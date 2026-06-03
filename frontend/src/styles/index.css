@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+  h1, h2, h3, h4 {
+    @apply tracking-tight;
+  }
+  input, select, textarea {
+    @apply text-sm;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-lg border border-gray-100 p-6;
+  }
+  .section-title {
+    @apply text-xs font-semibold text-gray-400 uppercase tracking-wider;
+  }
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+  }
+  .badge-green  { @apply bg-green-50 text-green-700; }
+  .badge-red    { @apply bg-red-50 text-red-700; }
+  .badge-yellow { @apply bg-yellow-50 text-yellow-700; }
+  .badge-gray   { @apply bg-gray-50 text-gray-600; }
+  .badge-blue   { @apply bg-blue-50 text-blue-700; }
+}
+
+/* Impresión térmica */
+@media print {
+  body * { visibility: hidden; }
+  .ticket-print, .ticket-print * { visibility: visible; }
+  .ticket-print {
+    position: fixed;
+    top: 0; left: 0;
+    width: 72mm;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: #000;
+  }
+  @page { size: 72mm auto; margin: 4mm; }
+}

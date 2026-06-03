@@ -1,0 +1,496 @@
+import React, { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { useForm } from 'react-hook-form'
+import { CheckCircle2, Building2, CreditCard, Link2, Eye, EyeOff, Loader2, Printer, Zap, RefreshCw, Volume2, VolumeX } from 'lucide-react'
+import { useTenant } from '../hooks/useTenant'
+import { onboardingService } from '../services/onboarding'
+import { useQZTray } from '../hooks/useQZTray'
+import { useSounds, TONOS_SCANNER } from '../hooks/useSounds'
+import { Button } from '../components/Common/Button'
+import { Input } from '../components/Common/Input'
+import { useAuth } from '../context/AuthContext'
+import { COP } from '../lib/format'
+
+export default function Configuracion() {
+  const { tenant: authTenant, updateTenant } = useAuth()
+  const { tenant, usage, update } = useTenant()
+  const qz     = useQZTray()
+  const sounds = useSounds()
+  const [sonidoActivo, setSonidoActivo] = useState(() => sounds.isEnabled())
+  const [volumen,      setVolumen]      = useState(() => sounds.getVolumen())
+  const [tonoId,       setTonoId]       = useState(() => sounds.getTonoId())
+  const [msg, setMsg] = useState('')
+  const [alegraUser, setAlegraUser] = useState('')
+  const [alegraToken, setAlegraToken] = useState('')
+  const [showToken, setShowToken] = useState(false)
+  const [alegraMsg, setAlegraMsg] = useState('')
+  const [alegraError, setAlegraError] = useState('')
+
+  const { register, handleSubmit } = useForm({ values: tenant })
+
+  const updateMutation = useMutation({
+    mutationFn: update,
+    onSuccess: (data) => {
+      setMsg('Datos actualizados correctamente')
+      // Sincronizar sidebar y header con los nuevos datos
+      updateTenant({ ...authTenant, ...data })
+    },
+  })
+
+  const alegraM = useMutation({
+    mutationFn: () => onboardingService.validarAlegra(alegraUser, alegraToken),
+    onSuccess: (data) => {
+      setAlegraMsg(data.mensaje)
+      setAlegraError('')
+      updateTenant({ alegra_conectado: true })
+      setAlegraUser('')
+      setAlegraToken('')
+    },
+    onError: (err) => setAlegraError(err.response?.data?.error || 'Error al conectar con Alegra'),
+  })
+
+  const usoPct = (uso, max) => max === 999 ? 0 : Math.min(100, Math.round((uso / max) * 100))
+
+  const [logo, setLogo] = useState(() => localStorage.getItem('carolina_logo') || null)
+
+  const handleLogo = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const base64 = ev.target.result
+      localStorage.setItem('carolina_logo', base64)
+      setLogo(base64)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const eliminarLogo = () => {
+    localStorage.removeItem('carolina_logo')
+    setLogo(null)
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-6">
+      {msg && (
+        <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm">
+          <CheckCircle2 className="w-4 h-4" />{msg}
+        </div>
+      )}
+
+      {/* Datos empresa */}
+      <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <Building2 className="w-5 h-5 text-gray-400" />
+          <h2 className="font-semibold text-gray-900">Datos de la empresa</h2>
+        </div>
+        <form onSubmit={handleSubmit(d => updateMutation.mutate(d))} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <Input label="Nombre de la empresa" {...register('nombre')} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">NIT</label>
+              <input disabled value={tenant?.nit || ''} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-400" />
+            </div>
+            <Input label="Teléfono" {...register('telefono')} />
+            <Input label="Dirección" {...register('direccion')} />
+            <Input label="Ciudad" {...register('ciudad')} />
+          </div>
+          <Button type="submit" loading={updateMutation.isPending}>Guardar cambios</Button>
+        </form>
+
+        {/* Logo de la empresa */}
+        <div className="mt-6 pt-6 border-t border-gray-100">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Logo (aparece en el ticket impreso)</p>
+          <div className="flex items-center gap-4">
+            {logo ? (
+              <>
+                <img src={logo} alt="Logo empresa" className="h-16 w-auto object-contain border border-gray-100 rounded-lg p-1 bg-white" />
+                <div className="space-y-2">
+                  <p className="text-xs text-green-600 font-medium">Logo cargado correctamente</p>
+                  <div className="flex gap-2">
+                    <label className="cursor-pointer text-xs text-blue-600 hover:underline">
+                      Cambiar logo
+                      <input type="file" accept="image/*" onChange={handleLogo} className="hidden" />
+                    </label>
+                    <span className="text-gray-300">·</span>
+                    <button onClick={eliminarLogo} className="text-xs text-red-500 hover:underline">Eliminar</button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <label className="cursor-pointer flex flex-col items-center gap-2 border-2 border-dashed border-gray-200 rounded-lg px-8 py-5 hover:border-gray-400 transition-colors">
+                <div className="text-2xl">🖼️</div>
+                <p className="text-sm text-gray-500">Subir logo de la empresa</p>
+                <p className="text-xs text-gray-400">PNG, JPG o SVG — recomendado fondo blanco</p>
+                <input type="file" accept="image/*" onChange={handleLogo} className="hidden" />
+              </label>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Plan y uso */}
+      <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <CreditCard className="w-5 h-5 text-gray-400" />
+            <h2 className="font-semibold text-gray-900">Plan actual</h2>
+          </div>
+          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold capitalize">{tenant?.plan}</span>
+        </div>
+        {usage && (
+          <div className="space-y-4">
+            <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
+              Precio: <strong>{COP(usage.limites.precio_mensual)}/mes</strong>
+            </div>
+            {[
+              { label: 'Usuarios', uso: usage.uso.usuarios, max: usage.limites.max_usuarios },
+              { label: 'Ventas hoy', uso: usage.uso.ventas_hoy, max: usage.limites.max_ventas_dia },
+            ].map(({ label, uso, max }) => (
+              <div key={label}>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600">{label}</span>
+                  <span className={`font-medium ${uso >= max * 0.8 ? 'text-orange-600' : 'text-gray-900'}`}>
+                    {uso} / {max === 999 ? '∞' : max}
+                  </span>
+                </div>
+                {max !== 999 && (
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div className={`h-2 rounded-full transition-all ${usoPct(uso, max) >= 80 ? 'bg-orange-500' : 'bg-blue-500'}`}
+                      style={{ width: `${usoPct(uso, max)}%` }} />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Integración Alegra — solo visible para admin */}
+      <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className="flex items-center gap-3 mb-2">
+          <Link2 className="w-5 h-5 text-gray-400" />
+          <h2 className="font-semibold text-gray-900">Integración Alegra (facturación DIAN)</h2>
+          {authTenant?.alegra_conectado && (
+            <span className="ml-auto flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full">
+              <CheckCircle2 className="w-3 h-3" />Activa
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-gray-500 mb-5">
+          Incluida en tu plan. Ingresa las credenciales que te asignó el equipo de Carolina para activar la facturación electrónica de esta empresa.
+        </p>
+
+        {alegraMsg && (
+          <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm mb-4">
+            <CheckCircle2 className="w-4 h-4" />{alegraMsg}
+          </div>
+        )}
+        {alegraError && (
+          <div className="bg-red-50 text-red-700 px-4 py-3 rounded-xl text-sm mb-4">{alegraError}</div>
+        )}
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Usuario Alegra</label>
+            <input
+              type="email"
+              value={alegraUser}
+              onChange={e => setAlegraUser(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="usuario@alegra.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Token Alegra</label>
+            <div className="relative">
+              <input
+                type={showToken ? 'text' : 'password'}
+                value={alegraToken}
+                onChange={e => setAlegraToken(e.target.value)}
+                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="token-de-alegra"
+              />
+              <button type="button" onClick={() => setShowToken(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <Button
+            onClick={() => alegraM.mutate()}
+            disabled={!alegraUser || !alegraToken}
+            loading={alegraM.isPending}
+          >
+            {alegraM.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            Guardar y validar credenciales
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Hardware de caja ── */}
+      <div className="bg-white rounded-xl border border-gray-100 p-6 space-y-6">
+        {/* Encabezado con estado QZ Tray */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Printer className="w-5 h-5 text-gray-400" />
+            <h2 className="font-semibold text-gray-900">Hardware de caja</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            {qz.estado === 'conectado'  && <span className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium flex items-center gap-1"><Zap className="w-3 h-3" />QZ Tray activo</span>}
+            {qz.estado === 'error'      && <span className="text-xs bg-red-50 text-red-600 px-2.5 py-1 rounded-full font-medium">Sin conexión</span>}
+            {qz.estado === 'conectando' && <span className="text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full font-medium flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" />Buscando...</span>}
+            <button onClick={qz.conectar} className="p-1.5 text-gray-400 hover:text-gray-700 rounded transition-colors" title="Reconectar"><RefreshCw className="w-3.5 h-3.5" /></button>
+          </div>
+        </div>
+
+        {qz.estado === 'error' && (
+          <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 space-y-2">
+            <p className="font-medium text-gray-700">QZ Tray no está corriendo</p>
+            <p className="text-gray-500">Necesario para impresión directa y apertura del cajón.</p>
+            <a href="https://qz.io/download/" target="_blank" rel="noreferrer"
+              className="inline-flex items-center gap-2 bg-gray-900 text-white text-xs px-4 py-2 rounded-md hover:bg-gray-700 font-medium">
+              <Printer className="w-3.5 h-3.5" />Descargar QZ Tray (gratis)
+            </a>
+          </div>
+        )}
+
+        {qz.estado === 'conectado' && (<>
+
+          {/* ── SECCIÓN: Impresora Térmica ── */}
+          <div className="border-t pt-4">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Impresora Térmica (tickets)</p>
+            <div className="space-y-3">
+
+              {/* Selección impresora */}
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Impresora</label>
+                <div className="flex gap-2">
+                  <select value={qz.impTermica} onChange={e => qz.guardarImpTermica(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900">
+                    <option value="">— Seleccionar —</option>
+                    {qz.impresoras.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                  <button onClick={async () => { try { await qz.imprimirPrueba() } catch(e) { alert(e.message) } }}
+                    disabled={!qz.impTermica}
+                    className="px-3 py-2 border border-gray-200 rounded-md text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+                    Imprimir prueba
+                  </button>
+                </div>
+              </div>
+
+              {/* Ancho papel */}
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Ancho del papel</label>
+                <div className="flex gap-2">
+                  {[['58','58 mm (32 chars)'],['80','80 mm (48 chars)']].map(([v,l]) => (
+                    <button key={v} onClick={() => qz.guardarAnchoPapel(v)}
+                      className={`flex-1 py-2 rounded-md text-sm font-medium border transition-colors ${qz.anchoPapel === v ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Densidad */}
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">
+                  Densidad de impresión — {['Muy baja','Baja','Normal','Normal+','Media','Media+','Alta','Muy alta','Maxima'][qz.densidad]} ({qz.densidad}/8)
+                </label>
+                <input type="range" min="0" max="8" step="1" value={qz.densidad}
+                  onChange={e => qz.guardarDensidad(e.target.value)} className="w-full" />
+                <div className="flex justify-between text-xs text-gray-300 mt-0.5">
+                  <span>Baja</span><span>Recomendado: 6</span><span>Maxima</span>
+                </div>
+              </div>
+
+              {/* Avance y corte */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-400 block mb-1">Líneas de avance antes del corte</label>
+                  <input type="number" min="0" max="10" value={qz.avancePapel}
+                    onChange={e => qz.guardarAvancePapel(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 block mb-1">Modo de corte</label>
+                  <select value={qz.modoCortePapel} onChange={e => qz.guardarModoCortePapel(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900">
+                    <option value="completo">Corte completo</option>
+                    <option value="parcial">Corte parcial</option>
+                    <option value="ninguno">Sin corte</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── SECCIÓN: Gaveta de dinero ── */}
+          <div className="border-t pt-4">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Gaveta de Dinero</p>
+            <div className="space-y-3">
+
+              {/* Pin */}
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Puerto del cable (si el cajón no abre, cambiar)</label>
+                <div className="flex gap-2">
+                  {[['0','Pin 2 (más común)'],['1','Pin 5']].map(([v,l]) => (
+                    <button key={v} onClick={() => qz.guardarGavetaPin(v)}
+                      className={`flex-1 py-2 rounded-md text-sm font-medium border transition-colors ${qz.gavetaPin === v ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Auto abrir */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-700 font-medium">Abrir automáticamente al cobrar</p>
+                  <p className="text-xs text-gray-400">El cajón se abre solo cuando se confirma una venta</p>
+                </div>
+                <button onClick={() => qz.guardarGavetaAuto(!qz.gavetaAuto)}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${qz.gavetaAuto ? 'bg-gray-900' : 'bg-gray-200'}`}>
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${qz.gavetaAuto ? 'translate-x-5' : ''}`} />
+                </button>
+              </div>
+
+              {/* Botón probar */}
+              <button onClick={() => qz.abrirGaveta()} disabled={!qz.impTermica}
+                className="w-full py-2 border border-gray-200 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+                Probar apertura del cajón
+              </button>
+            </div>
+          </div>
+
+          {/* ── SECCIÓN: Impresora A4 ── */}
+          <div className="border-t pt-4">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Impresora Facturas A4</p>
+            <select value={qz.impA4} onChange={e => qz.guardarImpA4(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900">
+              <option value="">— Seleccionar impresora —</option>
+              {qz.impresoras.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+
+        </>)}
+
+        {/* ── SECCIÓN: Scanner ── (no requiere QZ Tray) */}
+        <div className="border-t pt-4">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Pistola Lectora de Códigos</p>
+          <div className="space-y-3">
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">
+                  Velocidad máxima entre teclas: {qz.scannerMs}ms
+                </label>
+                <input type="range" min="20" max="150" step="10" value={qz.scannerMs}
+                  onChange={e => qz.guardarScannerMs(e.target.value)} className="w-full" />
+                <div className="flex justify-between text-xs text-gray-300 mt-0.5">
+                  <span>Rápida</span><span>Lenta</span>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">Sube si el scanner no detecta. Baja si el teclado activa escaneo.</p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Largo mínimo del código: {qz.scannerMin} chars</label>
+                <input type="range" min="2" max="15" step="1" value={qz.scannerMin}
+                  onChange={e => qz.guardarScannerMin(e.target.value)} className="w-full" />
+                <div className="flex justify-between text-xs text-gray-300 mt-0.5">
+                  <span>2</span><span>15</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Sonidos */}
+            <div className="space-y-3 pt-1 border-t border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {sonidoActivo ? <Volume2 className="w-4 h-4 text-gray-400" /> : <VolumeX className="w-4 h-4 text-gray-300" />}
+                  <div>
+                    <p className="text-sm text-gray-700 font-medium">Sonidos del sistema</p>
+                    <p className="text-xs text-gray-400">Beep al escanear · doble beep al cobrar · buzz en error</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    const nuevo = !sonidoActivo
+                    sounds.setEnabled(nuevo)
+                    setSonidoActivo(nuevo)
+                    if (nuevo) sounds.scan()
+                  }}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${sonidoActivo ? 'bg-gray-900' : 'bg-gray-200'}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${sonidoActivo ? 'translate-x-5' : ''}`} />
+                </button>
+              </div>
+
+              {/* Tono del scanner */}
+              {sonidoActivo && (
+                <div className="space-y-3">
+                  {/* Selector de tono */}
+                  <div>
+                    <label className="text-xs text-gray-400 block mb-1.5">Tono del scanner</label>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {TONOS_SCANNER.map(t => (
+                        <button key={t.id}
+                          onClick={() => {
+                            sounds.setTonoId(t.id)
+                            setTonoId(t.id)
+                            setTimeout(() => sounds.scan(), 50)
+                          }}
+                          className={`py-2 px-1 rounded-md text-xs font-medium border transition-colors text-center ${
+                            tonoId === t.id ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                          }`}
+                        >
+                          <p>{t.label}</p>
+                          <p className={`text-xs mt-0.5 ${tonoId === t.id ? 'text-gray-300' : 'text-gray-400'}`}>{t.desc}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Volumen */}
+                  <div>
+                    <label className="text-xs text-gray-400 block mb-1">Volumen: {volumen}%</label>
+                    <div className="flex items-center gap-3">
+                      <VolumeX className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
+                      <input type="range" min="10" max="100" step="5" value={volumen}
+                        onChange={e => { const v = parseInt(e.target.value); sounds.setVolumen(v); setVolumen(v) }}
+                        onMouseUp={() => sounds.scan()}
+                        onTouchEnd={() => sounds.scan()}
+                        className="flex-1" />
+                      <Volume2 className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                      <button onClick={() => sounds.scan()}
+                        className="text-xs text-gray-400 hover:text-gray-700 border border-gray-200 px-2 py-1 rounded-md">
+                        Probar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Campo de prueba scanner */}
+            <div>
+              <label className="text-xs text-gray-400 block mb-1">
+                Campo de prueba — escanea aquí para verificar (no conectado a QZ Tray)
+              </label>
+              <input
+                type="text"
+                placeholder="Escanea un código de barras aquí..."
+                onKeyDown={e => e.stopPropagation()}
+                className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm bg-gray-50 font-mono"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                El scanner funciona como teclado USB — no necesita QZ Tray ni drivers adicionales
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  )
+}
