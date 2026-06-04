@@ -306,6 +306,7 @@ export default function POS() {
             empresa:        tenant || {},
             venta:          ventaFinal,
             cliente:        clienteSeleccionado,
+            cajero:         user?.nombre || '',
             modoDemo,
             W:              qzTray.anchoCars,
             densidad:       qzTray.densidad,
