@@ -155,4 +155,56 @@ async function me(req, res, next) {
   }
 }
 
-module.exports = { register, login, refresh, logout, me };
+async function actualizarPerfil(req, res, next) {
+  try {
+    const { z } = require('zod');
+    const schema = z.object({
+      nombre: z.string().min(2).optional(),
+      email:  z.string().email().optional(),
+    });
+    const data = schema.parse(req.body);
+
+    if (data.email) {
+      const { rows: dup } = await db.query(
+        'SELECT id FROM users WHERE email = $1 AND id != $2',
+        [data.email, req.user.id]
+      );
+      if (dup.length) return res.status(400).json({ error: 'Ese email ya está en uso' });
+    }
+
+    const fields = Object.entries(data).filter(([, v]) => v !== undefined);
+    if (!fields.length) return res.status(400).json({ error: 'Sin datos para actualizar' });
+
+    const set = fields.map(([k], i) => `${k} = $${i + 2}`).join(', ');
+    const values = fields.map(([, v]) => v);
+
+    const { rows } = await db.query(
+      `UPDATE users SET ${set} WHERE id = $1 RETURNING id, nombre, email, rol`,
+      [req.user.id, ...values]
+    );
+    res.json({ mensaje: 'Perfil actualizado', user: rows[0] });
+  } catch (err) { next(err); }
+}
+
+async function cambiarPassword(req, res, next) {
+  try {
+    const { password_actual, password_nuevo } = req.body;
+    if (!password_actual || !password_nuevo)
+      return res.status(400).json({ error: 'Debes enviar la contraseña actual y la nueva' });
+    if (password_nuevo.length < 6)
+      return res.status(400).json({ error: 'La nueva contraseña debe tener mínimo 6 caracteres' });
+
+    const { rows } = await db.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const valid = await bcrypt.compare(password_actual, rows[0].password_hash);
+    if (!valid) return res.status(400).json({ error: 'La contraseña actual es incorrecta' });
+
+    const nuevoHash = await bcrypt.hash(password_nuevo, 12);
+    await db.query('UPDATE users SET password_hash = $1 WHERE id = $2', [nuevoHash, req.user.id]);
+
+    res.json({ mensaje: 'Contraseña actualizada correctamente' });
+  } catch (err) { next(err); }
+}
+
+module.exports = { register, login, refresh, logout, me, actualizarPerfil, cambiarPassword };

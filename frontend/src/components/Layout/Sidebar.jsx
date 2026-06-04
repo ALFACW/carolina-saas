@@ -1,5 +1,5 @@
 import React from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 const NAV_POR_ROL = {
@@ -82,11 +82,15 @@ export function Sidebar() {
 
       {/* Usuario */}
       <div className="px-5 py-4 border-t border-gray-100">
-        <p className="text-xs font-semibold text-gray-800 truncate">{user?.nombre}</p>
-        <p className="text-xs text-gray-400 capitalize mt-0.5 mb-3">{user?.rol}</p>
+        <Link to="/mi-perfil" className="block group mb-1">
+          <p className="text-xs font-semibold text-gray-800 truncate group-hover:text-gray-900">{user?.nombre}</p>
+          <p className="text-xs text-gray-400 capitalize mt-0.5 group-hover:text-gray-500">
+            {user?.rol} · <span className="underline">Mi perfil</span>
+          </p>
+        </Link>
         <button
           onClick={handleLogout}
-          className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
+          className="text-xs text-gray-400 hover:text-gray-700 transition-colors mt-2"
         >
           Cerrar sesión
         </button>
