@@ -61,10 +61,26 @@ const fechaHora = () => {
   return txt(`${fecha}  ${hora}`)
 }
 
-export function buildTicket({ empresa, venta, cliente, cajero, modoDemo = false, W = 48, densidad = 6, avancePapel = 3, modoCortePapel = 'completo' }) {
+// Tabla ESC 7: n1=puntos max, n2=tiempo calor(µs), n3=intervalo
+// Más n2 = más oscuro. Rango densidad 0-8.
+const DENSITY_TABLE = [
+  [3,  30, 8],  // 0 muy claro
+  [5,  50, 6],  // 1
+  [7,  70, 4],  // 2
+  [9,  90, 3],  // 3
+  [9, 120, 2],  // 4 normal
+  [11,150, 2],  // 5
+  [13,180, 1],  // 6 (default Carolina)
+  [15,210, 1],  // 7
+  [15,240, 0],  // 8 máximo
+]
+
+export function buildTicket({ empresa, venta, cliente, cajero, modoDemo = false, W = 48, densidad = 6, avancePapel = 3, modoCortePapel = 'completo', abrirGaveta = false }) {
   let t = CMD.init
 
-  t += GS + '\x7C' + String.fromCharCode(Math.min(8, Math.max(0, densidad)))
+  // ESC 7 n1 n2 n3 — densidad de impresión (calor del cabezal)
+  const [n1, n2, n3] = DENSITY_TABLE[Math.min(8, Math.max(0, densidad))]
+  t += ESC + '\x37' + String.fromCharCode(n1) + String.fromCharCode(n2) + String.fromCharCode(n3)
 
   // ══ ENCABEZADO ═══════════════════════════════════════
   t += CMD.center
@@ -170,11 +186,13 @@ export function buildTicket({ empresa, venta, cliente, cajero, modoDemo = false,
   t += 'Conserve este comprobante' + LF
   t += sep('-', W) + 'CarolinaPOS' + LF
 
-  // Corte y gaveta
+  // Corte
   t += ESC + '\x64' + String.fromCharCode(avancePapel)
   if (!modoCortePapel || modoCortePapel === 'completo') t += CMD.cut
   if (modoCortePapel === 'parcial') t += CMD.cutParcial
-  t += CMD.openDrawer
+
+  // Gaveta — solo al procesar la venta, no al reimprimir
+  if (abrirGaveta) t += CMD.openDrawer
 
   return [{ type: 'raw', format: 'plain', data: t }]
 }

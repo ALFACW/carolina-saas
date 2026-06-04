@@ -316,6 +316,7 @@ export default function POS() {
             venta:          ventaFinal,
             cliente:        clienteSeleccionado,
             cajero:         user?.nombre || '',
+            abrirGaveta:    true,
             modoDemo,
             W,
             densidad:       qt.densidad,
