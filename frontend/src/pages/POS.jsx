@@ -27,6 +27,10 @@ export default function POS() {
   const { setSidebar } = useUIStore()
   const [vistaTicket, setVistaTicket] = useState('ticket')
 
+  // Ref siempre actualizado de qzTray para evitar closure stale en onSuccess
+  const qzTrayRef = useRef(qzTray)
+  useEffect(() => { qzTrayRef.current = qzTray }, [qzTray])
+
   // Ocultar sidebar al entrar al POS, restaurar al salir
   useEffect(() => {
     setSidebar(false)
@@ -300,7 +304,9 @@ export default function POS() {
       }
 
       // ── Imprimir ticket + abrir gaveta automáticamente ──
-      if (qzTray.conectado && qzTray.impTermica) {
+      // Usamos ref para evitar closure stale — siempre tiene el qzTray más reciente
+      const qt = qzTrayRef.current
+      if (qt.conectado && qt.impTermica) {
         try {
           const cmds = buildTicket({
             empresa:        tenant || {},
@@ -308,14 +314,14 @@ export default function POS() {
             cliente:        clienteSeleccionado,
             cajero:         user?.nombre || '',
             modoDemo,
-            W:              qzTray.anchoCars,
-            densidad:       qzTray.densidad,
-            avancePapel:    qzTray.avancePapel,
-            modoCortePapel: qzTray.modoCortePapel,
+            W:              qt.anchoCars,
+            densidad:       qt.densidad,
+            avancePapel:    qt.avancePapel,
+            modoCortePapel: qt.modoCortePapel,
           })
-          await qzTray.imprimirTicket(cmds) // incluye openDrawer al final del ESC/POS
+          await qt.imprimirTicket(cmds)
         } catch (e) {
-          console.warn('Error imprimiendo ticket:', e)
+          console.warn('Error imprimiendo ticket automático:', e.message)
         }
       }
 
