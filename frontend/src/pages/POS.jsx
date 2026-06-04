@@ -21,7 +21,7 @@ import { COP } from '../lib/format'
 export default function POS() {
   const qc = useQueryClient()
   const navigate = useNavigate()
-  const { tenant } = useAuth()
+  const { tenant, user } = useAuth()
   const { success: soundSuccess, error: soundError, scan } = useSounds()
   const qzTray = useQZTray()
   const { setSidebar } = useUIStore()
