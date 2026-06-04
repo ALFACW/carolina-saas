@@ -124,20 +124,31 @@ export function useQZTray() {
     if (!impTermica) throw new Error('Selecciona una impresora térmica en Configuración')
     const config = qz.configs.create(impTermica)
 
+    // Convertir ticket a base64 para evitar corrupción de caracteres binarios (QR, logo)
+    const ticketB64 = datosEscPos.map(item => {
+      if (item.format === 'base64') return item
+      // Convertir string ESC/POS a base64
+      let binary = ''
+      const str = item.data
+      for (let i = 0; i < str.length; i++) {
+        binary += String.fromCharCode(str.charCodeAt(i) & 0xFF)
+      }
+      return { type: 'raw', format: 'base64', data: btoa(binary) }
+    })
+
     const logoSrc = localStorage.getItem('carolina_logo')
     if (logoSrc) {
       try {
         const { logoAEscPos } = await import('../lib/logoEscPos')
         const logoB64 = await logoAEscPos(logoSrc, anchoCars)
         if (logoB64) {
-          // Centro + logo bitmap + izquierda + ticket texto
           const center = btoa('\x1B\x61\x01')
           const left   = btoa('\x1B\x61\x00')
           await qz.print(config, [
             { type: 'raw', format: 'base64', data: center },
             { type: 'raw', format: 'base64', data: logoB64 },
             { type: 'raw', format: 'base64', data: left },
-            ...datosEscPos,
+            ...ticketB64,
           ])
           return
         }
@@ -146,7 +157,8 @@ export function useQZTray() {
       }
     }
 
-    await qz.print(config, datosEscPos)
+    // Sin logo: enviar en base64 igual para preservar el QR
+    await qz.print(config, ticketB64)
   }, [impTermica, anchoCars])
 
   // ── Abrir gaveta ───────────────────────────────────────
