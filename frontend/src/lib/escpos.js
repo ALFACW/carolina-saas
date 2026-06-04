@@ -28,6 +28,29 @@ const CMD = {
   openDrawer: ESC + '\x70\x00\x19\x19',
 }
 
+// Genera comandos ESC/POS para imprimir un QR code en la impresora térmica
+// Usa el comando GS ( k estándar compatible con la mayoría de impresoras ESC/POS
+function escposQR(data, size = 4) {
+  const GS = '\x1D'
+  const qrData = String(data)
+  const len = qrData.length + 3
+  const pL = len & 0xFF
+  const pH = (len >> 8) & 0xFF
+
+  let cmd = ''
+  // Modelo QR (modelo 2)
+  cmd += GS + '(k' + '\x04\x00' + '\x31\x41\x32\x00'
+  // Tamaño del módulo (1-16, recomendado 3-5)
+  cmd += GS + '(k' + '\x03\x00' + '\x31\x43' + String.fromCharCode(size)
+  // Corrección de errores (M = 77)
+  cmd += GS + '(k' + '\x03\x00' + '\x31\x45' + '\x4D'
+  // Almacenar datos
+  cmd += GS + '(k' + String.fromCharCode(pL) + String.fromCharCode(pH) + '\x31\x50\x30' + qrData
+  // Imprimir
+  cmd += GS + '(k' + '\x03\x00' + '\x31\x51\x30'
+  return cmd
+}
+
 const pad = (text, len, right = false) => {
   const t = String(text || '').substring(0, len)
   const sp = ' '.repeat(Math.max(0, len - t.length))
@@ -109,10 +132,19 @@ export function buildTicket({ empresa, venta, cliente, modoDemo = false, W = 32,
     t += CMD.boldOff
   }
 
-  // ── CUFE ──────────────────────────────────────────────
+  // ── CUFE + QR ─────────────────────────────────────────
   if (venta.cufe && !modoDemo) {
     t += sep('-', W)
-    t += CMD.center + 'Verifique en DIAN:' + LF + CMD.left
+    t += CMD.center
+
+    // QR code apuntando a verificación DIAN
+    const cufeUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${venta.cufe}`
+    t += escposQR(cufeUrl, 4)
+    t += LF
+
+    t += 'Escanea para verificar en DIAN' + LF + CMD.left
+    // CUFE en texto (primeros 32 chars)
+    t += 'CUFE:' + LF
     for (let i = 0; i < Math.min(venta.cufe.length, 64); i += W) {
       t += venta.cufe.substring(i, i + W) + LF
     }
