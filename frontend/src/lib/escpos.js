@@ -139,7 +139,9 @@ export function buildTicket({ empresa, venta, cliente, cajero, modoDemo = false,
   const ivaPorc  = ivaBase > 0 ? Math.round((ivaMonto / ivaBase) * 100) : 0
 
   t += col('SUB TOTAL:', '$' + Math.round(ivaBase).toLocaleString('es-CO'))
-  t += col(`IVA ${ivaPorc}%:`, '$' + Math.round(ivaMonto).toLocaleString('es-CO'))
+  if (ivaMonto > 0) {
+    t += col(`IVA ${ivaPorc}%:`, '$' + Math.round(ivaMonto).toLocaleString('es-CO'))
+  }
   t += sep('=', W)
 
   // Total grande
