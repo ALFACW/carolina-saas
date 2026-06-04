@@ -730,7 +730,7 @@ export default function POS() {
                 <button
                   onClick={async () => {
                     try {
-                      const cmds = buildTicket({ empresa: tenant || {}, venta: ventaResult, cliente: clienteSeleccionado, modoDemo: !tenant?.alegra_conectado, densidad: qzTray.densidad })
+                      const cmds = buildTicket({ empresa: tenant || {}, venta: ventaResult, cliente: clienteSeleccionado, cajero: user?.nombre || '', modoDemo: !tenant?.alegra_conectado, W: qzTray.anchoCars, densidad: qzTray.densidad, avancePapel: qzTray.avancePapel, modoCortePapel: qzTray.modoCortePapel })
                       await qzTray.imprimirTicket(cmds)
                     } catch {}
                   }}
