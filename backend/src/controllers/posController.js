@@ -116,7 +116,7 @@ async function procesarVenta(req, res, next) {
         descuento,
         iva_rate:        iva,
         impuesto:        impItem,
-        subtotal:        subtotalItem,
+        subtotal:        baseItem,
       });
     }
 
