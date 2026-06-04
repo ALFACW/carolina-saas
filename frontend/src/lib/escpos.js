@@ -87,8 +87,21 @@ export function buildTicket({ empresa, venta, cliente, modoDemo = false, W = 32,
   t += (modoDemo ? '*** DEMO - SIN VALIDEZ DIAN ***' : 'FACTURA ELECTRONICA DE VENTA') + LF
   t += CMD.boldOff
 
+  // ── Resolución DIAN (obligatorio) ─────────────────────
+  if (!modoDemo) {
+    const resolucion = empresa.resolucion_dian || 'RESOLUCION DIAN PENDIENTE'
+    const rangoDesde = empresa.rango_desde    || '000000001'
+    const rangoHasta = empresa.rango_hasta    || '999999999'
+    const vigencia   = empresa.vigencia_dian  || '2025-01-01 al 2026-12-31'
+    t += CMD.center
+    t += 'Resolucion No. ' + txt(resolucion) + LF
+    t += 'Rango: ' + rangoDesde + ' - ' + rangoHasta + LF
+    t += 'Vigencia: ' + txt(vigencia) + LF
+    t += CMD.left
+  }
+
   // ── Datos factura ──────────────────────────────────────
-  t += CMD.left + sep('-', W)
+  t += sep('-', W)
   t += cols2('No. Factura:', venta.numero_factura || '---', W)
   t += cols2('Fecha:', new Date().toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }), W)
   t += cols2('Pago:', txt((venta.metodo_pago || 'Efectivo').replace(/_/g, ' ')), W)

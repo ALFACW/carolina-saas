@@ -1,0 +1,5 @@
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS resolucion_dian VARCHAR(50),
+  ADD COLUMN IF NOT EXISTS rango_desde     VARCHAR(20),
+  ADD COLUMN IF NOT EXISTS rango_hasta     VARCHAR(20),
+  ADD COLUMN IF NOT EXISTS vigencia_dian   VARCHAR(50);
