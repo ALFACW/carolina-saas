@@ -1,4 +1,4 @@
-// Generador ESC/POS — Ticket POS Colombia (Factura Electrónica)
+// Generador ESC/POS — Ticket CarolinaPOS (diseño Claude Design)
 const ESC = '\x1B'
 const GS  = '\x1D'
 const LF  = '\x0A'
@@ -10,8 +10,9 @@ const txt = (s) => String(s || '')
   .replace(/[óòôöõ]/g, 'o').replace(/[ÓÒÔÖÕ]/g, 'O')
   .replace(/[úùûü]/g,  'u').replace(/[ÚÙÛÜ]/g,  'U')
   .replace(/ñ/g, 'n').replace(/Ñ/g, 'N')
-  .replace(/ç/g, 'c').replace(/Ç/g, 'C')
-  .replace(/¡/g, '!').replace(/¿/g, '?')
+  .replace(/[·•]/g, '-')
+  .replace(/[""]/g, '"').replace(/['']/g, "'")
+  .replace(/[^\x00-\xFF]/g, '?')
 
 const CMD = {
   init:       ESC + '@',
@@ -23,10 +24,11 @@ const CMD = {
   sizeDoble:  GS  + '\x21\x11',
   sizeAncho:  GS  + '\x21\x10',
   cut:        GS  + '\x56\x00',
+  cutParcial: GS  + '\x56\x01',
   openDrawer: ESC + '\x70\x00\x19\x19',
 }
 
-function escposQR(data, size = 4) {
+function escposQR(data, size = 6) {
   const qrData = String(data)
   const len = qrData.length + 3
   const pL = len & 0xFF
@@ -40,162 +42,138 @@ function escposQR(data, size = 4) {
   return cmd
 }
 
-const pad = (text, len, right = false) => {
+const rpad = (text, len) => {
   const t = String(text || '').substring(0, len)
-  const sp = ' '.repeat(Math.max(0, len - t.length))
-  return right ? sp + t : t + sp
+  return t + ' '.repeat(Math.max(0, len - t.length))
+}
+const lpad = (text, len) => {
+  const t = String(text || '').substring(0, len)
+  return ' '.repeat(Math.max(0, len - t.length)) + t
 }
 
 const sep = (c = '-', W = 32) => c.repeat(W) + LF
+const money = (n) => '$' + Math.round(n).toLocaleString('es-CO')
 
-const fechaLarga = () => {
+const fechaHora = () => {
   const d = new Date()
-  return txt(d.toLocaleDateString('es-CO', {
-    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
-  }))
+  const fecha = d.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const hora  = d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true })
+  return txt(`${fecha}  ${hora}`)
 }
 
-export function buildTicket({ empresa, venta, cliente, cajero, modoDemo = false, W = 32, densidad = 6, avancePapel = 3, modoCortePapel = 'completo' }) {
+export function buildTicket({ empresa, venta, cliente, cajero, modoDemo = false, W = 48, densidad = 6, avancePapel = 3, modoCortePapel = 'completo' }) {
   let t = CMD.init
 
-  // Densidad
   t += GS + '\x7C' + String.fromCharCode(Math.min(8, Math.max(0, densidad)))
 
-  // ─── LOGO (si existe se maneja desde useQZTray antes del texto) ────────────
+  // ══ ENCABEZADO ═══════════════════════════════════════
+  t += CMD.center
 
-  // ─── ENCABEZADO ────────────────────────────────────────────
-  t += CMD.center + sep('-', W)
+  t += 'NIT ' + txt(empresa.nit || '000.000.000-0') + LF
 
-  // NIT
-  t += CMD.boldOn
-  t += 'NIT: ' + txt(empresa.nit || '000.000.000-0') + LF
-  t += CMD.boldOff
-
-  // Nombre empresa en grande
-  t += CMD.sizeDoble + CMD.boldOn
+  t += CMD.boldOn + CMD.sizeDoble
   t += txt(empresa.nombre || 'Mi Empresa') + LF
   t += CMD.sizeNormal + CMD.boldOff
 
-  t += sep('-', W)
+  if (empresa.direccion) t += txt(empresa.direccion) + LF
+  if (empresa.telefono)  t += 'Tel. ' + txt(empresa.telefono) + LF
 
-  // ─── TIPO DE DOCUMENTO ─────────────────────────────────────
-  t += CMD.boldOn + CMD.sizeAncho
-  if (modoDemo) {
-    t += '*** DEMO ***' + LF
-  } else {
-    t += 'FACTURA ELECTRONICA' + LF
-  }
+  t += LF + CMD.boldOn + CMD.sizeAncho
+  t += (modoDemo ? '*** MODO DEMO ***' : 'FACTURA ELECTRONICA') + LF
   t += CMD.sizeNormal + CMD.boldOff
 
+  // ══ DATOS ════════════════════════════════════════════
   t += sep('-', W) + CMD.left
 
-  // ─── DATOS DE LA VENTA ─────────────────────────────────────
-  const col = (label, valor) => {
+  const fila = (label, valor) => {
+    const l = txt(label)
     const v = txt(String(valor || ''))
-    const maxL = W - v.length - 1
-    return pad(label, Math.max(1, maxL)) + ' ' + v + LF
+    const sp = W - l.length - v.length
+    return l + ' '.repeat(Math.max(1, sp)) + v + LF
   }
 
-  t += col('Factura No.:', venta.numero_factura || '---')
-  t += col('Fecha:', fechaLarga())
-  t += col('Tipo de pago:', txt((venta.metodo_pago || 'Efectivo').replace(/_/g, ' ')))
-
-  if (cliente) {
-    t += col('Cliente:', txt(cliente.nombre).substring(0, W - 10))
-    if (cliente.numero_documento) t += col('Documento:', `${cliente.tipo_documento || 'CC'}: ${cliente.numero_documento}`)
-  } else {
-    t += col('Cliente:', 'Consumidor Final')
+  t += fila('Factura:', venta.numero_factura || (modoDemo ? 'DEMO-000001' : '---'))
+  t += fila('Fecha:', fechaHora())
+  t += fila('Cajero:', txt(cajero || '-').substring(0, W - 10))
+  t += fila('Cliente:', cliente ? txt(cliente.nombre || 'Consumidor Final').substring(0, W - 10) : 'Consumidor Final')
+  if (cliente?.numero_documento) {
+    t += fila('Documento:', `${txt(cliente.tipo_documento || 'CC')} ${cliente.numero_documento}`)
   }
+  t += fila('Pago:', txt((venta.metodo_pago || 'Efectivo').replace(/_/g, ' ')))
 
-  if (cajero) t += col('Cajero:', txt(cajero).substring(0, W - 10))
-  if (empresa.direccion) t += col('Sucursal:', txt(empresa.direccion).substring(0, W - 10))
-  if (empresa.telefono)  t += col('Telefono:', txt(empresa.telefono))
-  if (empresa.email)     t += col('Correo:', txt(empresa.email).substring(0, W - 10))
-
-  // ─── ITEMS ─────────────────────────────────────────────────
+  // ══ ITEMS ════════════════════════════════════════════
   t += sep('-', W)
 
-  // Cabecera columnas
-  const descW = W - 10 - 8  // ancho para descripción
+  // Anchos de columna según papel
+  const isWide = W >= 40
+  const wDesc   = isWide ? W - 28 : W - 19
+  const wCant   = isWide ? 5  : 4
+  const wPrecio = isWide ? 11 : 7
+  const wTotal  = isWide ? 12 : 8
+
   t += CMD.boldOn
-  t += pad('DESCRIPCION', descW) + pad('CANT', 6, true) + pad('TOTAL', 8, true) + LF
-  t += CMD.boldOff
-  t += sep('-', W)
+  t += rpad('DESCRIPCION', wDesc) + lpad('CANT', wCant) + lpad('PRECIO', wPrecio) + lpad('TOTAL', wTotal) + LF
+  t += CMD.boldOff + sep('-', W)
 
   venta.items?.forEach(item => {
-    const nombre = txt(item.descripcion).substring(0, descW)
+    const nombre = txt(item.descripcion).substring(0, wDesc)
     const cant   = `x${item.cantidad}`
-    const total  = '$' + Math.round(item.subtotal).toLocaleString('es-CO')
-    t += pad(nombre, descW) + pad(cant, 6, true) + pad(total, 8, true) + LF
-    // Precio unitario en línea pequeña
-    t += '  ' + Math.round(item.precio_unitario).toLocaleString('es-CO') + ' c/u' + LF
+    const precio = money(item.precio_unitario)
+    const total  = money(item.subtotal || item.precio_unitario * item.cantidad)
+    t += rpad(nombre, wDesc) + lpad(cant, wCant) + lpad(precio, wPrecio) + lpad(total, wTotal) + LF
   })
 
-  // ─── TOTALES ───────────────────────────────────────────────
+  // ══ TOTALES ══════════════════════════════════════════
   t += sep('=', W)
 
-  const ivaBase  = venta.subtotal || 0
-  const ivaMonto = venta.impuesto_total || 0
-  const ivaPorc  = ivaBase > 0 ? Math.round((ivaMonto / ivaBase) * 100) : 0
+  const base    = venta.subtotal || 0
+  const iva     = venta.impuesto_total || 0
+  const ivaPorc = base > 0 ? Math.round((iva / base) * 100) : 0
 
-  t += col('SUB TOTAL:', '$' + Math.round(ivaBase).toLocaleString('es-CO'))
-  if (ivaMonto > 0) {
-    t += col(`IVA ${ivaPorc}%:`, '$' + Math.round(ivaMonto).toLocaleString('es-CO'))
-  }
-  t += sep('=', W)
+  t += fila('Subtotal:', money(base))
+  if (iva > 0) t += fila(`IVA ${ivaPorc}%:`, money(iva))
 
-  // Total grande
-  t += CMD.center + CMD.boldOn + CMD.sizeDoble
-  t += 'TOTAL: $' + Math.round(venta.total).toLocaleString('es-CO') + LF
+  t += sep('=', W) + CMD.center + CMD.boldOn + CMD.sizeDoble
+  t += 'TOTAL ' + money(venta.total) + LF
   t += CMD.sizeNormal + CMD.boldOff + CMD.left
 
-  // Vuelto
   if (venta.efectivo_recibido > 0) {
     t += sep('-', W)
-    t += col('Recibido:', '$' + Math.round(venta.efectivo_recibido).toLocaleString('es-CO'))
-    t += CMD.boldOn
-    t += col('Vuelto:', '$' + Math.round(Math.max(0, venta.efectivo_recibido - venta.total)).toLocaleString('es-CO'))
-    t += CMD.boldOff
+    t += fila('Efectivo recibido:', money(venta.efectivo_recibido))
+    t += CMD.boldOn + fila('Cambio:', money(Math.max(0, venta.efectivo_recibido - venta.total))) + CMD.boldOff
   }
 
-  // ─── QR + CUFE ─────────────────────────────────────────────
+  // ══ QR + CUFE ════════════════════════════════════════
   t += sep('-', W) + CMD.center
 
   if (venta.cufe && !modoDemo) {
     const cufeUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${venta.cufe}`
     t += escposQR(cufeUrl, 6) + LF
     t += sep('~', W)
-    t += 'ESCANEA PARA VERIFICAR' + LF
+    t += 'ESCANEA PARA VERIFICAR EN DIAN' + LF
     t += sep('~', W)
     t += CMD.left + 'CUFE:' + LF
     for (let i = 0; i < Math.min(venta.cufe.length, 64); i += W) {
       t += venta.cufe.substring(i, i + W) + LF
     }
   } else {
-    // Modo demo: QR de prueba
     t += escposQR('https://carolinapos.co', 6) + LF
     t += sep('~', W)
-    t += 'DOCUMENTO DE PRUEBA' + LF
+    t += 'ESCANEA PARA VERIFICAR EN DIAN' + LF
     t += sep('~', W)
   }
 
-  // ─── PIE ───────────────────────────────────────────────────
-  t += CMD.center
-  t += sep('-', W)
-  t += CMD.boldOn + 'GRACIAS POR TU COMPRA' + CMD.boldOff + LF
+  // ══ PIE ══════════════════════════════════════════════
+  t += CMD.center + sep('-', W)
+  t += CMD.boldOn + '!GRACIAS POR SU COMPRA!' + CMD.boldOff + LF
+  t += (modoDemo ? '*** SIN VALIDEZ DIAN ***' : 'Factura valida ante la DIAN') + LF
+  t += 'Conserve este comprobante' + LF
+  t += sep('-', W) + 'CarolinaPOS' + LF
 
-  if (!modoDemo) {
-    t += 'FACTURA VALIDA ANTE LA DIAN' + LF
-  } else {
-    t += '*** SIN VALIDEZ DIAN ***' + LF
-  }
-  t += 'CONSERVE ESTE COMPROBANTE' + LF
-  t += sep('-', W)
-
-  // Corte
+  // Corte y gaveta
   t += ESC + '\x64' + String.fromCharCode(avancePapel)
   if (!modoCortePapel || modoCortePapel === 'completo') t += CMD.cut
-  if (modoCortePapel === 'parcial') t += GS + '\x56\x01'
+  if (modoCortePapel === 'parcial') t += CMD.cutParcial
   t += CMD.openDrawer
 
   return [{ type: 'raw', format: 'plain', data: t }]
