@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, User, AlertCircle, Loader2, CheckCircle2, X, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Search, User, AlertCircle, Loader2, CheckCircle2, X, Trash2, ArrowLeft } from 'lucide-react'
 import { usePOSStore } from '../store/posStore'
+import { useUIStore } from '../store/uiStore'
 import { posService } from '../services/pos'
 import { clientesService } from '../services/clientes'
 import { productosService } from '../services/productos'
@@ -18,10 +20,18 @@ import { COP } from '../lib/format'
 
 export default function POS() {
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const { tenant } = useAuth()
   const { success: soundSuccess, error: soundError, scan } = useSounds()
   const qzTray = useQZTray()
+  const { setSidebar } = useUIStore()
   const [vistaTicket, setVistaTicket] = useState('ticket')
+
+  // Ocultar sidebar al entrar al POS, restaurar al salir
+  useEffect(() => {
+    setSidebar(false)
+    return () => setSidebar(true)
+  }, [])
 
   // Leer configuración del scanner desde localStorage (se configura en Configuración)
   const scannerMs  = parseInt(localStorage.getItem('carolina_scanner_ms')  || '80')
@@ -328,18 +338,36 @@ export default function POS() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-7rem)] gap-4">
+    <div className="flex h-screen bg-gray-50">
 
-      {/* ── Aviso modo demo (sin Alegra conectado) ── */}
-      {!tenant?.alegra_conectado && (
-        <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-md px-4 py-2.5 text-sm">
-          <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0 animate-pulse" />
-          <span className="text-amber-800 font-medium">Modo demo</span>
-          <span className="text-amber-700">— Las ventas se registran localmente pero <strong>no se envían a la DIAN</strong>. Conecta Alegra en Configuración para facturar legalmente.</span>
+      {/* ══ ÁREA IZQUIERDA: búsqueda + tabla ══ */}
+      <div className="flex-1 flex flex-col min-w-0 p-4 gap-3">
+
+        {/* Barra superior */}
+        <div className="flex items-center gap-3">
+          {/* Salir del POS */}
+          <button onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors">
+            <ArrowLeft className="w-4 h-4" />Salir
+          </button>
+
+          {/* Modo demo */}
+          {!tenant?.alegra_conectado && (
+            <span className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Modo demo — sin validez DIAN
+            </span>
+          )}
+
+          {carrito.length > 0 && (
+            <button onClick={limpiarCarrito}
+              className="ml-auto flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors">
+              <Trash2 className="w-3.5 h-3.5" />Limpiar
+            </button>
+          )}
         </div>
-      )}
 
-      {/* ── Barra superior: scanner + cliente ── */}
+      {/* ── Búsqueda + cliente ── */}
       <div className="flex items-center gap-3">
         {/* Campo de búsqueda / scanner */}
         <div className="relative flex-1 max-w-md">
@@ -444,7 +472,7 @@ export default function POS() {
         )}
       </div>
 
-      {/* ── Tabla de productos ── */}
+      {/* ── Tabla de items ── */}
       <div className="flex-1 bg-white rounded-lg border border-gray-100 overflow-hidden flex flex-col min-h-0">
         {/* Cabecera tabla */}
         <div className="grid grid-cols-[2rem_1fr_8rem_10rem_8rem_2.5rem] gap-x-3 px-5 py-2.5 border-b border-gray-100 text-xs font-semibold text-gray-400 uppercase tracking-wider">
@@ -515,47 +543,87 @@ export default function POS() {
         </div>
       </div>
 
-      {/* ── Panel inferior: totales + cobrar ── */}
-      <div className="bg-white rounded-lg border border-gray-100 px-6 py-4 flex items-center gap-8">
+      </div>{/* fin área izquierda */}
+
+      {/* ══ PANEL DERECHO: orden + totales + cobrar ══ */}
+      <div className="w-72 flex-shrink-0 bg-white border-l border-gray-100 flex flex-col">
+
+        {/* Cliente */}
+        <div className="px-4 py-3 border-b border-gray-100">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Cliente</p>
+          <button onClick={() => setShowClienteModal(true)}
+            className="w-full flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors">
+            <User className="w-3.5 h-3.5 flex-shrink-0" />
+            {clienteSeleccionado
+              ? <span className="font-medium text-gray-900 truncate">{clienteSeleccionado.nombre}</span>
+              : <span className="text-gray-400">Consumidor final <span className="text-gray-300">F2</span></span>
+            }
+            {clienteSeleccionado && (
+              <span onClick={e => { e.stopPropagation(); setCliente(null) }}
+                className="ml-auto text-gray-300 hover:text-gray-600">
+                <X className="w-3 h-3" />
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Resumen de items */}
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          {carrito.length === 0 ? (
+            <p className="text-xs text-gray-300 text-center py-8">Sin productos</p>
+          ) : (
+            <div className="space-y-2">
+              {carrito.map(item => {
+                const itemTotal = item.precio_unitario * item.cantidad * (1 - item.descuento / 100)
+                return (
+                  <div key={item.producto_id} className="flex items-center justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-900 truncate">{item.nombre}</p>
+                      <p className="text-xs text-gray-400">{item.cantidad} × {COP(item.precio_unitario)}</p>
+                    </div>
+                    <p className="text-xs font-semibold text-gray-900 flex-shrink-0">{COP(itemTotal)}</p>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
         {/* Método de pago */}
-        <div className="flex-1">
+        <div className="border-t border-gray-100">
           <MetodoPago />
         </div>
 
         {/* Totales */}
-        <div className="flex items-center gap-8">
-          <div className="text-right space-y-0.5">
-            <div className="flex gap-6 text-xs text-gray-400">
-              <span>Subtotal</span>
-              <span>{COP(subtotal)}</span>
-            </div>
-            <div className="flex gap-6 text-xs text-gray-400">
-              <span>IVA</span>
-              <span>{COP(iva)}</span>
-            </div>
-            <div className="flex gap-6 text-base font-bold text-gray-900 border-t border-gray-100 pt-1.5 mt-1">
-              <span>Total</span>
-              <span>{COP(total)}</span>
-            </div>
+        <div className="px-4 py-3 border-t border-gray-100 space-y-1.5">
+          <div className="flex justify-between text-xs text-gray-400">
+            <span>Subtotal</span><span>{COP(subtotal)}</span>
           </div>
+          <div className="flex justify-between text-xs text-gray-400">
+            <span>IVA</span><span>{COP(iva)}</span>
+          </div>
+          <div className="flex justify-between text-sm font-bold text-gray-900 border-t border-gray-100 pt-2 mt-1">
+            <span>Total</span><span>{COP(total)}</span>
+          </div>
+        </div>
 
-          {/* Botón cobrar */}
-          <div className="flex flex-col items-end gap-1">
-            <button
-              onClick={() => carrito.length > 0 && setShowCobroModal(true)}
-              disabled={carrito.length === 0}
-              className={`px-8 py-3 rounded-md font-semibold text-sm transition-colors disabled:opacity-30 whitespace-nowrap text-white ${
-                tenant?.alegra_conectado
-                  ? 'bg-gray-900 hover:bg-gray-700'
-                  : 'bg-amber-500 hover:bg-amber-600'
-              }`}
-            >
-              {tenant?.alegra_conectado ? 'Cobrar' : 'Cobrar (demo)'} {carrito.length > 0 ? COP(total) : ''} <span className="opacity-40 font-normal ml-1">F3</span>
-            </button>
-            {!tenant?.alegra_conectado && (
-              <p className="text-xs text-amber-600">Sin validez DIAN</p>
-            )}
-          </div>
+        {/* Botón cobrar */}
+        <div className="px-4 pb-4">
+          <button
+            onClick={() => carrito.length > 0 && setShowCobroModal(true)}
+            disabled={carrito.length === 0}
+            onKeyDown={e => { if (e.key === 'Enter' && !ventaMutation.isPending) setShowCobroModal(true) }}
+            className={`w-full py-3.5 rounded-md font-bold text-sm transition-colors disabled:opacity-30 text-white ${
+              tenant?.alegra_conectado ? 'bg-gray-900 hover:bg-gray-700' : 'bg-amber-500 hover:bg-amber-600'
+            }`}
+          >
+            {tenant?.alegra_conectado ? 'Cobrar' : 'Cobrar (demo)'}
+            {carrito.length > 0 && <span className="ml-2">{COP(total)}</span>}
+            <span className="ml-2 opacity-40 font-normal text-xs">F3</span>
+          </button>
+          {!tenant?.alegra_conectado && (
+            <p className="text-xs text-amber-600 text-center mt-1">Sin validez DIAN</p>
+          )}
         </div>
       </div>
 
