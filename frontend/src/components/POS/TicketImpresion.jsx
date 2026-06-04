@@ -18,7 +18,18 @@ export function TicketImpresion({ venta, tenant, cliente, qzTray }) {
   const handleImprimirQZ = async () => {
     setImprimiendo(true)
     try {
-      const cmds = buildTicket({ empresa: tenant || {}, venta, cliente })
+      const anchoPapel = localStorage.getItem('carolina_printer_ancho') || '80'
+      const cmds = buildTicket({
+        empresa:        tenant || {},
+        venta,
+        cliente,
+        cajero:         '',
+        W:              anchoPapel === '58' ? 32 : 48,
+        densidad:       parseInt(localStorage.getItem('carolina_printer_densidad') || '6'),
+        avancePapel:    parseInt(localStorage.getItem('carolina_printer_avance')   || '3'),
+        modoCortePapel: localStorage.getItem('carolina_printer_corte') || 'completo',
+        modoDemo:       !tenant?.alegra_conectado,
+      })
       await qzTray.imprimirTicket(cmds)
     } catch (err) {
       alert('Error al imprimir: ' + err.message)
