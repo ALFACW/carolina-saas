@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 
 export const useAuthStore = create(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       tenant: null,
       token: null,
@@ -15,17 +15,23 @@ export const useAuthStore = create(
         set({ user, tenant, token, isAuthenticated: true })
       },
 
-      updateTenant: (tenant) => set({ tenant }),
+      updateTenant: (tenant) => set((s) => ({ tenant: { ...s.tenant, ...tenant } })),
 
       logout: () => {
+        // Limpiar TODO — tokens + estado + persist
         localStorage.removeItem('carolina_token')
         localStorage.removeItem('carolina_refresh_token')
+        localStorage.removeItem('carolina-auth') // limpiar el persist de Zustand
         set({ user: null, tenant: null, token: null, isAuthenticated: false })
       },
     }),
     {
       name: 'carolina-auth',
-      partialize: (state) => ({ user: state.user, tenant: state.tenant, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({
+        user:            state.user,
+        tenant:          state.tenant,
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
   )
 )

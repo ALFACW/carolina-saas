@@ -22,6 +22,8 @@ export function AuthProvider({ children }) {
   const logoutFn = async () => {
     try { await authService.logout() } catch {}
     logout()
+    // Forzar recarga completa para limpiar cualquier estado en memoria
+    window.location.href = '/login'
   }
 
   return (
