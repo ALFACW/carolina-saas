@@ -304,25 +304,32 @@ export default function POS() {
       }
 
       // ── Imprimir ticket + abrir gaveta automáticamente ──
-      // Usamos ref para evitar closure stale — siempre tiene el qzTray más reciente
       const qt = qzTrayRef.current
+      console.log('[AUTO-PRINT] conectado:', qt.conectado, 'impTermica:', qt.impTermica)
       if (qt.conectado && qt.impTermica) {
         try {
+          const anchoPapel = localStorage.getItem('carolina_printer_ancho') || '80'
+          const W = anchoPapel === '58' ? 32 : 48
+          console.log('[AUTO-PRINT] Imprimiendo con W=', W)
           const cmds = buildTicket({
             empresa:        tenant || {},
             venta:          ventaFinal,
             cliente:        clienteSeleccionado,
             cajero:         user?.nombre || '',
             modoDemo,
-            W:              parseInt(localStorage.getItem('carolina_printer_ancho') === '58' ? 32 : 48),
+            W,
             densidad:       qt.densidad,
             avancePapel:    qt.avancePapel,
             modoCortePapel: qt.modoCortePapel,
           })
           await qt.imprimirTicket(cmds)
+          console.log('[AUTO-PRINT] Ticket enviado OK')
         } catch (e) {
-          console.warn('Error imprimiendo ticket automático:', e.message)
+          console.error('[AUTO-PRINT] Error:', e.message, e)
+          mostrarMsg(`Error al imprimir: ${e.message}`, 'error')
         }
+      } else {
+        console.log('[AUTO-PRINT] Skipped - QZ Tray no listo')
       }
 
       setVentaResult(ventaFinal)
