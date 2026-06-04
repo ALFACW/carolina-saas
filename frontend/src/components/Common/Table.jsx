@@ -1,6 +1,6 @@
 import React from 'react'
 
-export function Table({ columns, data, loading, emptyMessage = 'Sin registros' }) {
+export function Table({ columns, data, loading, emptyMessage = 'Sin registros', onRowClick }) {
   if (loading) return (
     <div className="w-full bg-white rounded-lg border border-gray-100">
       <div className="p-10 text-center text-sm text-gray-400">Cargando...</div>
@@ -27,9 +27,13 @@ export function Table({ columns, data, loading, emptyMessage = 'Sin registros' }
                 </td>
               </tr>
             ) : data.map((row, i) => (
-              <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+              <tr
+                key={i}
+                className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+              >
                 {columns.map(col => (
-                  <td key={col.key} className="px-5 py-3.5 text-gray-700">
+                  <td key={col.key} className="px-5 py-3.5 text-gray-700" onClick={col.stopPropagation ? e => e.stopPropagation() : undefined}>
                     {col.render ? col.render(row[col.key], row) : (row[col.key] ?? '—')}
                   </td>
                 ))}

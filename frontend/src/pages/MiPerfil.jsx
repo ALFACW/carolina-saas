@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { CheckCircle2, Eye, EyeOff, User, Lock } from 'lucide-react'
+import { CheckCircle2, Eye, EyeOff, User, Lock, Camera } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { Button } from '../components/Common/Button'
 import { Input } from '../components/Common/Input'
@@ -15,6 +15,8 @@ export default function MiPerfil() {
   const [errPass, setErrPass] = useState('')
   const [showActual, setShowActual] = useState(false)
   const [showNueva, setShowNueva] = useState(false)
+  const [foto, setFoto] = useState(() => localStorage.getItem('carolina_foto_perfil') || null)
+  const fotoInputRef = useRef(null)
 
   const { register: regPerfil, handleSubmit: handlePerfil, formState: { errors: errPerfil } } = useForm({
     defaultValues: { nombre: user?.nombre || '', email: user?.email || '' }
@@ -53,6 +55,17 @@ export default function MiPerfil() {
     },
   })
 
+  const handleFoto = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      localStorage.setItem('carolina_foto_perfil', ev.target.result)
+      setFoto(ev.target.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
   const onSubmitPass = (data) => {
     setErrPass('')
     if (data.password_nuevo !== data.password_confirmar) {
@@ -62,8 +75,79 @@ export default function MiPerfil() {
     passwordMutation.mutate(data)
   }
 
+  // Obtener iniciales del usuario
+  const iniciales = user?.nombre
+    ? user.nombre.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
+    : 'U'
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      {/* Foto de perfil */}
+      <div className="bg-white rounded-lg border border-gray-100 p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <Camera className="w-5 h-5 text-gray-400" />
+          <h2 className="font-semibold text-gray-900">Foto de perfil</h2>
+        </div>
+        <div className="flex items-center gap-6">
+          <button
+            type="button"
+            onClick={() => fotoInputRef.current?.click()}
+            className="relative group flex-shrink-0 focus:outline-none"
+            title="Cambiar foto"
+          >
+            <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 group-hover:border-gray-400 transition-colors">
+              {foto ? (
+                <img src={foto} alt="Foto de perfil" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                  <span className="text-white text-2xl font-bold">{iniciales}</span>
+                </div>
+              )}
+            </div>
+            {/* Overlay al hacer hover */}
+            <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <Camera className="w-6 h-6 text-white" />
+            </div>
+          </button>
+          <div>
+            <p className="text-sm font-medium text-gray-700">
+              {foto ? 'Foto de perfil cargada' : 'Sin foto de perfil'}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5 mb-3">
+              Haz clic en el avatar para cambiar la foto. Se guarda localmente.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => fotoInputRef.current?.click()}
+                className="text-xs px-3 py-1.5 border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                {foto ? 'Cambiar foto' : 'Subir foto'}
+              </button>
+              {foto && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.removeItem('carolina_foto_perfil')
+                    setFoto(null)
+                  }}
+                  className="text-xs px-3 py-1.5 border border-red-100 rounded-md text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  Eliminar
+                </button>
+              )}
+            </div>
+          </div>
+          <input
+            ref={fotoInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFoto}
+          />
+        </div>
+      </div>
+
       {/* Datos personales */}
       <div className="bg-white rounded-lg border border-gray-100 p-6">
         <div className="flex items-center gap-3 mb-5">

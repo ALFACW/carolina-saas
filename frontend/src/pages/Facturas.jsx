@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Search, Eye, XCircle, FileDown, Download } from 'lucide-react'
 import { facturasService } from '../services/facturas'
@@ -17,6 +17,7 @@ const ESTADO_COLORS = {
 
 export default function Facturas() {
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const [search, setSearch] = useState({ estado: '', fecha_desde: '', fecha_hasta: '' })
   const [page, setPage] = useState(1)
 
@@ -45,13 +46,16 @@ export default function Facturas() {
       </div>
     )},
     { key: 'fecha_emision', label: 'Fecha', render: v => new Date(v).toLocaleDateString('es-CO') },
-    { key: 'acciones', label: '', render: (_, row) => (
-      <div className="flex items-center gap-1">
-        <Link to={`/facturas/${row.id}`} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg"><Eye className="w-4 h-4" /></Link>
+    { key: 'acciones', label: '', stopPropagation: true, render: (_, row) => (
+      <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+        <Link to={`/facturas/${row.id}`} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg" title="Ver detalle">
+          <Eye className="w-4 h-4" />
+        </Link>
         {row.estado !== 'anulada' && (
           <button
             onClick={() => { if (window.confirm('¿Anular esta factura?')) anularMutation.mutate(row.id) }}
             className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg"
+            title="Anular factura"
           >
             <XCircle className="w-4 h-4" />
           </button>
@@ -84,7 +88,13 @@ export default function Facturas() {
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none" placeholder="Hasta" />
       </div>
 
-      <Table columns={columns} data={data?.facturas || []} loading={isLoading} emptyMessage="No hay facturas" />
+      <Table
+        columns={columns}
+        data={data?.facturas || []}
+        loading={isLoading}
+        emptyMessage="No hay facturas"
+        onRowClick={(row) => navigate(`/facturas/${row.id}`)}
+      />
 
       {data && data.total > 20 && (
         <div className="flex items-center justify-center gap-2">

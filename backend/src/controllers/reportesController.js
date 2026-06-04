@@ -1,4 +1,6 @@
 const db = require('../db');
+const logger = require('../lib/logger');
+const { enviarAlertaStock } = require('../lib/email');
 
 async function ventasDia(req, res, next) {
   try {
@@ -60,4 +62,33 @@ async function stockBajo(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { ventasDia, ventasMes, productosMasVendidos, stockBajo };
+/**
+ * GET /api/reportes/alertas-stock
+ * Busca todos los productos con stock_actual <= stock_minimo del tenant,
+ * envía email al admin si hay productos afectados, y devuelve la lista.
+ */
+async function alertasStock(req, res, next) {
+  try {
+    const { rows } = await db.query(
+      `SELECT * FROM productos
+       WHERE tenant_id = $1 AND activo = true AND stock_actual <= stock_minimo
+       ORDER BY (stock_actual - stock_minimo) ASC`,
+      [req.tenant.id]
+    );
+
+    // Enviar email si hay productos con stock bajo (no bloquea la respuesta si falla)
+    if (rows.length > 0) {
+      enviarAlertaStock({ tenant: req.tenant, productos: rows }).catch(err =>
+        logger.error('Error enviando alerta de stock desde reporte', { error: err.message })
+      );
+    }
+
+    res.json({
+      total: rows.length,
+      enviado_email: rows.length > 0,
+      productos: rows,
+    });
+  } catch (err) { next(err); }
+}
+
+module.exports = { ventasDia, ventasMes, productosMasVendidos, stockBajo, alertasStock };

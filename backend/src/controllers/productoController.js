@@ -1,6 +1,7 @@
 const { z } = require('zod');
 const db = require('../db');
 const logger = require('../lib/logger');
+const { enviarAlertaStock } = require('../lib/email');
 
 const productoSchema = z.object({
   codigo: z.string().optional().nullable(),
@@ -133,6 +134,22 @@ async function ajusteStock(req, res, next) {
     );
 
     logger.info('Ajuste de stock realizado', { producto_id: req.params.id, tipo, stock_anterior: stockAnterior, stock_nuevo: stockNuevo });
+
+    // Verificar si el stock quedó por debajo del mínimo y enviar alerta (sin bloquear la respuesta)
+    try {
+      const { rows: prodRows } = await db.query(
+        'SELECT * FROM productos WHERE id = $1 AND tenant_id = $2',
+        [req.params.id, req.tenant.id]
+      );
+      if (prodRows.length && prodRows[0].stock_actual <= prodRows[0].stock_minimo) {
+        enviarAlertaStock({ tenant: req.tenant, productos: prodRows }).catch(e =>
+          logger.error('Error enviando alerta de stock tras ajuste', { error: e.message })
+        );
+      }
+    } catch (alertErr) {
+      logger.error('Error verificando stock mínimo tras ajuste', { error: alertErr.message });
+    }
+
     res.json({ stock_anterior: stockAnterior, stock_nuevo: stockNuevo, tipo });
   } catch (err) { next(err); }
 }
