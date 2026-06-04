@@ -1,7 +1,6 @@
 const { z } = require('zod');
 const db = require('../db');
-const { decrypt } = require('../lib/crypto');
-const AlegraClient = require('../lib/alegra');
+const { getFactusClient } = require('../lib/factus');
 const logger = require('../lib/logger');
 
 const ventaSchema = z.object({
@@ -47,7 +46,9 @@ async function procesarVenta(req, res, next) {
   const { query: dbQuery, release, client } = await db.getClient();
   try {
     const data = ventaSchema.parse(req.body);
-    const modoDemo = !req.tenant.alegra_conectado;
+    // Modo real si Factus está configurado en el sistema
+    const factusConfigurado = !!(process.env.FACTUS_CLIENT_ID && process.env.FACTUS_USERNAME);
+    const modoDemo = !factusConfigurado;
 
     await client.query('BEGIN');
 
@@ -75,99 +76,88 @@ async function procesarVenta(req, res, next) {
     // Calcular totales
     let subtotal = 0;
     let impuestoTotal = 0;
-    const itemsAlegra = [];
     const itemsFactura = [];
+    const itemsFactus  = [];
 
     for (const item of data.items) {
       const prod = productoMap[item.producto_id];
       const precioUnit = item.precio_unitario || parseFloat(prod.precio_venta);
-      const descuento = item.descuento || 0;
+      const descuento  = item.descuento || 0;
       const precioConDesc = precioUnit * (1 - descuento / 100);
-      const iva = parseFloat(prod.impuesto_iva) || 0;
-      const impItem = precioConDesc * item.cantidad * iva / 100;
+      const iva        = parseFloat(prod.impuesto_iva) || 0;
+      const impItem    = precioConDesc * item.cantidad * iva / 100;
       const subtotalItem = precioConDesc * item.cantidad;
 
-      subtotal += subtotalItem;
+      subtotal      += subtotalItem;
       impuestoTotal += impItem;
 
-      itemsAlegra.push({
-        id: prod.alegra_id || undefined,
-        name: prod.nombre,
-        description: prod.descripcion || prod.nombre,
-        price: precioUnit,
-        quantity: item.cantidad,
-        discount: descuento,
-        tax: iva > 0 ? [{ id: 3 }] : [],
+      itemsFactura.push({
+        producto_id:    prod.id,
+        descripcion:    prod.nombre,
+        codigo:         prod.codigo || '',
+        cantidad:       item.cantidad,
+        precio_unitario:precioUnit,
+        descuento,
+        impuesto:       impItem,
+        subtotal:       subtotalItem,
+        iva_rate:       iva,
       });
 
-      itemsFactura.push({
-        producto_id: prod.id,
-        descripcion: prod.nombre,
-        cantidad: item.cantidad,
+      itemsFactus.push({
+        codigo:          prod.codigo || prod.id.substring(0, 10),
+        descripcion:     prod.nombre,
+        cantidad:        item.cantidad,
         precio_unitario: precioUnit,
         descuento,
-        impuesto: impItem,
-        subtotal: subtotalItem,
+        iva_rate:        iva,
+        impuesto:        impItem,
+        subtotal:        subtotalItem,
       });
     }
 
     const total = subtotal + impuestoTotal;
-    const hoy = new Date().toISOString().split('T')[0];
 
-    // Buscar sesión de caja activa del cajero
+    // Buscar sesión de caja activa
     const { rows: sesionRows } = await client.query(
       "SELECT id FROM sesiones_caja WHERE cajero_id=$1 AND tenant_id=$2 AND estado='abierta' ORDER BY fecha_apertura DESC LIMIT 1",
       [req.user.id, req.tenant.id]
-    )
-    const sesionId = sesionRows[0]?.id || null
+    );
+    const sesionId = sesionRows[0]?.id || null;
 
-    let alegraId = null;
+    let factusId      = null;
     let numeroFactura = null;
-    let cufe = null;
-    let pdfUrl = null;
+    let cufe          = null;
+    let pdfUrl        = null;
     let estadoFactura = 'demo';
 
     if (!modoDemo) {
-      // ── Modo real: conectado a Alegra ──────────────────────────────
-
-      // Obtener o crear contacto en Alegra
-      let alegraClienteId = null;
+      // ── Modo real: emitir via Factus ───────────────────────────────
+      let clienteData = null;
       if (data.cliente_id) {
         const { rows: clienteRows } = await client.query(
           'SELECT * FROM clientes WHERE id = $1 AND tenant_id = $2',
           [data.cliente_id, req.tenant.id]
         );
         if (!clienteRows.length) throw Object.assign(new Error('Cliente no encontrado'), { status: 400 });
-        const clienteData = clienteRows[0];
-
-        const token = decrypt(req.tenant.alegra_token_encrypted);
-        const alegra = new AlegraClient(req.tenant.alegra_user, token);
-
-        if (clienteData.alegra_id) {
-          alegraClienteId = clienteData.alegra_id;
-        } else {
-          const contacto = await alegra.crearContacto(clienteData);
-          alegraClienteId = String(contacto.id);
-          await client.query('UPDATE clientes SET alegra_id = $1 WHERE id = $2', [alegraClienteId, clienteData.id]);
-        }
+        clienteData = clienteRows[0];
       }
 
-      const token = decrypt(req.tenant.alegra_token_encrypted);
-      const alegra = new AlegraClient(req.tenant.alegra_user, token);
+      const factus = getFactusClient();
+      const referenceCode = `${req.tenant.id.substring(0, 8)}-${Date.now()}`;
 
-      const alegraFactura = await alegra.crearFactura({
-        date: hoy,
-        dueDate: hoy,
-        client: alegraClienteId ? { id: alegraClienteId } : { name: 'Consumidor Final' },
-        items: itemsAlegra,
-        paymentMethod: data.metodo_pago,
-        observations: data.notas || '',
+      const resultado = await factus.crearFactura({
+        referenceCode,
+        items:      itemsFactus,
+        cliente:    clienteData,
+        metodoPago: data.metodo_pago,
+        numbering_range_id: req.tenant.factus_numbering_range_id || null,
       });
 
-      alegraId      = String(alegraFactura.id);
-      numeroFactura = alegraFactura?.numberTemplate?.fullNumber || alegraFactura?.number || null;
-      cufe          = alegraFactura?.stamp?.cufe || alegraFactura?.cufe || null;
-      pdfUrl        = alegraFactura?.pdf || null;
+      const bill = resultado?.data || resultado;
+      factusId      = bill.number || null;
+      numeroFactura = bill.number || null;
+      cufe          = bill.cufe   || null;
+      pdfUrl        = bill.pdf    || null;
       estadoFactura = 'enviada';
     }
 
@@ -187,7 +177,7 @@ async function procesarVenta(req, res, next) {
         req.tenant.id,
         data.cliente_id || null,
         req.user.id,
-        alegraId,
+        factusId, // guardamos el número Factus en el campo alegra_id
         numeroFactura,
         cufe,
         subtotal.toFixed(2),
