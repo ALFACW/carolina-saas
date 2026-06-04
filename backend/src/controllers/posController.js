@@ -83,12 +83,16 @@ async function procesarVenta(req, res, next) {
       const prod = productoMap[item.producto_id];
       const precioUnit = item.precio_unitario || parseFloat(prod.precio_venta);
       const descuento  = item.descuento || 0;
-      const precioConDesc = precioUnit * (1 - descuento / 100);
       const iva        = parseFloat(prod.impuesto_iva) || 0;
-      const impItem    = precioConDesc * item.cantidad * iva / 100;
-      const subtotalItem = precioConDesc * item.cantidad;
 
-      subtotal      += subtotalItem;
+      // En Colombia el precio_venta YA INCLUYE IVA
+      const precioFinal   = precioUnit * (1 - descuento / 100); // precio con IVA por unidad
+      const totalItem     = precioFinal * item.cantidad;         // total que paga el cliente
+      const baseItem      = totalItem / (1 + iva / 100);         // base gravable (sin IVA)
+      const impItem       = totalItem - baseItem;                 // IVA del item
+      const precioBase    = baseItem / item.cantidad;             // precio base por unidad (para Factus)
+
+      subtotal      += baseItem;
       impuestoTotal += impItem;
 
       itemsFactura.push({
@@ -96,10 +100,11 @@ async function procesarVenta(req, res, next) {
         descripcion:    prod.nombre,
         codigo:         prod.codigo || '',
         cantidad:       item.cantidad,
-        precio_unitario:precioUnit,
+        precio_unitario:precioFinal,  // precio con IVA (lo que el cliente ve)
+        precio_base:    precioBase,   // precio sin IVA (para reportes)
         descuento,
         impuesto:       impItem,
-        subtotal:       subtotalItem,
+        subtotal:       baseItem,
         iva_rate:       iva,
       });
 
@@ -107,7 +112,7 @@ async function procesarVenta(req, res, next) {
         codigo:          prod.codigo || prod.id.substring(0, 10),
         descripcion:     prod.nombre,
         cantidad:        item.cantidad,
-        precio_unitario: precioUnit,
+        precio_unitario: precioBase,  // Factus recibe precio SIN IVA
         descuento,
         iva_rate:        iva,
         impuesto:        impItem,

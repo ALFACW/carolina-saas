@@ -38,7 +38,22 @@ export default function FacturaDetalle() {
 
   const pdfMutation = useMutation({
     mutationFn: () => facturasService.getPDF(id),
-    onSuccess: (data) => { if (data.pdf_url) window.open(data.pdf_url, '_blank') },
+    onSuccess: (data) => {
+      if (!data.pdf_url) return
+      // Si es base64, convertir a blob para abrirlo correctamente en el navegador
+      if (data.pdf_url.startsWith('data:')) {
+        const base64 = data.pdf_url.split(',')[1]
+        const binary = atob(base64)
+        const bytes = new Uint8Array(binary.length)
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+        const blob = new Blob([bytes], { type: 'application/pdf' })
+        const url = URL.createObjectURL(blob)
+        window.open(url, '_blank')
+        setTimeout(() => URL.revokeObjectURL(url), 60000)
+      } else {
+        window.open(data.pdf_url, '_blank')
+      }
+    },
   })
 
   const emailMutation = useMutation({

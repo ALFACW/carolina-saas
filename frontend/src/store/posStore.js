@@ -46,11 +46,20 @@ export const usePOSStore = create((set, get) => ({
 
   setMetodoPago: (metodo) => set({ metodoPago: metodo }),
 
-  getSubtotal: () => get().carrito.reduce((s, i) => s + (i.precio_unitario * i.cantidad * (1 - i.descuento / 100)), 0),
-  getIVA: () => get().carrito.reduce((s, i) => s + (i.precio_unitario * i.cantidad * (1 - i.descuento / 100) * i.iva / 100), 0),
-  getTotal: () => {
-    const sub = get().getSubtotal()
-    const iva = get().getIVA()
-    return sub + iva
-  },
+  // En Colombia el precio_venta YA INCLUYE IVA
+  // Total = precio_venta * cantidad (lo que paga el cliente)
+  // Base neta = total / (1 + iva%)
+  // IVA = total - base neta
+  getTotal: () => get().carrito.reduce((s, i) =>
+    s + i.precio_unitario * i.cantidad * (1 - i.descuento / 100), 0),
+  getSubtotal: () => get().carrito.reduce((s, i) => {
+    const total = i.precio_unitario * i.cantidad * (1 - i.descuento / 100)
+    const base = total / (1 + (i.iva || 0) / 100)
+    return s + base
+  }, 0),
+  getIVA: () => get().carrito.reduce((s, i) => {
+    const total = i.precio_unitario * i.cantidad * (1 - i.descuento / 100)
+    const base = total / (1 + (i.iva || 0) / 100)
+    return s + (total - base)
+  }, 0),
 }))
