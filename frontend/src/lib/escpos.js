@@ -146,21 +146,26 @@ export function buildTicket({ empresa, venta, cliente, modoDemo = false, W = 32,
   }
 
   // ── CUFE + QR ─────────────────────────────────────────
-  if (venta.cufe && !modoDemo) {
-    t += sep('-', W)
-    t += CMD.center
+  t += sep('-', W)
+  t += CMD.center
 
-    // QR code apuntando a verificación DIAN
+  if (venta.cufe && !modoDemo) {
+    // QR real apuntando a verificación DIAN
     const cufeUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${venta.cufe}`
     t += escposQR(cufeUrl, 4)
     t += LF
-
-    t += 'Escanea para verificar en DIAN' + LF + CMD.left
-    // CUFE en texto (primeros 32 chars)
+    t += 'Escanea para verificar en DIAN' + LF
+    t += CMD.left
     t += 'CUFE:' + LF
     for (let i = 0; i < Math.min(venta.cufe.length, 64); i += W) {
       t += venta.cufe.substring(i, i + W) + LF
     }
+  } else if (modoDemo) {
+    // QR de prueba para verificar que la impresora lo soporta
+    t += escposQR('https://carolinapos.co', 4)
+    t += LF
+    t += '*** TICKET DE PRUEBA ***' + LF
+    t += 'Sin validez DIAN' + LF + CMD.left
   }
 
   // ── Pie ───────────────────────────────────────────────
