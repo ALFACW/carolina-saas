@@ -11,6 +11,14 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+// Limpia TODO el estado de auth y redirige al login
+function clearAuthAndRedirect() {
+  localStorage.removeItem('carolina_token')
+  localStorage.removeItem('carolina_refresh_token')
+  localStorage.removeItem('carolina-auth') // Zustand persist
+  window.location.href = '/login'
+}
+
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -29,12 +37,10 @@ api.interceptors.response.use(
           original.headers.Authorization = `Bearer ${data.token}`
           return api(original)
         } catch {
-          localStorage.removeItem('carolina_token')
-          localStorage.removeItem('carolina_refresh_token')
-          window.location.href = '/login'
+          clearAuthAndRedirect()
         }
       } else {
-        window.location.href = '/login'
+        clearAuthAndRedirect()
       }
     }
     return Promise.reject(error)
