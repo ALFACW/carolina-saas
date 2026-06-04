@@ -1,7 +1,6 @@
 const { z } = require('zod');
 const db = require('../db');
-const { decrypt } = require('../lib/crypto');
-const AlegraClient = require('../lib/alegra');
+const { getFactusClient } = require('../lib/factus');
 const logger = require('../lib/logger');
 
 async function getAll(req, res, next) {
@@ -12,10 +11,10 @@ async function getAll(req, res, next) {
     const conditions = ['f.tenant_id = $1'];
     let idx = 2;
 
-    if (estado) { conditions.push(`f.estado = $${idx++}`); params.push(estado); }
-    if (cliente_id) { conditions.push(`f.cliente_id = $${idx++}`); params.push(cliente_id); }
-    if (fecha_desde) { conditions.push(`f.fecha_emision >= $${idx++}`); params.push(fecha_desde); }
-    if (fecha_hasta) { conditions.push(`f.fecha_emision <= $${idx++}`); params.push(fecha_hasta); }
+    if (estado)      { conditions.push(`f.estado = $${idx++}`);           params.push(estado); }
+    if (cliente_id)  { conditions.push(`f.cliente_id = $${idx++}`);       params.push(cliente_id); }
+    if (fecha_desde) { conditions.push(`f.fecha_emision >= $${idx++}`);   params.push(fecha_desde); }
+    if (fecha_hasta) { conditions.push(`f.fecha_emision <= $${idx++}`);   params.push(fecha_hasta); }
 
     const where = conditions.join(' AND ');
     const [data, count] = await Promise.all([
@@ -37,7 +36,8 @@ async function getById(req, res, next) {
   try {
     const [factura, items] = await Promise.all([
       db.query(
-        `SELECT f.*, c.nombre as cliente_nombre, c.numero_documento, u.nombre as vendedor_nombre
+        `SELECT f.*, c.nombre as cliente_nombre, c.numero_documento, c.email as cliente_email,
+                u.nombre as vendedor_nombre
          FROM facturas f
          LEFT JOIN clientes c ON f.cliente_id = c.id
          LEFT JOIN users u ON f.vendedor_id = u.id
@@ -61,32 +61,61 @@ async function getPDF(req, res, next) {
       [req.params.id, req.tenant.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Factura no encontrada' });
-    if (!req.tenant.alegra_conectado) return res.status(400).json({ error: 'Alegra no conectado' });
 
-    const token = decrypt(req.tenant.alegra_token_encrypted);
-    const alegra = new AlegraClient(req.tenant.alegra_user, token);
-    const pdfUrl = await alegra.obtenerPDF(rows[0].alegra_id);
-    res.json({ pdf_url: pdfUrl || rows[0].pdf_url });
+    // Si tiene PDF guardado, devolver directamente
+    if (rows[0].pdf_url) return res.json({ pdf_url: rows[0].pdf_url });
+
+    // Si tiene número Factus, pedir el PDF
+    if (rows[0].alegra_id && process.env.FACTUS_CLIENT_ID) {
+      const factus = getFactusClient();
+      const result = await factus.obtenerPDF(rows[0].alegra_id);
+      const pdfUrl = result?.data?.pdf_base_64_encoded
+        ? `data:application/pdf;base64,${result.data.pdf_base_64_encoded}`
+        : result?.data?.pdf || null;
+      return res.json({ pdf_url: pdfUrl });
+    }
+
+    res.json({ pdf_url: null });
   } catch (err) { next(err); }
 }
 
 async function anular(req, res, next) {
   try {
-    const { rows } = await db.query(
-      'SELECT * FROM facturas WHERE id = $1 AND tenant_id = $2',
+    const { rows: facturaRows } = await db.query(
+      'SELECT f.*, fi.producto_id, fi.descripcion, fi.cantidad, fi.precio_unitario, fi.subtotal FROM facturas f LEFT JOIN factura_items fi ON f.id = fi.factura_id WHERE f.id = $1 AND f.tenant_id = $2',
       [req.params.id, req.tenant.id]
     );
-    if (!rows.length) return res.status(404).json({ error: 'Factura no encontrada' });
-    const factura = rows[0];
-    if (factura.estado === 'anulada') return res.status(400).json({ error: 'Factura ya está anulada' });
-    if (!req.tenant.alegra_conectado) return res.status(400).json({ error: 'Alegra no conectado' });
+    if (!facturaRows.length) return res.status(404).json({ error: 'Factura no encontrada' });
 
-    const token = decrypt(req.tenant.alegra_token_encrypted);
-    const alegra = new AlegraClient(req.tenant.alegra_user, token);
-    await alegra.crearNotaCredito({ invoices: [{ id: factura.alegra_id }] });
+    const factura = facturaRows[0];
+    if (factura.estado === 'anulada') return res.status(400).json({ error: 'Factura ya está anulada' });
+
+    // Si tiene número Factus (fue emitida real), crear nota crédito
+    if (factura.alegra_id && process.env.FACTUS_CLIENT_ID) {
+      try {
+        const factus = getFactusClient();
+        const items = facturaRows.map(r => ({
+          codigo:          r.producto_id?.substring(0, 10) || 'PRD',
+          descripcion:     r.descripcion,
+          cantidad:        parseFloat(r.cantidad),
+          precio_unitario: parseFloat(r.precio_unitario),
+          subtotal:        parseFloat(r.subtotal),
+        }));
+        await factus.crearNotaCredito({
+          numeroBill:    factura.alegra_id,
+          referenceCode: `NC-${factura.id.substring(0, 8)}-${Date.now()}`,
+          items,
+          metodoPago:    factura.metodo_pago,
+          numbering_range_id: null,
+        });
+      } catch (factusErr) {
+        logger.warn('No se pudo crear nota crédito en Factus', { error: factusErr.message });
+        // Continúa con la anulación local aunque Factus falle
+      }
+    }
 
     await db.query("UPDATE facturas SET estado = 'anulada' WHERE id = $1", [factura.id]);
-    logger.info('Factura anulada', { factura_id: factura.id, tenant_id: req.tenant.id, user_id: req.user.id });
+    logger.info('Factura anulada', { factura_id: factura.id, tenant_id: req.tenant.id });
     res.json({ mensaje: 'Factura anulada correctamente' });
   } catch (err) { next(err); }
 }
