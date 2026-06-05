@@ -20,15 +20,44 @@ const save = (key, val) => localStorage.setItem(key, String(val))
 let qzInstance = null
 let qzLoaded   = false
 
+// Clave pública RSA de CarolinaPOS para eliminar popup de seguridad QZ Tray
+const QZ_CERT = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhS0ha/PoUf7jk+1pFPP2
+hW42rEU//Tn93BCaBqLWvjacU25yxMQTPl2mU2wLKDLuiV/ONlo8ZQ5SPv0mMOQh
+29sGniCnTkfZDx6mgnf4BG4crYEqOJuEz2o4LLdXqKn3JDmWTujvAY+LMavqOSOO
+2MfGhrywbg3Ymo9fbPiVhbEUdCxtcvyEG5ig7vs6p/8FhFSL9GKs4ss6OybL41JZ
+84P5ztpi3Im25ORWNOofSzyt+DfYJerqWYj8euNIY7TxVsjHtKjZC9s5bIcHaMtF
+LvYzuZ67hR9x+xcn72keYn/3kDEZ7lbRXf4kSyeUV5gRhC3F68bYoFcGcDVSavZ8
+OQIDAQAB
+-----END PUBLIC KEY-----`
+
+async function firmarQZ(mensaje) {
+  try {
+    const token = localStorage.getItem('carolina-auth')
+    if (!token) return ''
+    const { state } = JSON.parse(token)
+    const jwt = state?.token
+    if (!jwt) return ''
+    const res = await fetch(`/api/qz/sign?request=${encodeURIComponent(mensaje)}`, {
+      headers: { Authorization: `Bearer ${jwt}` },
+    })
+    if (!res.ok) return ''
+    return await res.text()
+  } catch {
+    return ''
+  }
+}
+
 async function getQZ() {
   if (qzLoaded && qzInstance) return qzInstance
   try {
     const mod  = await import('qz-tray')
     qzInstance = mod.default || mod
     qzLoaded   = true
-    qzInstance.security.setCertificatePromise(async () => '')
+    // Certificado propio → elimina el popup de seguridad
+    qzInstance.security.setCertificatePromise(() => Promise.resolve(QZ_CERT))
     qzInstance.security.setSignatureAlgorithm('SHA512')
-    qzInstance.security.setSignaturePromise(async () => '')
+    qzInstance.security.setSignaturePromise((toSign) => firmarQZ(toSign))
     return qzInstance
   } catch (err) {
     console.error('Error cargando qz-tray:', err)

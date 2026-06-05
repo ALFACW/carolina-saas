@@ -134,7 +134,43 @@ export default function GuiaHardware() {
         </div>
       </Step>
 
-      <Step num="5" title="Configura inicio automatico de QZ Tray">
+      <Step num="5" title="Instala el certificado de CarolinaPOS (elimina el popup)">
+        <div className="space-y-3 mt-3 text-sm text-gray-600">
+          <p>
+            Sin este paso QZ Tray pedira permiso cada vez que abras CarolinaPOS.
+            Instalar el certificado lo elimina para siempre.
+          </p>
+          <ol className="space-y-2 list-decimal list-inside">
+            <li>
+              Descarga el certificado haciendo clic aqui:{' '}
+              <a
+                href="/api/qz/certificate"
+                download="carolinapos-qz.pem"
+                className="text-gray-900 font-semibold underline"
+              >
+                Descargar carolinapos-qz.pem
+              </a>
+            </li>
+            <li>Abre el Explorador de archivos de Windows</li>
+            <li>
+              Navega a:{' '}
+              <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
+                C:\Users\TU_USUARIO\AppData\Roaming\qz
+              </code>
+            </li>
+            <li>Copia el archivo <strong>carolinapos-qz.pem</strong> dentro de esa carpeta</li>
+            <li>Reinicia QZ Tray (clic derecho en el icono → Exit, luego abrelo de nuevo)</li>
+          </ol>
+          <Ok>Desde ahora CarolinaPOS se conecta automaticamente sin ningun popup.</Ok>
+          <Tip>
+            La carpeta AppData esta oculta. Para verla: en el Explorador escribe{' '}
+            <code className="text-xs bg-amber-100 px-1 rounded">%APPDATA%\qz</code>{' '}
+            en la barra de direcciones y presiona Enter.
+          </Tip>
+        </div>
+      </Step>
+
+      <Step num="6" title="Configura inicio automatico de QZ Tray">
         <div className="space-y-3 mt-3 text-sm text-gray-600">
           <p>Para que QZ Tray arranque solo al encender el computador:</p>
           <ol className="space-y-2 list-decimal list-inside">
