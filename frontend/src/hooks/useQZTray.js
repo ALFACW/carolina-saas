@@ -33,14 +33,7 @@ OQIDAQAB
 
 async function firmarQZ(mensaje) {
   try {
-    const token = localStorage.getItem('carolina-auth')
-    if (!token) return ''
-    const { state } = JSON.parse(token)
-    const jwt = state?.token
-    if (!jwt) return ''
-    const res = await fetch(`/api/qz/sign?request=${encodeURIComponent(mensaje)}`, {
-      headers: { Authorization: `Bearer ${jwt}` },
-    })
+    const res = await fetch(`/api/qz/sign?request=${encodeURIComponent(mensaje)}`)
     if (!res.ok) return ''
     return await res.text()
   } catch {

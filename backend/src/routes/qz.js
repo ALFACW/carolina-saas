@@ -10,7 +10,7 @@ const PRIVATE_KEY = process.env.QZ_PRIVATE_KEY
   ? process.env.QZ_PRIVATE_KEY.replace(/\\n/g, '\n')
   : null
 
-router.get('/sign', authMiddleware, (req, res) => {
+router.get('/sign', (req, res) => {
   try {
     const toSign = req.query.request
     if (!toSign) return res.status(400).json({ error: 'Falta el parámetro request' })
