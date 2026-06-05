@@ -328,6 +328,8 @@ export default function POS() {
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-2 pointer-events-none" />
           <input
             ref={searchRef}
+            id="pos-search"
+            name="pos-search"
             type="text"
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
@@ -626,6 +628,8 @@ export default function POS() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-2" />
             <input
               autoFocus
+              id="cliente-search"
+              name="cliente-search"
               type="text"
               value={clienteSearch}
               onChange={e => setClienteSearch(e.target.value)}
@@ -679,6 +683,8 @@ export default function POS() {
               <label className="text-xs font-semibold text-ink-2 uppercase tracking-wider">Efectivo recibido</label>
               <input
                 autoFocus
+                id="efectivo-recibido"
+                name="efectivo-recibido"
                 type="number"
                 value={efectivoRecibido}
                 onChange={e => setEfectivoRecibido(e.target.value)}
