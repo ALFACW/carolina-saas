@@ -20,31 +20,21 @@ const save = (key, val) => localStorage.setItem(key, String(val))
 let qzInstance = null
 let qzLoaded   = false
 
-// Certificado X.509 autofirmado de CarolinaPOS para eliminar popup de seguridad QZ Tray
-const QZ_CERT = `-----BEGIN CERTIFICATE-----
-MIIDDTCCAfWgAwIBAgIUXilb7R9B5I0vE/svUw+YasP4zBgwDQYJKoZIhvcNAQEL
-BQAwFjEUMBIGA1UEAwwLQ2Fyb2xpbmFQT1MwHhcNMjYwNjA1MjEzODAxWhcNMzYw
-NjAyMjEzODAxWjAWMRQwEgYDVQQDDAtDYXJvbGluYVBPUzCCASIwDQYJKoZIhvcN
-AQEBBQADggEPADCCAQoCggEBAIUtIWvz6FH+45PtaRTz9oVuNqxFP/05/dwQmgai
-1r42nFNucsTEEz5dplNsCygy7olfzjZaPGUOUj79JjDkIdvbBp4gp05H2Q8epoJ3
-+ARuHK2BKjibhM9qOCy3V6ip9yQ5lk7o7wGPizGr6jkjjtjHxoa8sG4N2JqPX2z4
-lYWxFHQsbXL8hBuYoO77Oqf/BYRUi/RirOLLOjsmy+NSWfOD+c7aYtyJtuTkVjTq
-H0s8rfg32CXq6lmI/HrjSGO08VbIx7So2QvbOWyHB2jLRS72M7meu4UfcfsXJ+9p
-HmJ/95AxGe5W0V3+JEsnlFeYEYQtxevG2KBXBnA1Umr2fDkCAwEAAaNTMFEwHQYD
-VR0OBBYEFHi+cxvX/Kd12OeLvFUWX7Fm5LSkMB8GA1UdIwQYMBaAFHi+cxvX/Kd1
-2OeLvFUWX7Fm5LSkMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEB
-ABk7d25RGHl5vCjCYGx8JLvYaAwE2XOt3Cd0o5VcsHRn73ZkaW4bcUbBhKh18Tnp
-/cf0dPGWyVyWzNc4V/c2eYyvJWaIZBk0cGaUxm/wrAXqGzZcVfAJZpTuLhpu2vXP
-Qvs1Yd/G2eXt1dNqn0xMH2gNjAcZ8nZ8UjE3jKR5/48U5tmZAj6gxzfKtUKrTIz4
-Qafhld4o0Um1VA6iYLgN72M4SolO6w8d5Ievo5ZmZ3pWhcAIoV9W65XIlKlWTXtg
-OgJR4XFiVy/HGD52bGiYYmhQViNOow5r/aRx9RKQxjMxlpQUiYf6hlbE3mpGLYX3
-vP3fjL/OPPcTDnntiLXXAfs=
------END CERTIFICATE-----`
+const BASE_URL = import.meta.env.VITE_API_URL || ''
+
+async function obtenerCertQZ() {
+  try {
+    const res = await fetch(`${BASE_URL}/api/qz/certificate`)
+    if (!res.ok) return ''
+    return await res.text()
+  } catch {
+    return ''
+  }
+}
 
 async function firmarQZ(mensaje) {
   try {
-    const base = import.meta.env.VITE_API_URL || ''
-    const res = await fetch(`${base}/api/qz/sign?request=${encodeURIComponent(mensaje)}`)
+    const res = await fetch(`${BASE_URL}/api/qz/sign?request=${encodeURIComponent(mensaje)}`)
     if (!res.ok) return ''
     return await res.text()
   } catch {
@@ -58,9 +48,10 @@ async function getQZ() {
     const mod  = await import('qz-tray')
     qzInstance = mod.default || mod
     qzLoaded   = true
-    // Certificado propio → elimina el popup de seguridad
-    // QZ Tray hace: new Promise(certHandler) → el executor DEBE llamar resolve()
-    qzInstance.security.setCertificatePromise((resolve) => resolve(QZ_CERT))
+    // Certificado X.509 → se obtiene del backend para garantizar consistencia
+    qzInstance.security.setCertificatePromise((resolve, reject) =>
+      obtenerCertQZ().then(cert => cert ? resolve(cert) : reject('No se pudo obtener el certificado'))
+    )
     qzInstance.security.setSignatureAlgorithm('SHA512')
     // QZ Tray hace: new Promise( signaturePromise(toSign) )
     // → el retorno debe ser la función ejecutora (resolve, reject) => ...
