@@ -113,23 +113,27 @@ export function useQZTray() {
       return
     }
     try {
-      if (qz.websocket.isActive()) {
+      if (!qz.websocket.isActive()) {
+        await qz.websocket.connect({
+          host: 'localhost',
+          port: { secure: [8183], insecure: [8182] },
+          usingSecure: false,
+          retries: 3,
+          delay: 1,
+        })
+      }
+
+      // WebSocket activo → marcar conectado de inmediato
+      setEstado('conectado')
+
+      // Listar impresoras por separado — un fallo aquí no afecta el estado
+      try {
         const lista = await qz.printers.find()
         setImpresoras(Array.isArray(lista) ? lista : (lista ? [lista] : []))
-        setEstado('conectado')
-        intentando.current = false
-        return
+      } catch (e) {
+        console.warn('[QZ] No se listaron impresoras:', e.message)
       }
-      await qz.websocket.connect({
-        host: 'localhost',
-        port: { secure: [8183], insecure: [8182] },
-        usingSecure: false,
-        retries: 3,
-        delay: 1,
-      })
-      const lista = await qz.printers.find()
-      setImpresoras(Array.isArray(lista) ? lista : (lista ? [lista] : []))
-      setEstado('conectado')
+
     } catch (err) {
       setEstado('error')
       setErrorMsg(err?.message?.includes('Unable') || err?.message?.includes('disconnect')
