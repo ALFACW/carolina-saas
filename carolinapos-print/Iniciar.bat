@@ -15,20 +15,18 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: ── 2. Instalar dependencias (solo si faltan) ────────────────────────────────
+:: ── 2. Instalar dependencias ─────────────────────────────────────────────────
 echo  Verificando componentes...
 python -m pip install flask pywin32 --quiet --disable-pip-version-check
 
-:: ── 3. Configurar inicio automatico con Windows (solo la primera vez) ────────
+:: ── 3. Configurar inicio automatico (solo la primera vez) ────────────────────
 set "TASKNAME=CarolinaPOS Print Server"
 schtasks /query /tn "%TASKNAME%" >nul 2>&1
 if %errorlevel% neq 0 (
-    echo  Configurando inicio automatico...
+    echo  Configurando inicio automatico con Windows...
     schtasks /create /tn "%TASKNAME%" /sc onlogon /tr "pythonw \"%~dp0servidor.py\"" /rl limited /f >nul 2>&1
     if %errorlevel% == 0 (
-        echo  Listo. El servidor se iniciara automaticamente al encender el PC.
-    ) else (
-        echo  No se pudo configurar el inicio automatico.
+        echo  Listo. El servidor se iniciara solo al encender el PC.
     )
 )
 
@@ -37,29 +35,36 @@ netstat -an 2>nul | find ":8765" | find "LISTENING" >nul 2>&1
 if %errorlevel% == 0 (
     echo.
     echo  El servidor ya esta corriendo en http://localhost:8765
-    echo  Se inicia automaticamente cada vez que enciendes el PC.
+    echo  Se inicia automaticamente al encender el PC.
     echo  Puedes cerrar esta ventana.
     echo.
     pause
     exit /b 0
 )
 
-:: ── 5. Iniciar servidor en segundo plano (sin ventana) ───────────────────────
+:: ── 5. Iniciar servidor en segundo plano ─────────────────────────────────────
 echo  Iniciando servidor...
 start "" pythonw servidor.py
 
-timeout /t 3 /nobreak >nul
+timeout /t 4 /nobreak >nul
 
+:: ── 6. Verificar que inicio bien ─────────────────────────────────────────────
 netstat -an 2>nul | find ":8765" | find "LISTENING" >nul 2>&1
 if %errorlevel% == 0 (
     echo.
     echo  Servidor CarolinaPOS corriendo en http://localhost:8765
     echo  Puedes cerrar esta ventana.
+    echo.
 ) else (
     echo.
     echo  ERROR: El servidor no pudo iniciarse.
-    echo  Intenta ejecutar este archivo como Administrador.
+    echo  Abriendo registro de errores...
+    echo.
+    if exist "%~dp0servidor.log" (
+        notepad "%~dp0servidor.log"
+    ) else (
+        echo  No se genero registro. Intenta ejecutar este archivo como Administrador.
+    )
 )
 
-echo.
 pause

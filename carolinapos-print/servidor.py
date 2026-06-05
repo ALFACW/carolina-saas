@@ -1,33 +1,49 @@
 """
-CarolinaPOS Print Server v1.2
+CarolinaPOS Print Server v1.3
 Ejecutar con: Iniciar.bat
 """
-import sys
+import sys, os, logging
 
-# Las dependencias ya fueron instaladas por Iniciar.bat
-# Si falta alguna, mostrar mensaje claro
+# ── Log a archivo ─────────────────────────────────────────────────────────────
+LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'servidor.log')
+
+logging.basicConfig(
+    filename=LOG_PATH,
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s',
+    encoding='utf-8',
+)
+
+def log(msg):
+    logging.info(msg)
+    print(msg)
+
+def log_error(msg):
+    logging.error(msg)
+    print(msg)
+
+log('=== CarolinaPOS Print Server v1.3 iniciando ===')
+
+# ── Verificar dependencias ────────────────────────────────────────────────────
 try:
     from flask import Flask, request, jsonify
-except ImportError:
-    print()
-    print('  ERROR: Flask no esta instalado.')
-    print('  Usa Iniciar.bat para arrancar el servidor, no servidor.py directamente.')
-    print()
+    log('Flask OK')
+except ImportError as e:
+    log_error(f'ERROR: Flask no instalado: {e}')
+    log_error('Usa Iniciar.bat para arrancar el servidor, no servidor.py directamente.')
     input('Presiona Enter para salir...')
     sys.exit(1)
 
 try:
     import win32print
-except ImportError:
-    print()
-    print('  ERROR: pywin32 no esta instalado.')
-    print('  Cierra esta ventana y abre Iniciar.bat de nuevo.')
-    print()
+    log('pywin32 OK')
+except ImportError as e:
+    log_error(f'ERROR: pywin32 no instalado: {e}')
+    log_error('Cierra esta ventana y abre Iniciar.bat de nuevo.')
     input('Presiona Enter para salir...')
     sys.exit(1)
 
-# ── Servidor ─────────────────────────────────────────────────────────────────
-
+# ── Servidor ──────────────────────────────────────────────────────────────────
 app = Flask(__name__)
 
 ALLOWED_ORIGINS = [
@@ -61,9 +77,9 @@ def health():
     default = ''
     try:
         default = win32print.GetDefaultPrinter()
-    except:
-        pass
-    return jsonify({'ok': True, 'version': '1.2', 'default': default})
+    except Exception as e:
+        logging.warning(f'GetDefaultPrinter: {e}')
+    return jsonify({'ok': True, 'version': '1.3', 'default': default})
 
 @app.route('/printers')
 def listar_printers():
@@ -72,6 +88,7 @@ def listar_printers():
         printers = [p[2] for p in win32print.EnumPrinters(flags)]
         return jsonify({'impresoras': printers})
     except Exception as e:
+        logging.error(f'listar_printers: {e}')
         return jsonify({'impresoras': [], 'error': str(e)})
 
 @app.route('/print', methods=['POST'])
@@ -80,6 +97,7 @@ def imprimir():
         data = request.get_json()
         raw_bytes = bytes(data['bytes'])
         nombre = data.get('impresora') or win32print.GetDefaultPrinter()
+        logging.info(f'Imprimiendo en: {nombre} ({len(raw_bytes)} bytes)')
 
         h = win32print.OpenPrinter(nombre)
         try:
@@ -93,16 +111,16 @@ def imprimir():
         finally:
             win32print.ClosePrinter(h)
 
+        log(f'Ticket impreso OK en {nombre}')
         return jsonify({'ok': True})
     except Exception as e:
+        log_error(f'Error al imprimir: {e}')
         return jsonify({'ok': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
-    print()
-    print('  +-----------------------------------------+')
-    print('  |   CarolinaPOS Print Server v1.2          |')
-    print('  |   http://localhost:8765                   |')
-    print('  |   Deja esta ventana abierta               |')
-    print('  +-----------------------------------------+')
-    print()
-    app.run(host='127.0.0.1', port=8765, debug=False, use_reloader=False)
+    log('Servidor escuchando en http://localhost:8765')
+    try:
+        app.run(host='127.0.0.1', port=8765, debug=False, use_reloader=False)
+    except Exception as e:
+        log_error(f'Error al iniciar servidor: {e}')
+        raise
