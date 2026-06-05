@@ -238,6 +238,7 @@ export default function Configuracion() {
             <h2 className="font-semibold text-gray-900">Hardware de caja</h2>
           </div>
           <div className="flex items-center gap-2">
+            <a href="/guia-hardware" target="_blank" className="text-xs text-gray-400 hover:text-gray-700 underline">Ver guia de instalacion</a>
             {qz.estado === 'conectado'  && <span className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium flex items-center gap-1"><Zap className="w-3 h-3" />QZ Tray activo</span>}
             {qz.estado === 'error'      && <span className="text-xs bg-red-50 text-red-600 px-2.5 py-1 rounded-full font-medium">Sin conexión</span>}
             {qz.estado === 'conectando' && <span className="text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full font-medium flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" />Buscando...</span>}

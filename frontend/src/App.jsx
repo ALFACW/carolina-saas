@@ -28,6 +28,7 @@ import Compras from './pages/Compras'
 import CompraForm from './pages/CompraForm'
 import CompraDetalle from './pages/CompraDetalle'
 import Cartera from './pages/Cartera'
+import GuiaHardware from './pages/GuiaHardware'
 
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useAuth()
@@ -71,6 +72,7 @@ function AppRoutes() {
         <Route path="clientes/:id/editar" element={<RoleGuard roles={['admin', 'supervisor', 'inventario']}><ClienteForm /></RoleGuard>} />
         <Route path="reportes" element={<RoleGuard roles={['admin', 'supervisor']}><Reportes /></RoleGuard>} />
         <Route path="configuracion" element={<RoleGuard roles={['admin']}><Configuracion /></RoleGuard>} />
+        <Route path="guia-hardware" element={<GuiaHardware />} />
         <Route path="mi-perfil" element={<MiPerfil />} />
         <Route path="usuarios" element={<RoleGuard roles={['admin']}><Usuarios /></RoleGuard>} />
         <Route path="cajas" element={<RoleGuard roles={['admin', 'supervisor']}><Cajas /></RoleGuard>} />
