@@ -480,11 +480,6 @@ export default function POS() {
           </span>
         )}
 
-        {carrito.length > 0 && (
-          <button onClick={limpiarCarrito} className="text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1 ml-auto">
-            <Trash2 className="w-3.5 h-3.5" /> Limpiar
-          </button>
-        )}
       </div>
 
       {/* ── Tabla de items ── */}
