@@ -5,18 +5,20 @@ const fs      = require('fs')
 const path    = require('path')
 const { authenticateToken } = require('../middleware/auth')
 
-// Clave privada RSA para firmar conexiones QZ Tray
-const PRIVATE_KEY_PATH = path.join(__dirname, '../../qz-private.pem')
+// Clave privada desde variable de entorno (nunca en Git)
+const PRIVATE_KEY = process.env.QZ_PRIVATE_KEY
+  ? process.env.QZ_PRIVATE_KEY.replace(/\\n/g, '\n')
+  : null
 
 router.get('/sign', authenticateToken, (req, res) => {
   try {
     const toSign = req.query.request
     if (!toSign) return res.status(400).json({ error: 'Falta el parámetro request' })
+    if (!PRIVATE_KEY) return res.status(503).json({ error: 'QZ_PRIVATE_KEY no configurada' })
 
-    const privateKey = fs.readFileSync(PRIVATE_KEY_PATH, 'utf8')
     const sign = crypto.createSign('SHA512')
     sign.update(toSign)
-    const signature = sign.sign(privateKey, 'base64')
+    const signature = sign.sign(PRIVATE_KEY, 'base64')
 
     res.send(signature)
   } catch (err) {
