@@ -19,9 +19,36 @@ export default function Register() {
   const [empresa, setEmpresa] = useState({ nombre: '', nit: '', email: '', telefono: '', ciudad: '', plan: 'basico' })
   const [admin, setAdmin] = useState({ nombre: '', email: '', password: '' })
 
+  const validarNIT = (nit) => {
+    const limpio = nit.replace(/[.\-\s]/g, '')
+    return /^\d{7,10}$/.test(limpio)
+  }
+
+  const getPasswordStrength = (pwd) => {
+    let score = 0
+    if (pwd.length >= 8) score++
+    if (/[A-Z]/.test(pwd)) score++
+    if (/[0-9]/.test(pwd)) score++
+    if (/[^A-Za-z0-9]/.test(pwd)) score++
+    return score
+  }
+
+  const getPasswordLabel = (pwd) => {
+    const s = getPasswordStrength(pwd)
+    return ['', 'Débil', 'Regular', 'Buena', 'Fuerte'][s]
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (step === 1) { setStep(2); return }
+    if (step === 1) {
+      if (!validarNIT(empresa.nit)) {
+        setError('NIT inválido. Ingresa solo los números sin puntos ni guión.')
+        return
+      }
+      setError('')
+      setStep(2)
+      return
+    }
     setError('')
     setLoading(true)
     try {
@@ -72,7 +99,7 @@ export default function Register() {
                 <h2 className="text-base font-semibold text-ink mb-4">Datos de tu empresa</h2>
                 {[
                   { label: 'Nombre de la empresa *', key: 'nombre', placeholder: 'Mi Empresa SAS', required: true },
-                  { label: 'NIT *', key: 'nit', placeholder: '900123456-7', required: true },
+                  { label: 'NIT *', key: 'nit', placeholder: '9001234567', required: true },
                   { label: 'Email empresarial *', key: 'email', type: 'email', placeholder: 'info@empresa.com', required: true },
                   { label: 'Teléfono', key: 'telefono', placeholder: '+57 300 000 0000' },
                   { label: 'Ciudad', key: 'ciudad', placeholder: 'Bogotá' },
@@ -85,6 +112,9 @@ export default function Register() {
                       className="w-full px-3 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent text-sm transition-colors"
                       {...rest}
                     />
+                    {key === 'nit' && (
+                      <p className="text-xs text-ink-2 mt-1">Solo números, sin puntos ni guión. Ej: 9001234567</p>
+                    )}
                   </div>
                 ))}
 
@@ -141,6 +171,20 @@ export default function Register() {
                       className="w-full px-3 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent text-sm transition-colors"
                       {...rest}
                     />
+                    {key === 'password' && admin.password && (
+                      <div className="mt-2">
+                        <div className="flex gap-1 mb-1">
+                          {[1,2,3,4].map(level => (
+                            <div key={level} className={`h-1 flex-1 rounded-full transition-colors ${
+                              getPasswordStrength(admin.password) >= level
+                                ? level <= 1 ? 'bg-danger' : level <= 2 ? 'bg-warning' : level <= 3 ? 'bg-yellow-400' : 'bg-success'
+                                : 'bg-border'
+                            }`} />
+                          ))}
+                        </div>
+                        <p className="text-xs text-ink-2">{getPasswordLabel(admin.password)}</p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </>

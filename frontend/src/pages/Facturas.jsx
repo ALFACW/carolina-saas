@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, Eye, XCircle, Download } from 'lucide-react'
+import { Search, Eye, XCircle, Download, X } from 'lucide-react'
 import { facturasService } from '../services/facturas'
 import { Table } from '../components/Common/Table'
 import { Button } from '../components/Common/Button'
@@ -18,14 +18,33 @@ const ESTADO_COLORS = {
 export default function Facturas() {
   const qc = useQueryClient()
   const navigate = useNavigate()
-  const [search, setSearch] = useState({ estado: '', fecha_desde: '', fecha_hasta: '' })
+  const [filtros, setFiltros] = useState({ estado: '', fecha_desde: '', fecha_hasta: '', totalMin: '', totalMax: '' })
   const [page, setPage] = useState(1)
 
+  // Destructure for query (only backend-relevant fields)
+  const { totalMin, totalMax, ...filtrosBackend } = filtros
+
   const { data, isLoading } = useQuery({
-    queryKey: ['facturas', search, page],
-    queryFn: () => facturasService.getAll({ ...search, page, limit: 20 }),
+    queryKey: ['facturas', filtrosBackend, page],
+    queryFn: () => facturasService.getAll({ ...filtrosBackend, page, limit: 20 }),
     keepPreviousData: true,
   })
+
+  // Filter by total range in frontend
+  const facturasRaw = data?.facturas || []
+  const facturasFiltradas = facturasRaw.filter(f => {
+    const t = parseFloat(f.total || 0)
+    if (totalMin !== '' && !isNaN(parseFloat(totalMin)) && t < parseFloat(totalMin)) return false
+    if (totalMax !== '' && !isNaN(parseFloat(totalMax)) && t > parseFloat(totalMax)) return false
+    return true
+  })
+
+  const hayFiltrosActivos = filtros.estado || filtros.fecha_desde || filtros.fecha_hasta || filtros.totalMin || filtros.totalMax
+
+  const limpiarFiltros = () => {
+    setFiltros({ estado: '', fecha_desde: '', fecha_hasta: '', totalMin: '', totalMax: '' })
+    setPage(1)
+  }
 
   const anularMutation = useMutation({
     mutationFn: facturasService.anular,
@@ -76,8 +95,8 @@ export default function Facturas() {
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl border border-border p-4 flex flex-wrap gap-3">
-        <select value={search.estado} onChange={e => setSearch(p => ({ ...p, estado: e.target.value }))}
+      <div className="bg-white rounded-xl border border-border p-4 flex flex-wrap gap-3 items-center">
+        <select value={filtros.estado} onChange={e => setFiltros(p => ({ ...p, estado: e.target.value, page: 1 }))}
           className="px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent bg-white text-ink">
           <option value="">Todos los estados</option>
           <option value="enviada">Enviada</option>
@@ -85,19 +104,49 @@ export default function Facturas() {
           <option value="pendiente">Pendiente</option>
           <option value="anulada">Anulada</option>
         </select>
-        <input type="date" value={search.fecha_desde} onChange={e => setSearch(p => ({ ...p, fecha_desde: e.target.value }))}
+        <input type="date" value={filtros.fecha_desde} onChange={e => { setFiltros(p => ({ ...p, fecha_desde: e.target.value })); setPage(1) }}
           className="px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 text-ink" />
-        <input type="date" value={search.fecha_hasta} onChange={e => setSearch(p => ({ ...p, fecha_hasta: e.target.value }))}
+        <input type="date" value={filtros.fecha_hasta} onChange={e => { setFiltros(p => ({ ...p, fecha_hasta: e.target.value })); setPage(1) }}
           className="px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 text-ink" />
+        {/* Rango de total */}
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            placeholder="Total mín"
+            value={filtros.totalMin || ''}
+            onChange={e => setFiltros(f => ({ ...f, totalMin: e.target.value, page: 1 }))}
+            className="w-28 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+          />
+          <span className="text-ink-2 text-sm">—</span>
+          <input
+            type="number"
+            placeholder="Total máx"
+            value={filtros.totalMax || ''}
+            onChange={e => setFiltros(f => ({ ...f, totalMax: e.target.value, page: 1 }))}
+            className="w-28 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+          />
+        </div>
+        {/* Limpiar filtros */}
+        {hayFiltrosActivos && (
+          <button
+            onClick={limpiarFiltros}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-ink-2 hover:text-ink hover:bg-surface-soft rounded-lg border border-border transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+            Limpiar filtros
+          </button>
+        )}
       </div>
 
-      <Table
-        columns={columns}
-        data={data?.facturas || []}
-        loading={isLoading}
-        emptyMessage="No hay facturas"
-        onRowClick={(row) => navigate(`/facturas/${row.id}`)}
-      />
+      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+        <Table
+          columns={columns}
+          data={facturasFiltradas}
+          loading={isLoading}
+          emptyMessage="No hay facturas"
+          onRowClick={(row) => navigate(`/facturas/${row.id}`)}
+        />
+      </div>
 
       {data && data.total > 20 && (
         <div className="flex items-center justify-center gap-2">

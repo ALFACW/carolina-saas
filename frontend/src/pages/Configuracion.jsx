@@ -34,10 +34,23 @@ export default function Configuracion() {
   const usoPct = (uso, max) => max === 999 ? 0 : Math.min(100, Math.round((uso / max) * 100))
 
   const [logo, setLogo] = useState(() => localStorage.getItem('carolina_logo') || null)
+  const [logoError, setLogoError] = useState('')
+
+  const MIME_VALIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']
+  const MAX_SIZE = 2 * 1024 * 1024 // 2MB
 
   const handleLogo = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    setLogoError('')
+    if (!MIME_VALIDOS.includes(file.type)) {
+      setLogoError('Formato no válido. Usa JPG, PNG, WebP o SVG.')
+      return
+    }
+    if (file.size > MAX_SIZE) {
+      setLogoError('La imagen es demasiado grande. Máximo 2MB.')
+      return
+    }
     const reader = new FileReader()
     reader.onload = (ev) => {
       const base64 = ev.target.result
@@ -50,6 +63,7 @@ export default function Configuracion() {
   const eliminarLogo = () => {
     localStorage.removeItem('carolina_logo')
     setLogo(null)
+    setLogoError('')
   }
 
   return (
@@ -90,30 +104,33 @@ export default function Configuracion() {
         {/* Logo de la empresa */}
         <div className="mt-6 pt-6 border-t border-border">
           <p className="text-xs font-semibold text-ink-2 uppercase tracking-wider mb-3">Logo (aparece en el ticket impreso)</p>
-          <div className="flex items-center gap-4">
-            {logo ? (
-              <>
-                <img src={logo} alt="Logo empresa" className="h-16 w-auto object-contain border border-border rounded-lg p-1 bg-white" />
-                <div className="space-y-2">
-                  <p className="text-xs text-success font-medium">Logo cargado correctamente</p>
-                  <div className="flex gap-2">
-                    <label className="cursor-pointer text-xs text-accent hover:underline">
-                      Cambiar logo
-                      <input type="file" accept="image/*" onChange={handleLogo} className="hidden" />
-                    </label>
-                    <span className="text-ink-2">·</span>
-                    <button onClick={eliminarLogo} className="text-xs text-red-500 hover:underline">Eliminar</button>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-4">
+              {logo ? (
+                <>
+                  <img src={logo} alt="Logo empresa" className="h-16 w-auto object-contain border border-border rounded-lg p-1 bg-white" />
+                  <div className="space-y-2">
+                    <p className="text-xs text-success font-medium">Logo cargado correctamente</p>
+                    <div className="flex gap-2">
+                      <label className="cursor-pointer text-xs text-accent hover:underline">
+                        Cambiar logo
+                        <input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" onChange={handleLogo} className="hidden" />
+                      </label>
+                      <span className="text-ink-2">·</span>
+                      <button onClick={eliminarLogo} className="text-xs text-red-500 hover:underline">Eliminar</button>
+                    </div>
                   </div>
-                </div>
-              </>
-            ) : (
-              <label className="cursor-pointer flex flex-col items-center gap-2 border-2 border-dashed border-border rounded-lg px-8 py-5 hover:border-border-strong transition-colors">
-                <div className="text-2xl">🖼️</div>
-                <p className="text-sm text-ink-2">Subir logo de la empresa</p>
-                <p className="text-xs text-ink-2">PNG, JPG o SVG — recomendado fondo blanco</p>
-                <input type="file" accept="image/*" onChange={handleLogo} className="hidden" />
-              </label>
-            )}
+                </>
+              ) : (
+                <label className="cursor-pointer flex flex-col items-center gap-2 border-2 border-dashed border-border rounded-lg px-8 py-5 hover:border-border-strong transition-colors">
+                  <div className="text-2xl">🖼️</div>
+                  <p className="text-sm text-ink-2">Subir logo de la empresa</p>
+                  <p className="text-xs text-ink-2">PNG, JPG, WebP o SVG — recomendado fondo blanco</p>
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" onChange={handleLogo} className="hidden" />
+                </label>
+              )}
+            </div>
+            {logoError && <p className="text-xs text-danger mt-1">{logoError}</p>}
           </div>
         </div>
       </div>

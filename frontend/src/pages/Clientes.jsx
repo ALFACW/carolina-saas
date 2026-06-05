@@ -6,11 +6,13 @@ import { clientesService } from '../services/clientes'
 import { Table } from '../components/Common/Table'
 import { Button } from '../components/Common/Button'
 import { exportarClientes } from '../lib/exportExcel'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
 
 export default function Clientes() {
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, id: null, nombre: '' })
 
   const { data, isLoading } = useQuery({
     queryKey: ['clientes', search, page],
@@ -36,7 +38,7 @@ export default function Clientes() {
     { key: 'acciones', label: '', render: (_, row) => (
       <div className="flex items-center gap-1">
         <Link to={`/clientes/${row.id}/editar`} className="p-1.5 text-accent hover:bg-accent-soft rounded-lg"><Edit className="w-4 h-4" /></Link>
-        <button onClick={() => { if (window.confirm('¿Eliminar cliente?')) deleteMutation.mutate(row.id) }}
+        <button onClick={() => setConfirmDialog({ open: true, id: row.id, nombre: row.nombre })}
           className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
       </div>
     )},
@@ -60,9 +62,21 @@ export default function Clientes() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-2" />
         <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
           className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent text-ink placeholder:text-ink-2/60"
-          placeholder="Buscar clientes..." />
+          placeholder="Buscar clientes..."
+          aria-label="Buscar" />
       </div>
-      <Table columns={columns} data={data?.clientes || []} loading={isLoading} emptyMessage="No hay clientes" />
+      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+        <Table columns={columns} data={data?.clientes || []} loading={isLoading} emptyMessage="No hay clientes" />
+      </div>
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onClose={() => setConfirmDialog({ open: false, id: null, nombre: '' })}
+        onConfirm={() => { deleteMutation.mutate(confirmDialog.id); setConfirmDialog({ open: false, id: null, nombre: '' }) }}
+        title="¿Eliminar cliente?"
+        message={`"${confirmDialog.nombre}" será eliminado permanentemente.`}
+        confirmLabel="Sí, eliminar"
+        loading={deleteMutation.isPending}
+      />
       {data && data.total > 20 && (
         <div className="flex items-center justify-center gap-2">
           <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-sm border border-border rounded-lg disabled:opacity-40 text-ink hover:bg-surface-soft">Anterior</button>

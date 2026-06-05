@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Search, User, AlertCircle, Loader2, CheckCircle2, X, Trash2, ArrowLeft } from 'lucide-react'
+import { Search, User, AlertCircle, Loader2, CheckCircle2, X, Trash2, ArrowLeft, ShoppingCart } from 'lucide-react'
 import { usePOSStore } from '../store/posStore'
 import { useUIStore } from '../store/uiStore'
 import { posService } from '../services/pos'
@@ -53,6 +53,7 @@ export default function POS() {
   const [searchDebounced,  setSearchDebounced]  = useState('')
   const [resultIndex,      setResultIndex]      = useState(-1)  // fila seleccionada con ↑↓
   const [dropdownOpen,     setDropdownOpen]     = useState(false)
+  const [mobileCartOpen,   setMobileCartOpen]   = useState(false)
 
   const searchRef    = useRef(null)
   const dropdownRef  = useRef(null)
@@ -356,7 +357,7 @@ export default function POS() {
     <div className="flex h-screen bg-surface-soft">
 
       {/* ══ ÁREA IZQUIERDA: búsqueda + tabla ══ */}
-      <div className="flex-1 flex flex-col min-w-0 p-4 gap-3">
+      <div className="flex-1 flex flex-col min-w-0 p-4 gap-3 w-full">
 
         {/* Barra superior */}
         <div className="flex items-center gap-3">
@@ -390,10 +391,18 @@ export default function POS() {
             placeholder="Buscar por nombre o código... (scanner automático)"
             autoComplete="off"
           />
-          {/* Indicador cargando */}
-          {buscando && (
+          {/* Indicador cargando o botón X limpiar */}
+          {buscando ? (
             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-2 animate-spin" />
-          )}
+          ) : searchText.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => { setSearchText(''); searchRef.current?.focus() }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-2 hover:text-ink cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          ) : null}
 
           {/* Dropdown resultados */}
           {dropdownOpen && searchDebounced && (
@@ -475,6 +484,14 @@ export default function POS() {
 
       </div>
 
+      {/* ── Atajos de teclado ── */}
+      <div className="flex items-center gap-4 text-xs text-ink-2 mb-2 px-1">
+        <span><kbd className="bg-surface-soft border border-border rounded px-1.5 py-0.5 font-mono text-xs">F2</kbd> Buscar</span>
+        <span><kbd className="bg-surface-soft border border-border rounded px-1.5 py-0.5 font-mono text-xs">F3</kbd> Cobrar</span>
+        <span><kbd className="bg-surface-soft border border-border rounded px-1.5 py-0.5 font-mono text-xs">Esc</kbd> Limpiar</span>
+        <span><kbd className="bg-surface-soft border border-border rounded px-1.5 py-0.5 font-mono text-xs">+/-</kbd> Cantidad</span>
+      </div>
+
       {/* ── Tabla de items ── */}
       <div className="flex-1 bg-white rounded-xl border border-border overflow-hidden flex flex-col min-h-0">
         {/* Cabecera tabla */}
@@ -548,8 +565,31 @@ export default function POS() {
 
       </div>{/* fin área izquierda */}
 
+      {/* Overlay oscuro detrás del drawer en móvil */}
+      {mobileCartOpen && (
+        <div className="fixed inset-0 bg-black/40 z-40 md:hidden" onClick={() => setMobileCartOpen(false)} />
+      )}
+
       {/* ══ PANEL DERECHO: orden + totales + cobrar ══ */}
-      <div className="w-72 flex-shrink-0 bg-white border-l border-border flex flex-col">
+      <div className={`
+        fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto
+        transform transition-transform ${mobileCartOpen ? 'translate-y-0' : 'translate-y-full'}
+        md:relative md:inset-auto md:translate-y-0 md:max-h-none md:overflow-y-visible
+        md:shadow-none md:rounded-none md:w-72 md:flex-shrink-0 md:border-l md:border-border
+        flex flex-col
+      `}>
+
+        {/* Handle de arrastre (solo móvil) */}
+        <div className="md:hidden flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 bg-border rounded-full" />
+        </div>
+
+        {/* Botón cerrar X (solo móvil) */}
+        <div className="md:hidden flex justify-end px-4 pb-1">
+          <button onClick={() => setMobileCartOpen(false)}>
+            <X size={20} className="text-ink-2" />
+          </button>
+        </div>
 
         {/* Cliente */}
         <div className="px-4 py-3 border-b border-border">
@@ -619,9 +659,25 @@ export default function POS() {
           >
             Cobrar
             {carrito.length > 0 && <span className="ml-2">{COP(total)}</span>}
-            <span className="ml-2 opacity-40 font-normal text-xs">F3</span>
+            <span className="text-xs bg-white/20 px-1.5 py-0.5 rounded font-mono ml-2">F3</span>
           </button>
         </div>
+      </div>
+
+      {/* Botón flotante carrito (solo móvil) */}
+      <div className="fixed bottom-6 right-6 z-40 md:hidden">
+        <button
+          onClick={() => setMobileCartOpen(true)}
+          className="bg-accent text-white rounded-full shadow-xl px-5 py-3.5 flex items-center gap-2 font-semibold text-sm"
+        >
+          <ShoppingCart size={18} />
+          Ver carrito
+          {carrito.length > 0 && (
+            <span className="bg-white text-accent text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {carrito.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* ── Modal: cliente ── */}

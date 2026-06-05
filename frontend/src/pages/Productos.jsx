@@ -9,12 +9,14 @@ import { Modal } from '../components/Common/Modal'
 import { Button } from '../components/Common/Button'
 import { COP } from '../lib/format'
 import { exportarProductos } from '../lib/exportExcel'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
 
 export default function Productos() {
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [ajusteModal, setAjusteModal] = useState(null)
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, id: null, nombre: '' })
   const [ajusteCantidad, setAjusteCantidad] = useState(0)
   const [ajusteTipo, setAjusteTipo] = useState('ajuste')
   const [importModal, setImportModal] = useState(false)
@@ -108,7 +110,7 @@ export default function Productos() {
         <Link to={`/productos/${row.id}/editar`} className="p-1.5 text-ink-2 hover:text-accent hover:bg-accent-soft rounded transition-colors">
           <Edit className="w-4 h-4" />
         </Link>
-        <button onClick={() => { if (window.confirm('¿Desactivar este producto?')) deleteMutation.mutate(row.id) }}
+        <button onClick={() => setConfirmDialog({ open: true, id: row.id, nombre: row.nombre })}
           className="p-1.5 text-ink-2 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
           <Trash2 className="w-4 h-4" />
         </button>
@@ -145,10 +147,13 @@ export default function Productos() {
           onChange={e => { setSearch(e.target.value); setPage(1) }}
           className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent text-ink placeholder:text-ink-2/60"
           placeholder="Buscar por nombre o código..."
+          aria-label="Buscar"
         />
       </div>
 
-      <Table columns={columns} data={data?.productos || []} loading={isLoading} emptyMessage="Sin productos aún" />
+      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+        <Table columns={columns} data={data?.productos || []} loading={isLoading} emptyMessage="Sin productos aún" />
+      </div>
 
       {data && data.total > 20 && (
         <div className="flex items-center justify-center gap-2">
@@ -260,6 +265,16 @@ export default function Productos() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onClose={() => setConfirmDialog({ open: false, id: null, nombre: '' })}
+        onConfirm={() => { deleteMutation.mutate(confirmDialog.id); setConfirmDialog({ open: false, id: null, nombre: '' }) }}
+        title="¿Eliminar producto?"
+        message={`"${confirmDialog.nombre}" será eliminado permanentemente.`}
+        confirmLabel="Sí, eliminar"
+        loading={deleteMutation.isPending}
+      />
 
       {/* ── Modal ajuste stock ── */}
       <Modal isOpen={!!ajusteModal} onClose={() => setAjusteModal(null)} title={`Ajustar stock — ${ajusteModal?.nombre}`} size="sm">

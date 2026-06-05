@@ -13,7 +13,7 @@ export default function Button({ variant = 'primary', size = 'md', children, ...
 
   return (
     <button
-      className={`font-semibold rounded-lg transition-colors ${variants[variant]} ${sizes[size]}`}
+      className={`font-semibold rounded-lg transition-colors focus:ring-2 focus:ring-accent/30 focus:outline-none ${variants[variant]} ${sizes[size]}`}
       {...props}
     >
       {children}

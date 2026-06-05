@@ -19,19 +19,24 @@ export default function Dashboard() {
   const { data: dash } = useQuery({
     queryKey: ['pos-dashboard'],
     queryFn: posService.getDashboard,
-    refetchInterval: 60000,
+    refetchInterval: false,
+    refetchOnWindowFocus: true,
   })
 
   const { data: topProductos } = useQuery({
     queryKey: ['top-productos'],
     queryFn: async () => { const { data } = await api.get('/api/reportes/productos-mas-vendidos?limit=5'); return data },
     staleTime: 300000,
+    refetchInterval: false,
+    refetchOnWindowFocus: true,
   })
 
   const { data: stockBajo } = useQuery({
     queryKey: ['stock-bajo'],
     queryFn: async () => { const { data } = await api.get('/api/reportes/stock-bajo'); return data },
     staleTime: 120000,
+    refetchInterval: false,
+    refetchOnWindowFocus: true,
   })
 
   const ventasHoy = dash?.ventas_hoy || { cantidad: 0, total: 0 }

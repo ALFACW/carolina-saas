@@ -30,7 +30,7 @@ export function Header({ onToggleSidebar, sidebarAbierto }) {
       {/* Toggle sidebar */}
       <button
         onClick={onToggleSidebar}
-        className="p-1.5 text-ink-2 hover:text-ink hover:bg-surface-soft rounded-lg transition-colors flex-shrink-0"
+        className="p-1.5 text-ink-2 hover:text-ink hover:bg-surface-soft rounded-lg transition-colors flex-shrink-0 focus:ring-2 focus:ring-accent/30 focus:outline-none"
         title={sidebarAbierto ? 'Ocultar menú' : 'Mostrar menú'}
       >
         {sidebarAbierto
@@ -56,7 +56,7 @@ export function Header({ onToggleSidebar, sidebarAbierto }) {
           {new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
         </span>
 
-        <button className="text-ink-2 hover:text-ink transition-colors p-1.5 rounded-lg hover:bg-surface-soft">
+        <button className="text-ink-2 hover:text-ink transition-colors p-1.5 rounded-lg hover:bg-surface-soft focus:ring-2 focus:ring-accent/30 focus:outline-none">
           <Bell size={18} />
         </button>
 

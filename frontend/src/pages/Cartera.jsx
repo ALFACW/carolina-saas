@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, Download, X, CreditCard, Clock, Users, AlertTriangle } from 'lucide-react'
+import { Search, Download, X, CreditCard, Clock, Users, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { carteraService } from '../services/cartera'
 import { COP } from '../lib/format'
 import { exportarCartera } from '../lib/exportExcel'
@@ -13,7 +13,7 @@ const METODOS_PAGO = [
 ]
 
 // ─── Modal Registrar Pago ─────────────────────────────────────────────────────
-function ModalPago({ factura, onClose }) {
+function ModalPago({ factura, onClose, onPagoExitoso }) {
   const qc = useQueryClient()
   const [monto, setMonto] = useState('')
   const [metodo, setMetodo] = useState('efectivo')
@@ -22,10 +22,24 @@ function ModalPago({ factura, onClose }) {
 
   const saldo = parseFloat(factura.saldo_pendiente || 0)
 
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [onClose])
+
   const mutation = useMutation({
     mutationFn: carteraService.registrarPago,
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       qc.invalidateQueries({ queryKey: ['cartera'] })
+      onPagoExitoso({
+        cliente: factura.cliente_nombre,
+        factura: factura.numero_factura || `#${factura.id}`,
+        monto: variables.monto,
+        metodo: variables.metodo_pago,
+        fecha: new Date().toLocaleDateString('es-CO'),
+        referencia: data?.referencia || data?.id,
+      })
       onClose()
     },
     onError: (err) => {
@@ -157,6 +171,12 @@ function ModalPago({ factura, onClose }) {
 
 // ─── Modal Historial de Pagos ─────────────────────────────────────────────────
 function ModalHistorial({ factura, onClose }) {
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [onClose])
+
   const { data: pagos, isLoading } = useQuery({
     queryKey: ['cartera-pagos', factura.id],
     queryFn: () => carteraService.getPagos(factura.id),
@@ -234,6 +254,7 @@ export default function Cartera() {
   const [busqueda, setBusqueda] = useState('')
   const [modalPago, setModalPago] = useState(null)      // factura seleccionada
   const [modalHistorial, setModalHistorial] = useState(null)
+  const [reciboData, setReciboData] = useState(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['cartera', { soloVencidas }],
@@ -349,7 +370,7 @@ export default function Cartera() {
       </div>
 
       {/* SECCIÓN 3 — Tabla */}
-      <div className="bg-white rounded-xl border border-border overflow-hidden">
+      <div className="bg-white rounded-xl border border-border overflow-hidden -mx-4 px-0 md:mx-0">
         {isLoading ? (
           <div className="py-16 text-center">
             <div className="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -365,15 +386,15 @@ export default function Cartera() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wide">Cliente</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wide">N° Factura</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wide">Fecha</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wide">Vencimiento</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-ink-2 uppercase tracking-wide">Total</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-ink-2 uppercase tracking-wide">Pagado</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-ink-2 uppercase tracking-wide">Saldo</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-ink-2 uppercase tracking-wide">Estado</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-ink-2 uppercase tracking-wide">Acciones</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wide">Cliente</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wide">N° Factura</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wide">Fecha</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wide">Vencimiento</th>
+                  <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-ink-2 uppercase tracking-wide">Total</th>
+                  <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-ink-2 uppercase tracking-wide">Pagado</th>
+                  <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-ink-2 uppercase tracking-wide">Saldo</th>
+                  <th scope="col" className="px-4 py-3 text-center text-xs font-semibold text-ink-2 uppercase tracking-wide">Estado</th>
+                  <th scope="col" className="px-4 py-3 text-center text-xs font-semibold text-ink-2 uppercase tracking-wide">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -460,6 +481,7 @@ export default function Cartera() {
         <ModalPago
           factura={modalPago}
           onClose={() => setModalPago(null)}
+          onPagoExitoso={(datos) => setReciboData(datos)}
         />
       )}
       {modalHistorial && (
@@ -467,6 +489,39 @@ export default function Cartera() {
           factura={modalHistorial}
           onClose={() => setModalHistorial(null)}
         />
+      )}
+
+      {/* Modal recibo de pago */}
+      {reciboData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setReciboData(null)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 z-10">
+            <div className="text-center mb-4">
+              <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                <CheckCircle2 size={24} className="text-success" />
+              </div>
+              <h3 className="font-semibold text-ink">Pago registrado</h3>
+              <p className="text-sm text-ink-2 mt-1">¿Deseas imprimir el recibo?</p>
+            </div>
+            <div className="bg-surface-soft rounded-xl p-4 text-sm space-y-2 mb-4">
+              <div className="flex justify-between"><span className="text-ink-2">Cliente</span><span className="font-medium text-ink">{reciboData.cliente}</span></div>
+              <div className="flex justify-between"><span className="text-ink-2">Factura</span><span className="font-medium text-ink">{reciboData.factura}</span></div>
+              <div className="flex justify-between"><span className="text-ink-2">Monto</span><span className="font-semibold text-ink">${Number(reciboData.monto).toLocaleString('es-CO')}</span></div>
+              <div className="flex justify-between"><span className="text-ink-2">Método</span><span className="font-medium text-ink capitalize">{(reciboData.metodo || '').replace(/_/g, ' ')}</span></div>
+              <div className="flex justify-between"><span className="text-ink-2">Fecha</span><span className="font-medium text-ink">{reciboData.fecha}</span></div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setReciboData(null)}
+                className="flex-1 border border-border text-ink py-2.5 rounded-lg text-sm hover:bg-surface-soft font-medium">
+                Cerrar
+              </button>
+              <button onClick={() => { window.print(); setReciboData(null) }}
+                className="flex-1 bg-accent text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-accent/90">
+                Imprimir recibo
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

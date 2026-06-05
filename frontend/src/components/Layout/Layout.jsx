@@ -11,12 +11,27 @@ export function Layout() {
 
   return (
     <div className="flex min-h-screen bg-surface-soft">
-      <div className={`flex-shrink-0 transition-all duration-300 ${sidebarAbierto ? 'w-60' : 'w-0 overflow-hidden'}`}>
-        <Sidebar />
+      {/* Overlay para móvil cuando el sidebar está abierto */}
+      {sidebarAbierto && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          onClick={toggleSidebar}
+        />
+      )}
+
+      {/* Sidebar: fixed en móvil, relativo en desktop */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 transition-transform duration-200
+        md:relative md:translate-x-0 md:z-auto md:flex-shrink-0
+        ${sidebarAbierto ? 'translate-x-0' : '-translate-x-full md:w-0 md:overflow-hidden'}
+        ${sidebarAbierto ? 'md:w-60' : 'md:w-0 md:overflow-hidden'}
+      `}>
+        <Sidebar onClose={toggleSidebar} />
       </div>
+
       <div className="flex-1 flex flex-col min-w-0">
         {!esPOS && <Header onToggleSidebar={toggleSidebar} sidebarAbierto={sidebarAbierto} />}
-        <main className={`flex-1 overflow-auto ${esPOS ? '' : 'p-8'}`}>
+        <main className={`flex-1 overflow-auto ${esPOS ? '' : 'p-4 md:p-8'}`}>
           <Outlet />
         </main>
       </div>

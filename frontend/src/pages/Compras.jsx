@@ -246,12 +246,14 @@ export default function Compras() {
       </div>
 
       {/* Tabla */}
-      <Table
-        columns={columns}
-        data={data?.compras || []}
-        loading={isLoading}
-        emptyMessage="No hay órdenes de compra"
-      />
+      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+        <Table
+          columns={columns}
+          data={data?.compras || []}
+          loading={isLoading}
+          emptyMessage="No hay órdenes de compra"
+        />
+      </div>
 
       {/* Paginación */}
       {data && data.total > 20 && (

@@ -6,6 +6,7 @@ import { Table } from '../components/Common/Table'
 import { Button } from '../components/Common/Button'
 import { Modal } from '../components/Common/Modal'
 import { Input } from '../components/Common/Input'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
 
 const EMPTY_FORM = {
   nombre: '',
@@ -25,6 +26,7 @@ export default function Proveedores() {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [errors, setErrors] = useState({})
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, id: null, nombre: '' })
 
   const { data, isLoading } = useQuery({
     queryKey: ['proveedores', search, page],
@@ -105,9 +107,7 @@ export default function Proveedores() {
   }
 
   const handleDelete = (prov) => {
-    if (window.confirm(`¿Eliminar proveedor "${prov.nombre}"?`)) {
-      deleteMutation.mutate(prov.id)
-    }
+    setConfirmDialog({ open: true, id: prov.id, nombre: prov.nombre })
   }
 
   const isSaving = createMutation.isPending || updateMutation.isPending
@@ -175,16 +175,19 @@ export default function Proveedores() {
           onChange={e => { setSearch(e.target.value); setPage(1) }}
           className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent text-ink placeholder:text-ink-2/60"
           placeholder="Buscar por nombre o NIT..."
+          aria-label="Buscar"
         />
       </div>
 
       {/* Tabla */}
-      <Table
-        columns={columns}
-        data={data?.proveedores || []}
-        loading={isLoading}
-        emptyMessage="No hay proveedores registrados"
-      />
+      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+        <Table
+          columns={columns}
+          data={data?.proveedores || []}
+          loading={isLoading}
+          emptyMessage="No hay proveedores registrados"
+        />
+      </div>
 
       {/* Paginación */}
       {data && data.total > 20 && (
@@ -208,6 +211,16 @@ export default function Proveedores() {
           </button>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onClose={() => setConfirmDialog({ open: false, id: null, nombre: '' })}
+        onConfirm={() => { deleteMutation.mutate(confirmDialog.id); setConfirmDialog({ open: false, id: null, nombre: '' }) }}
+        title="¿Eliminar proveedor?"
+        message={`"${confirmDialog.nombre}" será eliminado permanentemente.`}
+        confirmLabel="Sí, eliminar"
+        loading={deleteMutation.isPending}
+      />
 
       {/* Modal de creación/edición */}
       <Modal
