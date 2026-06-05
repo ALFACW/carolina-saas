@@ -101,13 +101,13 @@ export default function Configuracion() {
                       Cambiar logo
                       <input type="file" accept="image/*" onChange={handleLogo} className="hidden" />
                     </label>
-                    <span className="text-gray-300">·</span>
+                    <span className="text-ink-2">·</span>
                     <button onClick={eliminarLogo} className="text-xs text-red-500 hover:underline">Eliminar</button>
                   </div>
                 </div>
               </>
             ) : (
-              <label className="cursor-pointer flex flex-col items-center gap-2 border-2 border-dashed border-border rounded-lg px-8 py-5 hover:border-gray-400 transition-colors">
+              <label className="cursor-pointer flex flex-col items-center gap-2 border-2 border-dashed border-border rounded-lg px-8 py-5 hover:border-border-strong transition-colors">
                 <div className="text-2xl">🖼️</div>
                 <p className="text-sm text-ink-2">Subir logo de la empresa</p>
                 <p className="text-xs text-ink-2">PNG, JPG o SVG — recomendado fondo blanco</p>
@@ -144,8 +144,8 @@ export default function Configuracion() {
                   </span>
                 </div>
                 {max !== 999 && (
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div className={`h-2 rounded-full transition-all ${usoPct(uso, max) >= 80 ? 'bg-orange-500' : 'bg-blue-500'}`}
+                  <div className="w-full bg-surface-soft rounded-full h-2">
+                    <div className={`h-2 rounded-full transition-all ${usoPct(uso, max) >= 80 ? 'bg-orange-500' : 'bg-accent'}`}
                       style={{ width: `${usoPct(uso, max)}%` }} />
                   </div>
                 )}
@@ -177,7 +177,7 @@ export default function Configuracion() {
             <p className="font-medium text-ink">QZ Tray no está corriendo</p>
             <p className="text-ink-2">Necesario para impresión directa y apertura del cajón.</p>
             <a href="https://qz.io/download/" target="_blank" rel="noreferrer"
-              className="inline-flex items-center gap-2 bg-gray-900 text-white text-xs px-4 py-2 rounded-md hover:bg-gray-700 font-medium">
+              className="inline-flex items-center gap-2 bg-accent text-white text-xs px-4 py-2 rounded-md hover:bg-accent/80 font-medium">
               <Printer className="w-3.5 h-3.5" />Descargar QZ Tray (gratis)
             </a>
           </div>
@@ -195,7 +195,7 @@ export default function Configuracion() {
                 <label className="text-xs text-ink-2 block mb-1">Impresora</label>
                 <div className="flex gap-2">
                   <select value={qz.impTermica} onChange={e => qz.guardarImpTermica(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900">
+                    className="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-accent/30">
                     <option value="">— Seleccionar —</option>
                     {qz.impresoras.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
@@ -213,7 +213,7 @@ export default function Configuracion() {
                 <div className="flex gap-2">
                   {[['58','58 mm (32 chars)'],['80','80 mm (48 chars)']].map(([v,l]) => (
                     <button key={v} onClick={() => qz.guardarAnchoPapel(v)}
-                      className={`flex-1 py-2 rounded-md text-sm font-medium border transition-colors ${qz.anchoPapel === v ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-ink-2 border-border hover:border-gray-400'}`}>
+                      className={`flex-1 py-2 rounded-md text-sm font-medium border transition-colors ${qz.anchoPapel === v ? 'bg-accent text-white border-accent' : 'bg-white text-ink-2 border-border hover:border-border-strong'}`}>
                       {l}
                     </button>
                   ))}
@@ -227,7 +227,7 @@ export default function Configuracion() {
                 </label>
                 <input type="range" min="0" max="8" step="1" value={qz.densidad}
                   onChange={e => qz.guardarDensidad(e.target.value)} className="w-full" />
-                <div className="flex justify-between text-xs text-gray-300 mt-0.5">
+                <div className="flex justify-between text-xs text-ink-2 mt-0.5">
                   <span>Baja</span><span>Recomendado: 6</span><span>Maxima</span>
                 </div>
               </div>
@@ -238,12 +238,12 @@ export default function Configuracion() {
                   <label className="text-xs text-ink-2 block mb-1">Líneas de avance antes del corte</label>
                   <input type="number" min="0" max="10" value={qz.avancePapel}
                     onChange={e => qz.guardarAvancePapel(e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900" />
+                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
                 </div>
                 <div>
                   <label className="text-xs text-ink-2 block mb-1">Modo de corte</label>
                   <select value={qz.modoCortePapel} onChange={e => qz.guardarModoCortePapel(e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900">
+                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-accent/30">
                     <option value="completo">Corte completo</option>
                     <option value="parcial">Corte parcial</option>
                     <option value="ninguno">Sin corte</option>
@@ -264,7 +264,7 @@ export default function Configuracion() {
                 <div className="flex gap-2">
                   {[['0','Pin 2 (más común)'],['1','Pin 5']].map(([v,l]) => (
                     <button key={v} onClick={() => qz.guardarGavetaPin(v)}
-                      className={`flex-1 py-2 rounded-md text-sm font-medium border transition-colors ${qz.gavetaPin === v ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-ink-2 border-border hover:border-gray-400'}`}>
+                      className={`flex-1 py-2 rounded-md text-sm font-medium border transition-colors ${qz.gavetaPin === v ? 'bg-accent text-white border-accent' : 'bg-white text-ink-2 border-border hover:border-border-strong'}`}>
                       {l}
                     </button>
                   ))}
@@ -278,7 +278,7 @@ export default function Configuracion() {
                   <p className="text-xs text-ink-2">El cajón se abre solo cuando se confirma una venta</p>
                 </div>
                 <button onClick={() => qz.guardarGavetaAuto(!qz.gavetaAuto)}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${qz.gavetaAuto ? 'bg-gray-900' : 'bg-gray-200'}`}>
+                  className={`relative w-11 h-6 rounded-full transition-colors ${qz.gavetaAuto ? 'bg-accent' : 'bg-border'}`}>
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${qz.gavetaAuto ? 'translate-x-5' : ''}`} />
                 </button>
               </div>
@@ -295,7 +295,7 @@ export default function Configuracion() {
           <div className="border-t pt-4">
             <p className="text-xs font-bold text-ink-2 uppercase tracking-widest mb-3">Impresora Facturas A4</p>
             <select value={qz.impA4} onChange={e => qz.guardarImpA4(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900">
+              className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-accent/30">
               <option value="">— Seleccionar impresora —</option>
               {qz.impresoras.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
@@ -315,7 +315,7 @@ export default function Configuracion() {
                 </label>
                 <input type="range" min="20" max="150" step="10" value={qz.scannerMs}
                   onChange={e => qz.guardarScannerMs(e.target.value)} className="w-full" />
-                <div className="flex justify-between text-xs text-gray-300 mt-0.5">
+                <div className="flex justify-between text-xs text-ink-2 mt-0.5">
                   <span>Rápida</span><span>Lenta</span>
                 </div>
                 <p className="text-xs text-ink-2 mt-1">Sube si el scanner no detecta. Baja si el teclado activa escaneo.</p>
@@ -324,7 +324,7 @@ export default function Configuracion() {
                 <label className="text-xs text-ink-2 block mb-1">Largo mínimo del código: {qz.scannerMin} chars</label>
                 <input type="range" min="2" max="15" step="1" value={qz.scannerMin}
                   onChange={e => qz.guardarScannerMin(e.target.value)} className="w-full" />
-                <div className="flex justify-between text-xs text-gray-300 mt-0.5">
+                <div className="flex justify-between text-xs text-ink-2 mt-0.5">
                   <span>2</span><span>15</span>
                 </div>
               </div>
@@ -334,7 +334,7 @@ export default function Configuracion() {
             <div className="space-y-3 pt-1 border-t border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {sonidoActivo ? <Volume2 className="w-4 h-4 text-ink-2" /> : <VolumeX className="w-4 h-4 text-gray-300" />}
+                  {sonidoActivo ? <Volume2 className="w-4 h-4 text-ink-2" /> : <VolumeX className="w-4 h-4 text-ink-2" />}
                   <div>
                     <p className="text-sm text-ink font-medium">Sonidos del sistema</p>
                     <p className="text-xs text-ink-2">Beep al escanear · doble beep al cobrar · buzz en error</p>
@@ -347,7 +347,7 @@ export default function Configuracion() {
                     setSonidoActivo(nuevo)
                     if (nuevo) sounds.scan()
                   }}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${sonidoActivo ? 'bg-gray-900' : 'bg-gray-200'}`}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${sonidoActivo ? 'bg-accent' : 'bg-border'}`}
                 >
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${sonidoActivo ? 'translate-x-5' : ''}`} />
                 </button>
@@ -368,11 +368,11 @@ export default function Configuracion() {
                             setTimeout(() => sounds.scan(), 50)
                           }}
                           className={`py-2 px-1 rounded-md text-xs font-medium border transition-colors text-center ${
-                            tonoId === t.id ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-ink-2 border-border hover:border-gray-400'
+                            tonoId === t.id ? 'bg-accent text-white border-accent' : 'bg-white text-ink-2 border-border hover:border-border-strong'
                           }`}
                         >
                           <p>{t.label}</p>
-                          <p className={`text-xs mt-0.5 ${tonoId === t.id ? 'text-gray-300' : 'text-ink-2'}`}>{t.desc}</p>
+                          <p className={`text-xs mt-0.5 ${tonoId === t.id ? 'text-ink-2' : 'text-ink-2'}`}>{t.desc}</p>
                         </button>
                       ))}
                     </div>
@@ -382,7 +382,7 @@ export default function Configuracion() {
                   <div>
                     <label className="text-xs text-ink-2 block mb-1">Volumen: {volumen}%</label>
                     <div className="flex items-center gap-3">
-                      <VolumeX className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
+                      <VolumeX className="w-3.5 h-3.5 text-ink-2 flex-shrink-0" />
                       <input type="range" min="10" max="100" step="5" value={volumen}
                         onChange={e => { const v = parseInt(e.target.value); sounds.setVolumen(v); setVolumen(v) }}
                         onMouseUp={() => sounds.scan()}

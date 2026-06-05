@@ -338,7 +338,7 @@ export default function Cartera() {
         <label className="flex items-center gap-2 cursor-pointer select-none">
           <div
             onClick={() => setSoloVencidas(v => !v)}
-            className={`relative w-10 h-5 rounded-full transition-colors ${soloVencidas ? 'bg-red-500' : 'bg-gray-200'}`}
+            className={`relative w-10 h-5 rounded-full transition-colors ${soloVencidas ? 'bg-red-500' : 'bg-border'}`}
           >
             <span
               className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${soloVencidas ? 'translate-x-5' : ''}`}
@@ -357,7 +357,7 @@ export default function Cartera() {
           </div>
         ) : facturasFiltradas.length === 0 ? (
           <div className="py-16 text-center">
-            <Clock className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+            <Clock className="w-10 h-10 text-ink-2 mx-auto mb-3" />
             <p className="text-sm text-ink-2">No hay facturas de cartera</p>
           </div>
         ) : (
@@ -376,7 +376,7 @@ export default function Cartera() {
                   <th className="px-4 py-3 text-center text-xs font-semibold text-ink-2 uppercase tracking-wide">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-border">
                 {facturasFiltradas.map(factura => {
                   const diasVencida = parseInt(factura.dias_vencida || 0)
                   const vencida = diasVencida > 0
@@ -408,7 +408,7 @@ export default function Cartera() {
                           ? <span className={vencida ? 'text-red-600 font-medium' : 'text-ink-2'}>
                               {new Date(factura.fecha_vencimiento).toLocaleDateString('es-CO')}
                             </span>
-                          : <span className="text-gray-300">—</span>}
+                          : <span className="text-ink-2">—</span>}
                       </td>
                       <td className="px-4 py-3 text-right font-medium text-ink">
                         {COP(factura.total)}

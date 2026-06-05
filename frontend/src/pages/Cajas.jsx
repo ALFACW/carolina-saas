@@ -243,7 +243,7 @@ export default function Cajas() {
             <select
               value={filtros.caja_id}
               onChange={(e) => setFiltros(prev => ({ ...prev, caja_id: e.target.value }))}
-              className="w-full px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-900"
+              className="w-full px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
             >
               <option value="">Todas las cajas</option>
               {cajas.map(c => (
@@ -257,7 +257,7 @@ export default function Cajas() {
               type="date"
               value={filtros.fecha_desde}
               onChange={(e) => setFiltros(prev => ({ ...prev, fecha_desde: e.target.value }))}
-              className="px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-900"
+              className="px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
             />
           </div>
           <div>
@@ -266,7 +266,7 @@ export default function Cajas() {
               type="date"
               value={filtros.fecha_hasta}
               onChange={(e) => setFiltros(prev => ({ ...prev, fecha_hasta: e.target.value }))}
-              className="px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-900"
+              className="px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
             />
           </div>
           <div className="flex items-end">
@@ -317,7 +317,7 @@ export default function Cajas() {
               name="activa"
               checked={formCaja.activa}
               onChange={cambiarCaja}
-              className="w-4 h-4 rounded border-border text-ink focus:ring-gray-900"
+              className="w-4 h-4 rounded border-border text-ink focus:ring-accent/30"
             />
             <span className="text-sm text-ink">Caja activa</span>
           </label>

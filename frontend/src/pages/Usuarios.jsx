@@ -19,7 +19,7 @@ const ROL_BADGE = {
 
 function RolBadge({ rol }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${ROL_BADGE[rol] || 'bg-gray-100 text-ink-2'}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${ROL_BADGE[rol] || 'bg-surface-soft text-ink-2'}`}>
       {rol}
     </span>
   )
