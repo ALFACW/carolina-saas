@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { superAdminService } from '../services/superAdmin'
 import { Button } from '../components/Common/Button'
 import { Input } from '../components/Common/Input'
+import { Shield } from 'lucide-react'
 
 export default function SuperAdminLogin() {
   const navigate = useNavigate()
@@ -12,7 +13,6 @@ export default function SuperAdminLogin() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    // Si ya hay token de super admin, redirigir
     const token = localStorage.getItem('carolina_sa_token')
     if (token) navigate('/super-admin', { replace: true })
   }, [navigate])
@@ -55,47 +55,44 @@ export default function SuperAdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-sm space-y-8">
-        {/* Branding super admin */}
-        <div className="text-center space-y-2">
-          <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
-            <span className="text-white text-2xl font-black">C</span>
+    <div className="min-h-screen bg-surface-soft flex flex-col items-center justify-center p-6">
+      <div className="w-full max-w-md space-y-8">
+
+        {/* Logo + título */}
+        <div className="text-center space-y-3">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <span className="w-12 h-12 rounded-full bg-accent flex items-center justify-center font-brand font-bold text-2xl text-white">C</span>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Carolina</h1>
-          <p className="text-sm text-gray-400">Panel de administración del sistema</p>
+          <h1 className="text-2xl font-bold text-ink tracking-tight">Administración CarolinaPOS</h1>
+          <p className="text-sm text-ink-2">Acceso exclusivo para operadores del sistema</p>
         </div>
 
-        {/* Formulario */}
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 shadow-xl space-y-5">
-          <div>
-            <h2 className="text-sm font-semibold text-white">Acceso restringido</h2>
-            <p className="text-xs text-gray-500 mt-1">Solo operadores autorizados de Carolina</p>
+        {/* Card formulario */}
+        <div className="bg-white rounded-xl border border-border shadow-sm p-8 space-y-6">
+          <div className="flex items-center gap-2 text-ink-2">
+            <Shield className="w-4 h-4" />
+            <span className="text-sm font-medium">Acceso restringido</span>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                Email
-              </label>
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-ink">Email</label>
               <input
                 name="email"
                 type="email"
                 value={form.email}
                 onChange={cambiar}
-                placeholder="admin@carolina.com"
+                placeholder="admin@carolinapos.co"
                 autoComplete="username"
-                className={`w-full px-3 py-2.5 border text-sm rounded-lg bg-gray-800 text-white placeholder-gray-600 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
-                  errors.email ? 'border-red-500' : 'border-gray-700 hover:border-gray-600'
+                className={`w-full px-3 py-2.5 border text-sm rounded-lg bg-white text-ink placeholder-ink-2 transition-colors focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent ${
+                  errors.email ? 'border-red-400 bg-red-50' : 'border-border hover:border-border-strong'
                 }`}
               />
-              {errors.email && <p className="text-xs text-red-400">{errors.email}</p>}
+              {errors.email && <p className="text-xs text-danger">{errors.email}</p>}
             </div>
 
-            <div className="space-y-1">
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                Contraseña
-              </label>
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-ink">Contraseña</label>
               <input
                 name="password"
                 type="password"
@@ -103,31 +100,31 @@ export default function SuperAdminLogin() {
                 onChange={cambiar}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className={`w-full px-3 py-2.5 border text-sm rounded-lg bg-gray-800 text-white placeholder-gray-600 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
-                  errors.password ? 'border-red-500' : 'border-gray-700 hover:border-gray-600'
+                className={`w-full px-3 py-2.5 border text-sm rounded-lg bg-white text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent ${
+                  errors.password ? 'border-red-400 bg-red-50' : 'border-border hover:border-border-strong'
                 }`}
               />
-              {errors.password && <p className="text-xs text-red-400">{errors.password}</p>}
+              {errors.password && <p className="text-xs text-danger">{errors.password}</p>}
             </div>
 
             {errorGeneral && (
-              <div className="px-3 py-2 bg-red-950 border border-red-800 rounded-lg">
-                <p className="text-xs text-red-400">{errorGeneral}</p>
+              <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-danger">{errorGeneral}</p>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors"
+              className="w-full py-2.5 bg-accent hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors"
             >
               {loading ? 'Verificando...' : 'Ingresar'}
             </button>
           </form>
         </div>
 
-        <p className="text-center text-xs text-gray-600">
-          Carolina SaaS · Panel interno
+        <p className="text-center text-xs text-ink-2">
+          Carolina SaaS · Panel interno exclusivo
         </p>
       </div>
     </div>

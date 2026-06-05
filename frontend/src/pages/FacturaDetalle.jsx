@@ -40,7 +40,6 @@ export default function FacturaDetalle() {
     mutationFn: () => facturasService.getPDF(id),
     onSuccess: (data) => {
       if (!data.pdf_url) return
-      // Si es base64, convertir a blob para abrirlo correctamente en el navegador
       if (data.pdf_url.startsWith('data:')) {
         const base64 = data.pdf_url.split(',')[1]
         const binary = atob(base64)
@@ -71,7 +70,6 @@ export default function FacturaDetalle() {
     },
   })
 
-  // Abrir modal email: pre-cargar email del cliente si existe
   const handleOpenEmail = () => {
     setEmailInput(factura?.cliente_email || '')
     setEmailMsg('')
@@ -95,7 +93,6 @@ export default function FacturaDetalle() {
 
   if (isLoading) return <Loading />
 
-  // Construir objeto venta para TicketImpresion
   const ventaParaTicket = factura ? {
     numero_factura: factura.numero_factura,
     cufe: factura.cufe,
@@ -112,197 +109,253 @@ export default function FacturaDetalle() {
     })),
   } : null
 
-  // Cliente para el ticket
   const clienteParaTicket = factura?.cliente_nombre
     ? { nombre: factura.cliente_nombre }
     : null
 
+  const estadoColor =
+    factura?.estado === 'enviada' || factura?.estado === 'aceptada'
+      ? 'bg-green-50 text-success border border-green-200'
+      : factura?.estado === 'anulada'
+      ? 'bg-red-50 text-danger border border-red-200'
+      : 'bg-yellow-50 text-warning border border-yellow-200'
+
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
-      <div className="flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
-          <ArrowLeft className="w-4 h-4" />Volver
+    <div className="min-h-screen bg-surface-soft p-6 md:p-8">
+      <div className="max-w-3xl mx-auto space-y-6">
+
+        {/* Back link */}
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm text-ink-2 hover:text-ink mb-2 w-fit transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Volver a facturas
         </button>
-        <div className="flex gap-2 flex-wrap justify-end">
-          <Button variant="secondary" onClick={() => pdfMutation.mutate()} loading={pdfMutation.isPending}>
-            <FileDown className="w-4 h-4" />Ver PDF
-          </Button>
-          <Button variant="secondary" onClick={() => setShowTicket(true)}>
-            <Printer className="w-4 h-4" />Reimprimir ticket
-          </Button>
-          <Button variant="secondary" onClick={handleOpenEmail}>
-            <Send className="w-4 h-4" />Enviar email
-          </Button>
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-ink">{factura?.numero_factura || 'Sin número'}</h1>
+            <p className="text-sm text-ink-2 mt-1">
+              {factura && new Date(factura.fecha_emision).toLocaleString('es-CO')}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${estadoColor}`}>
+              {factura?.estado}
+            </span>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => pdfMutation.mutate()}
+            disabled={pdfMutation.isPending}
+            className="flex items-center gap-2 border border-border hover:bg-surface-soft text-ink font-medium px-4 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50"
+          >
+            <FileDown className="w-4 h-4" />
+            {pdfMutation.isPending ? 'Cargando...' : 'Descargar PDF'}
+          </button>
+          <button
+            onClick={handleOpenEmail}
+            className="flex items-center gap-2 border border-border hover:bg-surface-soft text-ink font-medium px-4 py-2.5 rounded-lg text-sm transition-colors"
+          >
+            <Send className="w-4 h-4" />
+            Enviar email
+          </button>
+          <button
+            onClick={() => setShowTicket(true)}
+            className="flex items-center gap-2 border border-border hover:bg-surface-soft text-ink font-medium px-4 py-2.5 rounded-lg text-sm transition-colors"
+          >
+            <Printer className="w-4 h-4" />
+            Reimprimir ticket
+          </button>
           {factura?.estado !== 'anulada' && (
-            <Button variant="danger" onClick={() => { if (window.confirm('¿Anular esta factura?')) anularMutation.mutate() }} loading={anularMutation.isPending}>
-              <XCircle className="w-4 h-4" />Anular
-            </Button>
+            <button
+              onClick={() => { if (window.confirm('¿Anular esta factura?')) anularMutation.mutate() }}
+              disabled={anularMutation.isPending}
+              className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-danger border border-red-200 font-medium px-4 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50"
+            >
+              <XCircle className="w-4 h-4" />
+              {anularMutation.isPending ? 'Anulando...' : 'Anular'}
+            </button>
           )}
         </div>
-      </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{factura?.numero_factura || 'Sin número'}</h2>
-            <p className="text-gray-500 text-sm mt-1">{factura && new Date(factura.fecha_emision).toLocaleString('es-CO')}</p>
+        {/* Main card */}
+        <div className="bg-white rounded-xl border border-border shadow-sm p-6 space-y-6">
+
+          {/* Empresa / Cliente */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <p className="text-xs font-semibold text-ink-2 uppercase tracking-wide mb-2">Cliente</p>
+              <p className="font-semibold text-ink">{factura?.cliente_nombre || 'Consumidor final'}</p>
+              {factura?.numero_documento && (
+                <p className="text-sm text-ink-2 mt-0.5">{factura.numero_documento}</p>
+              )}
+              {factura?.cliente_email && (
+                <p className="text-sm text-ink-2 mt-0.5">{factura.cliente_email}</p>
+              )}
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-ink-2 uppercase tracking-wide mb-2">Pago</p>
+              <p className="font-semibold text-ink capitalize">{factura?.metodo_pago?.replace('_', ' ')}</p>
+              {factura?.vendedor_nombre && (
+                <p className="text-sm text-ink-2 mt-0.5">Vendedor: {factura.vendedor_nombre}</p>
+              )}
+            </div>
           </div>
-          <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${
-            factura?.estado === 'enviada' || factura?.estado === 'aceptada' ? 'bg-green-100 text-green-700' :
-            factura?.estado === 'anulada' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
-          }`}>{factura?.estado}</span>
+
+          {/* CUFE */}
+          {factura?.cufe && (
+            <div className="bg-surface-soft rounded-lg p-3 border border-border">
+              <p className="text-xs font-semibold text-ink-2 uppercase tracking-wide mb-1">CUFE (DIAN)</p>
+              <p className="text-xs text-ink-2 break-all font-mono">{factura.cufe}</p>
+            </div>
+          )}
+
+          {/* Tabla de ítems */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-surface-soft border-b border-border">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wide">Descripción</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wide">Cant.</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wide">P. Unit.</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wide">IVA</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wide">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {factura?.items?.map((item, i) => {
+                  // IVA colombiano: precio incluye IVA. base = total / (1 + iva/100)
+                  const sub = Number(item.subtotal) || 0
+                  return (
+                    <tr key={i} className="border-b border-border hover:bg-surface-soft px-4 py-3">
+                      <td className="px-4 py-3 text-ink">{item.descripcion}</td>
+                      <td className="px-4 py-3 text-right text-ink-2">{item.cantidad}</td>
+                      <td className="px-4 py-3 text-right text-ink-2">{COP(item.precio_unitario)}</td>
+                      <td className="px-4 py-3 text-right text-ink-2">{item.iva_porcentaje != null ? `${item.iva_porcentaje}%` : '—'}</td>
+                      <td className="px-4 py-3 text-right font-medium text-ink">{COP(sub)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Totales */}
+          <div className="flex justify-end">
+            <div className="w-56 space-y-2">
+              <div className="flex justify-between text-sm text-ink-2">
+                <span>Subtotal</span>
+                <span>{COP(factura?.subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-ink-2">
+                <span>IVA</span>
+                <span>{COP(factura?.impuesto_total)}</span>
+              </div>
+              <div className="flex justify-between font-bold text-base border-t border-border pt-2">
+                <span className="text-ink">Total</span>
+                <span className="text-accent">{COP(factura?.total)}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-6 mb-6">
-          <div>
-            <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2">Cliente</h3>
-            <p className="font-medium text-gray-900">{factura?.cliente_nombre || 'Consumidor final'}</p>
-            {factura?.numero_documento && <p className="text-sm text-gray-500">{factura.numero_documento}</p>}
-            {factura?.cliente_email && <p className="text-sm text-gray-400">{factura.cliente_email}</p>}
-          </div>
-          <div>
-            <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2">Pago</h3>
-            <p className="font-medium text-gray-900 capitalize">{factura?.metodo_pago?.replace('_', ' ')}</p>
-            {factura?.vendedor_nombre && <p className="text-sm text-gray-500">Vendedor: {factura.vendedor_nombre}</p>}
-          </div>
-        </div>
-
-        {factura?.cufe && (
-          <div className="bg-gray-50 rounded-lg p-3 mb-6">
-            <p className="text-xs font-semibold text-gray-400 uppercase mb-1">CUFE (DIAN)</p>
-            <p className="text-xs text-gray-600 break-all font-mono">{factura.cufe}</p>
+        {/* Modal reimprimir ticket */}
+        {showTicket && ventaParaTicket && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+                <h3 className="font-semibold text-ink flex items-center gap-2">
+                  <Printer className="w-4 h-4 text-ink-2" />
+                  Reimprimir ticket
+                </h3>
+                <button
+                  onClick={() => setShowTicket(false)}
+                  className="text-ink-2 hover:text-ink transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-5">
+                <TicketImpresion
+                  venta={ventaParaTicket}
+                  tenant={tenant}
+                  cliente={clienteParaTicket}
+                  qzTray={qzTray}
+                />
+              </div>
+            </div>
           </div>
         )}
 
-        <table className="w-full text-sm mb-6">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left py-2 text-gray-500 font-medium">Producto</th>
-              <th className="text-right py-2 text-gray-500 font-medium">Cant.</th>
-              <th className="text-right py-2 text-gray-500 font-medium">Precio</th>
-              <th className="text-right py-2 text-gray-500 font-medium">Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            {factura?.items?.map((item, i) => (
-              <tr key={i} className="border-b border-gray-50">
-                <td className="py-2.5 text-gray-900">{item.descripcion}</td>
-                <td className="py-2.5 text-right text-gray-600">{item.cantidad}</td>
-                <td className="py-2.5 text-right text-gray-600">{COP(item.precio_unitario)}</td>
-                <td className="py-2.5 text-right font-medium">{COP(item.subtotal)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <div className="flex justify-end">
-          <div className="w-48 space-y-2">
-            <div className="flex justify-between text-sm text-gray-500">
-              <span>Subtotal</span><span>{COP(factura?.subtotal)}</span>
-            </div>
-            <div className="flex justify-between text-sm text-gray-500">
-              <span>IVA</span><span>{COP(factura?.impuesto_total)}</span>
-            </div>
-            <div className="flex justify-between font-bold text-base border-t pt-2">
-              <span>Total</span><span className="text-blue-700">{COP(factura?.total)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal reimprimir ticket */}
-      {showTicket && ventaParaTicket && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                <Printer className="w-4 h-4 text-gray-500" />
-                Reimprimir ticket
-              </h3>
-              <button
-                onClick={() => setShowTicket(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-5">
-              <TicketImpresion
-                venta={ventaParaTicket}
-                tenant={tenant}
-                cliente={clienteParaTicket}
-                qzTray={qzTray}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal enviar email */}
-      {showEmail && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                <Send className="w-4 h-4 text-gray-500" />
-                Enviar factura por email
-              </h3>
-              <button
-                onClick={() => setShowEmail(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-5 space-y-4">
-              <p className="text-sm text-gray-600">
-                Se enviará la factura <span className="font-semibold text-gray-900">{factura?.numero_factura}</span> al siguiente correo:
-              </p>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
-                  Correo electrónico
-                </label>
-                <input
-                  type="email"
-                  value={emailInput}
-                  onChange={e => { setEmailInput(e.target.value); setEmailErr('') }}
-                  placeholder="cliente@email.com"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
-                  autoFocus
-                  onKeyDown={e => e.key === 'Enter' && handleEnviarEmail()}
-                />
+        {/* Modal enviar email */}
+        {showEmail && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+                <h3 className="font-semibold text-ink flex items-center gap-2">
+                  <Send className="w-4 h-4 text-ink-2" />
+                  Enviar factura por email
+                </h3>
+                <button onClick={() => setShowEmail(false)} className="text-ink-2 hover:text-ink transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-
-              {emailErr && (
-                <div className="bg-red-50 text-red-700 px-3 py-2 rounded-lg text-sm">{emailErr}</div>
-              )}
-              {emailMsg && (
-                <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-2 rounded-lg text-sm">
-                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />{emailMsg}
+              <div className="p-5 space-y-4">
+                <p className="text-sm text-ink-2">
+                  Se enviará la factura{' '}
+                  <span className="font-semibold text-ink">{factura?.numero_factura}</span>{' '}
+                  al siguiente correo:
+                </p>
+                <div>
+                  <label className="block text-sm font-medium text-ink mb-1.5">
+                    Correo electrónico
+                  </label>
+                  <input
+                    type="email"
+                    value={emailInput}
+                    onChange={e => { setEmailInput(e.target.value); setEmailErr('') }}
+                    placeholder="cliente@email.com"
+                    className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                    autoFocus
+                    onKeyDown={e => e.key === 'Enter' && handleEnviarEmail()}
+                  />
                 </div>
-              )}
-
-              <div className="flex gap-2 pt-1">
-                <Button
-                  onClick={handleEnviarEmail}
-                  loading={emailMutation.isPending}
-                  className="flex-1"
-                >
-                  <Send className="w-4 h-4" />Enviar
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowEmail(false)}
-                  disabled={emailMutation.isPending}
-                >
-                  Cancelar
-                </Button>
+                {emailErr && (
+                  <div className="bg-red-50 text-danger px-3 py-2 rounded-lg text-sm border border-red-200">{emailErr}</div>
+                )}
+                {emailMsg && (
+                  <div className="flex items-center gap-2 bg-green-50 text-success px-3 py-2 rounded-lg text-sm border border-green-200">
+                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />{emailMsg}
+                  </div>
+                )}
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={handleEnviarEmail}
+                    disabled={emailMutation.isPending}
+                    className="flex-1 flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50"
+                  >
+                    <Send className="w-4 h-4" />
+                    {emailMutation.isPending ? 'Enviando...' : 'Enviar'}
+                  </button>
+                  <button
+                    onClick={() => setShowEmail(false)}
+                    disabled={emailMutation.isPending}
+                    className="border border-border hover:bg-surface-soft text-ink font-medium px-4 py-2.5 rounded-lg text-sm transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

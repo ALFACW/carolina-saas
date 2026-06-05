@@ -28,7 +28,7 @@ export function TicketImpresion({ venta, tenant, cliente, qzTray }) {
         densidad:       parseInt(localStorage.getItem('carolina_printer_densidad') || '6'),
         avancePapel:    parseInt(localStorage.getItem('carolina_printer_avance')   || '3'),
         modoCortePapel: localStorage.getItem('carolina_printer_corte') || 'completo',
-        modoDemo:       !tenant?.alegra_conectado,
+        modoDemo:       venta?.estado === 'demo',
       })
       await qzTray.imprimirTicket(cmds)
     } catch (err) {

@@ -25,7 +25,6 @@ export default function AbrirCaja() {
     queryKey: ['sesion-activa'],
     queryFn: cajasService.getSesionActiva,
     retry: false,
-    // 404 = sin sesión activa, no es error real
     throwOnError: false,
   })
 
@@ -78,8 +77,8 @@ export default function AbrirCaja() {
 
   if (loadingSesion) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-sm text-gray-400">Verificando turno...</div>
+      <div className="min-h-screen bg-surface-soft flex items-center justify-center">
+        <div className="text-sm text-ink-2">Verificando turno...</div>
       </div>
     )
   }
@@ -87,16 +86,21 @@ export default function AbrirCaja() {
   const usaMultiCaja = tenant?.modo_caja === 'multicaja' || cajas.length > 1
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-surface-soft flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-        <div>
-          <p className="text-base font-bold text-gray-900 tracking-tight">Carolina</p>
-          {tenant && <p className="text-xs text-gray-400">{tenant.nombre}</p>}
+      <header className="bg-white border-b border-border px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="w-9 h-9 rounded-full bg-accent flex items-center justify-center font-brand font-bold text-lg text-white">C</span>
+          <div>
+            <span className="font-brand font-semibold text-base text-ink flex items-center">
+              Carolina<span className="bg-accent text-white font-bold text-xs px-2 py-0.5 rounded-md ml-1.5">POS</span>
+            </span>
+            {tenant && <p className="text-xs text-ink-2">{tenant.nombre}</p>}
+          </div>
         </div>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-ink-2 hover:text-ink transition-colors"
         >
           <LogOut className="w-3.5 h-3.5" />
           Cerrar sesión
@@ -106,17 +110,18 @@ export default function AbrirCaja() {
       {/* Contenido */}
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md space-y-6">
+
           {/* Bienvenida */}
           <div className="text-center space-y-1">
-            <div className="w-14 h-14 bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-14 h-14 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-white text-xl font-bold">
                 {user?.nombre?.charAt(0)?.toUpperCase() || 'U'}
               </span>
             </div>
-            <h1 className="text-2xl font-semibold text-gray-900">
+            <h1 className="text-2xl font-semibold text-ink">
               Hola, {user?.nombre?.split(' ')[0] || 'usuario'}
             </h1>
-            <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
+            <div className="flex items-center justify-center gap-2 text-ink-2 text-sm">
               <Clock className="w-4 h-4" />
               <span>{horaFormateada} — {fechaFormateada}</span>
             </div>
@@ -124,43 +129,44 @@ export default function AbrirCaja() {
 
           {/* Caso: ya tiene sesión activa */}
           {sesionActiva && (sesionActiva.id || sesionActiva._id) ? (
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-4">
+            <div className="bg-white rounded-xl border border-border shadow-sm p-6 space-y-4">
               <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <CheckCircle className="w-5 h-5 text-success flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Tienes un turno abierto</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-sm font-semibold text-ink">Tienes un turno abierto</p>
+                  <p className="text-xs text-ink-2 mt-0.5">
                     Caja: {sesionActiva.caja?.nombre || 'Caja principal'} · Fondo: {COP(sesionActiva.fondo_inicial || 0)}
                   </p>
                 </div>
               </div>
-              <Button className="w-full" size="lg" onClick={() => navigate('/pos')}>
+              <button
+                onClick={() => navigate('/pos')}
+                className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-semibold px-4 py-3 rounded-lg text-sm transition-colors"
+              >
                 <ShoppingCart className="w-4 h-4" />
                 Ir al Punto de Venta
-              </Button>
+              </button>
             </div>
           ) : (
             /* Caso: abrir nuevo turno */
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+            <div className="bg-white rounded-xl border border-border shadow-sm p-6">
               <div className="mb-5">
-                <h2 className="text-sm font-semibold text-gray-900">Abrir turno de caja</h2>
-                <p className="text-xs text-gray-400 mt-1">
+                <h2 className="text-base font-semibold text-ink">Abrir turno de caja</h2>
+                <p className="text-xs text-ink-2 mt-1">
                   Ingresa el efectivo con el que inicias tu turno
                 </p>
               </div>
 
               <form onSubmit={handleAbrirCaja} className="space-y-4">
-                {/* Selector de caja (solo si multicaja) */}
+                {/* Selector de caja */}
                 {usaMultiCaja && cajas.length > 0 && (
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                      Caja
-                    </label>
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-medium text-ink">Caja</label>
                     <select
                       value={cajaId}
                       onChange={(e) => { setCajaId(e.target.value); setErrorCaja('') }}
-                      className={`w-full px-3 py-2 border text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 ${
-                        errorCaja ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-gray-300'
+                      className={`w-full px-3 py-2.5 border text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors ${
+                        errorCaja ? 'border-red-400 bg-red-50' : 'border-border hover:border-border-strong'
                       }`}
                     >
                       <option value="">Seleccionar caja...</option>
@@ -168,18 +174,16 @@ export default function AbrirCaja() {
                         <option key={c.id || c._id} value={c.id || c._id}>{c.nombre}</option>
                       ))}
                     </select>
-                    {errorCaja && <p className="text-xs text-red-500">{errorCaja}</p>}
+                    {errorCaja && <p className="text-xs text-danger">{errorCaja}</p>}
                   </div>
                 )}
 
                 {/* Fondo inicial */}
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                    Fondo inicial en efectivo
-                  </label>
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-ink">Fondo inicial en efectivo</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <DollarSign className="w-4 h-4 text-gray-400" />
+                      <DollarSign className="w-4 h-4 text-ink-2" />
                     </div>
                     <input
                       type="number"
@@ -188,32 +192,31 @@ export default function AbrirCaja() {
                       value={fondo}
                       onChange={(e) => { setFondo(e.target.value); setErrorFondo('') }}
                       placeholder="0"
-                      className={`w-full pl-9 pr-3 py-2 border text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 ${
-                        errorFondo ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-gray-300'
+                      className={`w-full pl-9 pr-3 py-2.5 border text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors ${
+                        errorFondo ? 'border-red-400 bg-red-50' : 'border-border hover:border-border-strong'
                       }`}
                     />
                   </div>
-                  {errorFondo && <p className="text-xs text-red-500">{errorFondo}</p>}
+                  {errorFondo && <p className="text-xs text-danger">{errorFondo}</p>}
                   {fondo && !isNaN(Number(fondo)) && (
-                    <p className="text-xs text-gray-400">{COP(Number(fondo))}</p>
+                    <p className="text-xs text-ink-2">{COP(Number(fondo))}</p>
                   )}
                 </div>
 
                 {abrirMutation.isError && (
-                  <p className="text-xs text-red-500">
+                  <p className="text-xs text-danger">
                     {abrirMutation.error?.response?.data?.message || 'Error al abrir la caja'}
                   </p>
                 )}
 
-                <Button
+                <button
                   type="submit"
-                  className="w-full"
-                  size="lg"
-                  loading={abrirMutation.isPending}
+                  disabled={abrirMutation.isPending}
+                  className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-semibold px-4 py-3 rounded-lg text-sm transition-colors disabled:opacity-50"
                 >
                   <ShoppingCart className="w-4 h-4" />
-                  Abrir mi caja
-                </Button>
+                  {abrirMutation.isPending ? 'Abriendo...' : 'Abrir mi caja'}
+                </button>
               </form>
             </div>
           )}

@@ -287,7 +287,7 @@ export default function POS() {
       soundSuccess()
       const snap = [...carrito]
       const ef   = metodoPago === 'efectivo' ? efectivoNum : 0
-      const modoDemo = !tenant?.alegra_conectado
+      const modoDemo = data.estado === 'demo'
 
       const ventaFinal = {
         ...data,
@@ -353,7 +353,7 @@ export default function POS() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-surface-soft">
 
       {/* ══ ÁREA IZQUIERDA: búsqueda + tabla ══ */}
       <div className="flex-1 flex flex-col min-w-0 p-4 gap-3">
@@ -362,21 +362,14 @@ export default function POS() {
         <div className="flex items-center gap-3">
           {/* Salir del POS */}
           <button onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors">
+            className="flex items-center gap-1.5 text-xs text-ink-2 hover:text-ink transition-colors">
             <ArrowLeft className="w-4 h-4" />Salir
           </button>
 
-          {/* Modo demo */}
-          {!tenant?.alegra_conectado && (
-            <span className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-              Modo demo — sin validez DIAN
-            </span>
-          )}
 
           {carrito.length > 0 && (
             <button onClick={limpiarCarrito}
-              className="ml-auto flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors">
+              className="ml-auto flex items-center gap-1 text-xs text-ink-2 hover:text-danger transition-colors">
               <Trash2 className="w-3.5 h-3.5" />Limpiar
             </button>
           )}
@@ -386,35 +379,35 @@ export default function POS() {
       <div className="flex items-center gap-3">
         {/* Campo de búsqueda / scanner */}
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-2" />
           <input
             ref={searchRef}
             type="text"
             value={searchText}
             onChange={e => { setSearchText(e.target.value); setDropdownOpen(true) }}
             onFocus={() => searchText.length > 0 && setDropdownOpen(true)}
-            className="w-full pl-9 pr-9 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 hover:border-gray-300"
+            className="w-full pl-9 pr-9 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent hover:border-border-strong transition-colors"
             placeholder="Buscar por nombre o código... (scanner automático)"
             autoComplete="off"
           />
           {/* Indicador cargando */}
           {buscando && (
-            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300 animate-spin" />
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-2 animate-spin" />
           )}
 
           {/* Dropdown resultados */}
           {dropdownOpen && searchDebounced && (
-            <div ref={dropdownRef} className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-md shadow-xl z-50 overflow-hidden">
+            <div ref={dropdownRef} className="absolute top-full left-0 right-0 mt-1 bg-white border border-border rounded-xl shadow-xl z-50 overflow-hidden">
               {productos.length === 0 && !buscando ? (
-                <div className="px-4 py-3 text-sm text-gray-400">
+                <div className="px-4 py-3 text-sm text-ink-2">
                   Sin resultados para <strong>"{searchDebounced}"</strong>
                 </div>
               ) : (
                 <>
                   {productos.length > 1 && (
-                    <div className="px-4 py-2 border-b border-gray-50 flex items-center justify-between">
-                      <p className="text-xs text-gray-400">{productos.length} resultados</p>
-                      <p className="text-xs text-gray-300">↑↓ navegar · Enter agregar</p>
+                    <div className="px-4 py-2 border-b border-border flex items-center justify-between">
+                      <p className="text-xs text-ink-2">{productos.length} resultados</p>
+                      <p className="text-xs text-ink-2">↑↓ navegar · Enter agregar</p>
                     </div>
                   )}
                   {productos.map((p, idx) => {
@@ -426,24 +419,24 @@ export default function POS() {
                         onClick={() => agregarDesdeResultado(p)}
                         disabled={sinStock}
                         className={`w-full text-left px-4 py-2.5 flex items-center justify-between gap-4 transition-colors ${
-                          activo ? 'bg-gray-900 text-white' : sinStock ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gray-50'
+                          activo ? 'bg-accent text-white' : sinStock ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-soft'
                         }`}
                       >
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium truncate ${activo ? 'text-white' : 'text-gray-900'}`}>
+                          <p className={`text-sm font-medium truncate ${activo ? 'text-white' : 'text-ink'}`}>
                             {p.nombre}
                           </p>
-                          <p className={`text-xs ${activo ? 'text-gray-300' : 'text-gray-400'}`}>
+                          <p className={`text-xs ${activo ? 'text-white/70' : 'text-ink-2'}`}>
                             {p.codigo && <span className="font-mono">{p.codigo} · </span>}
                             {sinStock ? 'Sin stock' : `${p.stock_actual} uds disponibles`}
                           </p>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className={`text-sm font-bold ${activo ? 'text-white' : 'text-gray-900'}`}>
+                          <p className={`text-sm font-bold ${activo ? 'text-white' : 'text-ink'}`}>
                             {COP(p.precio_venta)}
                           </p>
                           {p.impuesto_iva > 0 && (
-                            <p className={`text-xs ${activo ? 'text-gray-300' : 'text-gray-400'}`}>+{p.impuesto_iva}% IVA</p>
+                            <p className={`text-xs ${activo ? 'text-white/70' : 'text-ink-2'}`}>+{p.impuesto_iva}% IVA</p>
                           )}
                         </div>
                       </button>
@@ -458,14 +451,14 @@ export default function POS() {
         {/* Cliente */}
         <button
           onClick={() => setShowClienteModal(true)}
-          className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-md text-sm text-gray-500 hover:border-gray-400 hover:text-gray-800 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 border border-border rounded-lg text-sm text-ink-2 hover:border-border-strong hover:text-ink transition-colors"
         >
           <User className="w-3.5 h-3.5" />
           <span className="max-w-[160px] truncate">
-            {clienteSeleccionado ? clienteSeleccionado.nombre : <span className="text-gray-400">Consumidor final <span className="text-gray-300">F2</span></span>}
+            {clienteSeleccionado ? clienteSeleccionado.nombre : <span className="text-ink-2">Consumidor final <span className="text-ink-2/60">F2</span></span>}
           </span>
           {clienteSeleccionado && (
-            <span onClick={e => { e.stopPropagation(); setCliente(null) }} className="text-gray-300 hover:text-gray-600">
+            <span onClick={e => { e.stopPropagation(); setCliente(null) }} className="text-ink-2 hover:text-ink">
               <X className="w-3 h-3" />
             </span>
           )}
@@ -473,8 +466,8 @@ export default function POS() {
 
         {/* Feedback scanner */}
         {scanMsg && (
-          <span className={`text-xs font-medium px-3 py-1.5 rounded-md ${
-            scanMsg.tipo === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+          <span className={`text-xs font-medium px-3 py-1.5 rounded-lg ${
+            scanMsg.tipo === 'ok' ? 'bg-green-50 text-success' : 'bg-red-50 text-danger'
           }`}>
             {scanMsg.tipo === 'ok' ? '✓' : '✕'} {scanMsg.texto}
           </span>
@@ -483,9 +476,9 @@ export default function POS() {
       </div>
 
       {/* ── Tabla de items ── */}
-      <div className="flex-1 bg-white rounded-lg border border-gray-100 overflow-hidden flex flex-col min-h-0">
+      <div className="flex-1 bg-white rounded-xl border border-border overflow-hidden flex flex-col min-h-0">
         {/* Cabecera tabla */}
-        <div className="grid grid-cols-[2rem_1fr_8rem_10rem_8rem_2.5rem] gap-x-3 px-5 py-2.5 border-b border-gray-100 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <div className="grid grid-cols-[2rem_1fr_8rem_10rem_8rem_2.5rem] gap-x-3 px-5 py-2.5 border-b border-border text-xs font-semibold text-ink-2 uppercase tracking-wider bg-surface-soft">
           <span>#</span>
           <span>Producto</span>
           <span>Código</span>
@@ -497,7 +490,7 @@ export default function POS() {
         {/* Filas */}
         <div className="flex-1 overflow-y-auto">
           {carrito.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-300 py-16">
+            <div className="flex flex-col items-center justify-center h-full text-ink-2 py-16">
               <p className="text-sm">Escanea o busca un producto para comenzar</p>
             </div>
           ) : (
@@ -506,19 +499,19 @@ export default function POS() {
               return (
                 <div
                   key={item.producto_id}
-                  className="grid grid-cols-[2rem_1fr_8rem_10rem_8rem_2.5rem] gap-x-3 px-5 py-3 border-b border-gray-50 hover:bg-gray-50 items-center"
+                  className="grid grid-cols-[2rem_1fr_8rem_10rem_8rem_2.5rem] gap-x-3 px-5 py-3 border-b border-border hover:bg-surface-soft items-center transition-colors"
                 >
                   {/* # */}
-                  <span className="text-xs text-gray-300 font-medium">{idx + 1}</span>
+                  <span className="text-xs text-ink-2 font-medium">{idx + 1}</span>
 
                   {/* Nombre + precio unit */}
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{item.nombre}</p>
-                    <p className="text-xs text-gray-400">{COP(item.precio_unitario)} c/u</p>
+                    <p className="text-sm font-medium text-ink">{item.nombre}</p>
+                    <p className="text-xs text-ink-2">{COP(item.precio_unitario)} c/u</p>
                   </div>
 
                   {/* Código */}
-                  <span className="text-xs text-gray-400 font-mono">
+                  <span className="text-xs text-ink-2 font-mono">
                     {item.codigo || '—'}
                   </span>
 
@@ -526,23 +519,23 @@ export default function POS() {
                   <div className="flex items-center justify-center gap-2">
                     <button
                       onClick={() => actualizarCantidad(item.producto_id, item.cantidad - 1)}
-                      className="w-7 h-7 flex items-center justify-center border border-gray-200 rounded text-gray-500 hover:border-gray-900 hover:text-gray-900 transition-colors text-base leading-none"
+                      className="w-7 h-7 flex items-center justify-center border border-border rounded-lg text-ink-2 hover:border-accent hover:text-accent transition-colors text-base leading-none"
                     >−</button>
-                    <span className="text-sm font-semibold text-gray-900 w-8 text-center">{item.cantidad}</span>
+                    <span className="text-sm font-semibold text-ink w-8 text-center">{item.cantidad}</span>
                     <button
                       onClick={() => actualizarCantidad(item.producto_id, item.cantidad + 1)}
                       disabled={item.cantidad >= item.stock_actual}
-                      className="w-7 h-7 flex items-center justify-center border border-gray-200 rounded text-gray-500 hover:border-gray-900 hover:text-gray-900 transition-colors disabled:opacity-30 text-base leading-none"
+                      className="w-7 h-7 flex items-center justify-center border border-border rounded-lg text-ink-2 hover:border-accent hover:text-accent transition-colors disabled:opacity-30 text-base leading-none"
                     >+</button>
                   </div>
 
                   {/* Total fila */}
-                  <p className="text-sm font-bold text-gray-900 text-right">{COP(itemTotal)}</p>
+                  <p className="text-sm font-bold text-ink text-right">{COP(itemTotal)}</p>
 
                   {/* Eliminar */}
                   <button
                     onClick={() => removerItem(item.producto_id)}
-                    className="flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors"
+                    className="flex items-center justify-center text-ink-2 hover:text-danger transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -556,21 +549,21 @@ export default function POS() {
       </div>{/* fin área izquierda */}
 
       {/* ══ PANEL DERECHO: orden + totales + cobrar ══ */}
-      <div className="w-72 flex-shrink-0 bg-white border-l border-gray-100 flex flex-col">
+      <div className="w-72 flex-shrink-0 bg-white border-l border-border flex flex-col">
 
         {/* Cliente */}
-        <div className="px-4 py-3 border-b border-gray-100">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Cliente</p>
+        <div className="px-4 py-3 border-b border-border">
+          <p className="text-xs font-semibold text-ink-2 uppercase tracking-wider mb-1.5">Cliente</p>
           <button onClick={() => setShowClienteModal(true)}
-            className="w-full flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors">
+            className="w-full flex items-center gap-2 text-sm text-ink-2 hover:text-ink transition-colors">
             <User className="w-3.5 h-3.5 flex-shrink-0" />
             {clienteSeleccionado
-              ? <span className="font-medium text-gray-900 truncate">{clienteSeleccionado.nombre}</span>
-              : <span className="text-gray-400">Consumidor final <span className="text-gray-300">F2</span></span>
+              ? <span className="font-medium text-ink truncate">{clienteSeleccionado.nombre}</span>
+              : <span className="text-ink-2">Consumidor final <span className="text-ink-2/50">F2</span></span>
             }
             {clienteSeleccionado && (
               <span onClick={e => { e.stopPropagation(); setCliente(null) }}
-                className="ml-auto text-gray-300 hover:text-gray-600">
+                className="ml-auto text-ink-2 hover:text-ink">
                 <X className="w-3 h-3" />
               </span>
             )}
@@ -580,7 +573,7 @@ export default function POS() {
         {/* Resumen de items */}
         <div className="flex-1 overflow-y-auto px-4 py-3">
           {carrito.length === 0 ? (
-            <p className="text-xs text-gray-300 text-center py-8">Sin productos</p>
+            <p className="text-xs text-ink-2 text-center py-8">Sin productos</p>
           ) : (
             <div className="space-y-2">
               {carrito.map(item => {
@@ -588,10 +581,10 @@ export default function POS() {
                 return (
                   <div key={item.producto_id} className="flex items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-900 truncate">{item.nombre}</p>
-                      <p className="text-xs text-gray-400">{item.cantidad} × {COP(item.precio_unitario)}</p>
+                      <p className="text-xs font-medium text-ink truncate">{item.nombre}</p>
+                      <p className="text-xs text-ink-2">{item.cantidad} × {COP(item.precio_unitario)}</p>
                     </div>
-                    <p className="text-xs font-semibold text-gray-900 flex-shrink-0">{COP(itemTotal)}</p>
+                    <p className="text-xs font-semibold text-ink flex-shrink-0">{COP(itemTotal)}</p>
                   </div>
                 )
               })}
@@ -600,19 +593,19 @@ export default function POS() {
         </div>
 
         {/* Método de pago */}
-        <div className="border-t border-gray-100">
+        <div className="border-t border-border">
           <MetodoPago />
         </div>
 
         {/* Totales */}
-        <div className="px-4 py-3 border-t border-gray-100 space-y-1.5">
-          <div className="flex justify-between text-xs text-gray-400">
+        <div className="px-4 py-3 border-t border-border space-y-1.5">
+          <div className="flex justify-between text-xs text-ink-2">
             <span>Subtotal</span><span>{COP(subtotal)}</span>
           </div>
-          <div className="flex justify-between text-xs text-gray-400">
+          <div className="flex justify-between text-xs text-ink-2">
             <span>IVA</span><span>{COP(iva)}</span>
           </div>
-          <div className="flex justify-between text-sm font-bold text-gray-900 border-t border-gray-100 pt-2 mt-1">
+          <div className="flex justify-between text-sm font-bold text-ink border-t border-border pt-2 mt-1">
             <span>Total</span><span>{COP(total)}</span>
           </div>
         </div>
@@ -623,17 +616,12 @@ export default function POS() {
             onClick={() => carrito.length > 0 && setShowCobroModal(true)}
             disabled={carrito.length === 0}
             onKeyDown={e => { if (e.key === 'Enter' && !ventaMutation.isPending) setShowCobroModal(true) }}
-            className={`w-full py-3.5 rounded-md font-bold text-sm transition-colors disabled:opacity-30 text-white ${
-              tenant?.alegra_conectado ? 'bg-gray-900 hover:bg-gray-700' : 'bg-amber-500 hover:bg-amber-600'
-            }`}
+            className="w-full py-3.5 rounded-xl font-bold text-sm transition-colors disabled:opacity-30 text-white bg-accent hover:bg-accent/90"
           >
-            {tenant?.alegra_conectado ? 'Cobrar' : 'Cobrar (demo)'}
+            Cobrar
             {carrito.length > 0 && <span className="ml-2">{COP(total)}</span>}
             <span className="ml-2 opacity-40 font-normal text-xs">F3</span>
           </button>
-          {!tenant?.alegra_conectado && (
-            <p className="text-xs text-amber-600 text-center mt-1">Sin validez DIAN</p>
-          )}
         </div>
       </div>
 
@@ -641,21 +629,21 @@ export default function POS() {
       <Modal isOpen={showClienteModal} onClose={() => setShowClienteModal(false)} title="Seleccionar cliente">
         <div className="space-y-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-2" />
             <input autoFocus type="text" value={clienteSearch} onChange={e => setClienteSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
+              className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
               placeholder="Buscar por nombre o documento..." />
           </div>
           <button onClick={() => { setCliente(null); setShowClienteModal(false) }}
-            className="w-full py-2.5 border border-dashed border-gray-200 rounded-md text-sm text-gray-400 hover:border-gray-400 hover:text-gray-700 transition-colors">
+            className="w-full py-2.5 border border-dashed border-border rounded-lg text-sm text-ink-2 hover:border-border-strong hover:text-ink transition-colors">
             Consumidor final
           </button>
-          <div className="max-h-60 overflow-y-auto divide-y divide-gray-50">
+          <div className="max-h-60 overflow-y-auto divide-y divide-border">
             {clientesData?.clientes?.map(c => (
               <button key={c.id} onClick={() => { setCliente(c); setShowClienteModal(false) }}
-                className="w-full text-left px-3 py-2.5 hover:bg-gray-50 transition-colors">
-                <p className="text-sm font-medium text-gray-900">{c.nombre}</p>
-                <p className="text-xs text-gray-400">{c.tipo_documento}: {c.numero_documento}</p>
+                className="w-full text-left px-3 py-2.5 hover:bg-surface-soft transition-colors">
+                <p className="text-sm font-medium text-ink">{c.nombre}</p>
+                <p className="text-xs text-ink-2">{c.tipo_documento}: {c.numero_documento}</p>
               </button>
             ))}
           </div>
@@ -671,42 +659,42 @@ export default function POS() {
           }
         }}>
           <div className="text-center py-2">
-            <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Total</p>
-            <p className="text-4xl font-bold text-gray-900 tracking-tight">{COP(total)}</p>
-            {clienteSeleccionado && <p className="text-xs text-gray-400 mt-1">{clienteSeleccionado.nombre}</p>}
+            <p className="text-xs text-ink-2 uppercase tracking-wider mb-1">Total</p>
+            <p className="text-4xl font-bold text-ink tracking-tight">{COP(total)}</p>
+            {clienteSeleccionado && <p className="text-xs text-ink-2 mt-1">{clienteSeleccionado.nombre}</p>}
           </div>
 
           <MetodoPago />
 
           {metodoPago === 'efectivo' && (
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Efectivo recibido</label>
+              <label className="text-xs font-semibold text-ink-2 uppercase tracking-wider">Efectivo recibido</label>
               <input autoFocus type="number" value={efectivoRecibido} onChange={e => setEfectivoRecibido(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-md text-2xl font-bold text-center focus:outline-none focus:ring-1 focus:ring-gray-900"
+                className="w-full px-4 py-3 border border-border rounded-lg text-2xl font-bold text-center focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
                 placeholder="0" />
               {efectivoNum >= total && efectivoNum > 0 && (
-                <div className="flex justify-between text-sm font-semibold bg-gray-50 rounded-md px-4 py-2.5">
-                  <span className="text-gray-500">Vuelto</span>
-                  <span className="text-gray-900">{COP(vuelto)}</span>
+                <div className="flex justify-between text-sm font-semibold bg-surface-soft rounded-lg px-4 py-2.5">
+                  <span className="text-ink-2">Vuelto</span>
+                  <span className="text-ink">{COP(vuelto)}</span>
                 </div>
               )}
-              {efectivoInsuficiente && <p className="text-xs text-red-500 text-center">Monto insuficiente</p>}
+              {efectivoInsuficiente && <p className="text-xs text-danger text-center">Monto insuficiente</p>}
             </div>
           )}
 
           {errorVenta && (
-            <div className="flex items-start gap-2 bg-red-50 text-red-700 text-xs p-3 rounded-md">
+            <div className="flex items-start gap-2 bg-red-50 text-danger text-xs p-3 rounded-lg border border-red-200">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />{errorVenta}
             </div>
           )}
 
           <div className="flex gap-2 pt-1">
             <button onClick={() => { setShowCobroModal(false); setErrorVenta('') }}
-              className="flex-1 py-2.5 border border-gray-200 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50">
+              className="flex-1 py-2.5 border border-border rounded-lg text-sm font-medium text-ink hover:bg-surface-soft transition-colors">
               Cancelar
             </button>
             <button onClick={handleCobrar} disabled={ventaMutation.isPending || efectivoInsuficiente}
-              className="flex-1 bg-gray-900 text-white py-2.5 rounded-md text-sm font-semibold hover:bg-gray-700 disabled:opacity-40 flex items-center justify-center gap-2">
+              className="flex-1 bg-accent text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-accent/90 disabled:opacity-40 flex items-center justify-center gap-2 transition-colors">
               {ventaMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin" />Procesando...</> : 'Confirmar cobro'}
             </button>
           </div>
@@ -718,15 +706,15 @@ export default function POS() {
         {ventaResult && (
           <div className="text-center space-y-4 py-2">
             {/* Ícono y confirmación */}
-            <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
+            <CheckCircle2 className="w-12 h-12 text-success mx-auto" />
             <div>
-              <p className="text-lg font-bold text-gray-900">{COP(ventaResult.total)}</p>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-lg font-bold text-ink">{COP(ventaResult.total)}</p>
+              <p className="text-sm text-ink-2 mt-1">
                 {ventaResult.numero_factura ? `Factura ${ventaResult.numero_factura}` : 'Venta registrada'}
                 {qzTray.conectado && qzTray.impTermica && ' · Ticket impreso'}
               </p>
               {ventaResult.efectivo_recibido > 0 && (
-                <p className="text-base font-semibold text-gray-700 mt-2">
+                <p className="text-base font-semibold text-ink mt-2">
                   Vuelto: {COP(Math.max(0, ventaResult.efectivo_recibido - ventaResult.total))}
                 </p>
               )}
@@ -739,11 +727,11 @@ export default function POS() {
                 <button
                   onClick={async () => {
                     try {
-                      const cmds = buildTicket({ empresa: tenant || {}, venta: ventaResult, cliente: clienteSeleccionado, cajero: user?.nombre || '', modoDemo: !tenant?.alegra_conectado, W: parseInt(localStorage.getItem('carolina_printer_ancho') === '58' ? 32 : 48), densidad: qzTray.densidad, avancePapel: qzTray.avancePapel, modoCortePapel: qzTray.modoCortePapel, abrirGaveta: false })
+                      const cmds = buildTicket({ empresa: tenant || {}, venta: ventaResult, cliente: clienteSeleccionado, cajero: user?.nombre || '', modoDemo: ventaResult?.estado === 'demo', W: parseInt(localStorage.getItem('carolina_printer_ancho') === '58' ? 32 : 48), densidad: qzTray.densidad, avancePapel: qzTray.avancePapel, modoCortePapel: qzTray.modoCortePapel, abrirGaveta: false })
                       await qzTray.imprimirTicket(cmds)
                     } catch {}
                   }}
-                  className="flex-1 py-2 text-xs border border-gray-200 rounded-md text-gray-500 hover:bg-gray-50"
+                  className="flex-1 py-2 text-xs border border-border rounded-lg text-ink-2 hover:bg-surface-soft transition-colors"
                 >
                   Reimprimir ticket
                 </button>
@@ -751,7 +739,7 @@ export default function POS() {
               {/* Factura A4 */}
               <button
                 onClick={() => setVistaTicket(vistaTicket === 'a4' ? 'ticket' : 'a4')}
-                className="flex-1 py-2 text-xs border border-gray-200 rounded-md text-gray-500 hover:bg-gray-50"
+                className="flex-1 py-2 text-xs border border-border rounded-lg text-ink-2 hover:bg-surface-soft transition-colors"
               >
                 {vistaTicket === 'a4' ? 'Ocultar factura' : 'Ver factura A4'}
               </button>
@@ -759,7 +747,7 @@ export default function POS() {
 
             {/* Factura A4 expandible */}
             {vistaTicket === 'a4' && (
-              <div className="border-t pt-4">
+              <div className="border-t border-border pt-4">
                 <FacturaA4 venta={ventaResult} tenant={tenant} cliente={clienteSeleccionado} />
               </div>
             )}
@@ -767,7 +755,7 @@ export default function POS() {
             {/* Nueva venta */}
             <button
               onClick={() => { setShowTicketModal(false); setVistaTicket('ticket') }}
-              className="w-full bg-gray-900 text-white py-3 rounded-md font-semibold text-sm hover:bg-gray-700"
+              className="w-full bg-accent text-white py-3 rounded-xl font-semibold text-sm hover:bg-accent/90 transition-colors"
             >
               Nueva venta
             </button>

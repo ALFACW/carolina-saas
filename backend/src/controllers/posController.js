@@ -182,7 +182,7 @@ async function procesarVenta(req, res, next) {
         req.tenant.id,
         data.cliente_id || null,
         req.user.id,
-        factusId, // guardamos el número Factus en el campo alegra_id
+        factusId, // guardamos el número Factus en el campo factus_id (columna legacy alegra_id)
         numeroFactura,
         cufe,
         subtotal.toFixed(2),

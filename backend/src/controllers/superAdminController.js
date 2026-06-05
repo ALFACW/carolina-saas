@@ -13,9 +13,6 @@ const updateTenantSchema = z.object({
   plan:              z.enum(['starter', 'basico', 'profesional', 'empresarial']).optional(),
   estado:            z.enum(['activo', 'suspendido', 'cancelado']).optional(),
   modo_caja:         z.enum(['simple', 'multicaja']).optional(),
-  alegra_user:       z.string().optional().nullable(),
-  alegra_token:      z.string().optional().nullable(),
-  alegra_conectado:  z.boolean().optional(),
   nombre:            z.string().min(2).optional(),
   notas:             z.string().optional().nullable(),
 })
@@ -76,7 +73,7 @@ async function getTenants(req, res, next) {
       `SELECT
          t.id, t.nombre, t.nit, t.email, t.telefono, t.ciudad,
          t.plan, t.estado, t.modo_caja,
-         t.alegra_conectado, t.onboarding_completado,
+         t.onboarding_completado,
          t.fecha_creacion, t.fecha_actualizacion,
          (SELECT COUNT(*) FROM users u WHERE u.tenant_id = t.id AND u.activo = true)  AS usuarios_activos,
          (SELECT COUNT(*) FROM facturas f WHERE f.tenant_id = t.id)                   AS total_facturas,
@@ -107,7 +104,7 @@ async function getTenantById(req, res, next) {
     const [tenantRows, userRows, factRows] = await Promise.all([
       db.query(
         `SELECT id, nombre, nit, email, telefono, direccion, ciudad,
-                plan, estado, modo_caja, alegra_user, alegra_conectado,
+                plan, estado, modo_caja,
                 onboarding_completado, fecha_creacion, fecha_actualizacion
          FROM tenants WHERE id = $1`,
         [req.params.id]
@@ -139,7 +136,7 @@ async function getTenantById(req, res, next) {
   } catch (err) { next(err) }
 }
 
-// PUT /api/super-admin/tenants/:id — actualizar tenant (plan, estado, Alegra, etc.)
+// PUT /api/super-admin/tenants/:id — actualizar tenant (plan, estado, etc.)
 async function updateTenant(req, res, next) {
   try {
     const data = updateTenantSchema.parse(req.body)
@@ -147,12 +144,10 @@ async function updateTenant(req, res, next) {
     const values = []
     let idx = 2
 
-    if (data.plan             !== undefined) { updates.push(`plan = $${idx++}`);              values.push(data.plan) }
-    if (data.estado           !== undefined) { updates.push(`estado = $${idx++}`);            values.push(data.estado) }
-    if (data.modo_caja        !== undefined) { updates.push(`modo_caja = $${idx++}`);         values.push(data.modo_caja) }
-    if (data.nombre           !== undefined) { updates.push(`nombre = $${idx++}`);            values.push(data.nombre) }
-    if (data.alegra_user      !== undefined) { updates.push(`alegra_user = $${idx++}`);       values.push(data.alegra_user) }
-    if (data.alegra_conectado !== undefined) { updates.push(`alegra_conectado = $${idx++}`); values.push(data.alegra_conectado) }
+    if (data.plan             !== undefined) { updates.push(`plan = $${idx++}`);      values.push(data.plan) }
+    if (data.estado           !== undefined) { updates.push(`estado = $${idx++}`);   values.push(data.estado) }
+    if (data.modo_caja        !== undefined) { updates.push(`modo_caja = $${idx++}`); values.push(data.modo_caja) }
+    if (data.nombre           !== undefined) { updates.push(`nombre = $${idx++}`);   values.push(data.nombre) }
 
     if (!updates.length) return res.status(400).json({ error: 'Sin datos para actualizar' })
 
@@ -160,7 +155,7 @@ async function updateTenant(req, res, next) {
 
     const { rows } = await db.query(
       `UPDATE tenants SET ${updates.join(', ')} WHERE id = $1
-       RETURNING id, nombre, nit, email, plan, estado, modo_caja, alegra_conectado, onboarding_completado`,
+       RETURNING id, nombre, nit, email, plan, estado, modo_caja, onboarding_completado`,
       [req.params.id, ...values]
     )
     if (!rows.length) return res.status(404).json({ error: 'Tenant no encontrado' })
@@ -182,8 +177,7 @@ async function getEstadisticas(req, res, next) {
            COUNT(*)                                               AS total_tenants,
            COUNT(*) FILTER (WHERE estado = 'activo')             AS tenants_activos,
            COUNT(*) FILTER (WHERE estado = 'suspendido')         AS tenants_suspendidos,
-           COUNT(*) FILTER (WHERE fecha_creacion >= NOW() - INTERVAL '30 days') AS nuevos_30d,
-           COUNT(*) FILTER (WHERE alegra_conectado = true)       AS con_alegra
+           COUNT(*) FILTER (WHERE fecha_creacion >= NOW() - INTERVAL '30 days') AS nuevos_30d
          FROM tenants`
       ),
       db.query(

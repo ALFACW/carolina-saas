@@ -93,12 +93,13 @@ FRONTEND_URL=https://app.carolinapos.co
 
 1. **SQL pendiente** en Railway PostgreSQL:
    ```sql
-   UPDATE users SET username = 'concentradoscalarca' WHERE email = 'carlos@tiendademo.com';
+   UPDATE users SET username = 'concentradoscalarca' WHERE email = 'concentradoscalarca@gmail.com';
    ```
+   *(email actualizado por el usuario — era carlos@tiendademo.com)*
 
-2. **DNS app.carolinapos.co**: CNAME en registrador → Netlify + actualizar `FRONTEND_URL` Railway a `https://app.carolinapos.co`
+2. **DNS app.carolinapos.co**: ✅ CNAME → Netlify. `FRONTEND_URL` Railway pendiente actualizar a `https://app.carolinapos.co`
 
-3. **Landing page carolinapos.co**: ✅ Lista en subcarpeta `landing/`. Desplegar en Netlify con base dir `landing/` y conectar dominio `carolinapos.co`
+3. **Landing page carolinapos.co**: ✅ Desplegada en Cloudflare Pages → carolinapos.co
 
 4. **Emails Zoho Mail**: contacto@, soporte@, ventas@, noreply@carolinapos.co
 

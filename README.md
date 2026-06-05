@@ -1,6 +1,6 @@
 # Carolina — SaaS Facturación Electrónica DIAN
 
-SaaS multi-tenant de facturación electrónica para Colombia. Cada empresa conecta su propia cuenta Alegra para emitir facturas ante la DIAN.
+SaaS multi-tenant de facturación electrónica para Colombia. Emite facturas electrónicas ante la DIAN via Factus API.
 
 ## Stack
 
@@ -77,7 +77,6 @@ El frontend corre en `http://localhost:5173` con proxy hacia el backend en `:300
 | `REDIS_URL` | URL de conexión Redis |
 | `JWT_SECRET` | Secreto para firmar JWT (mínimo 32 chars) |
 | `ENCRYPTION_KEY` | Clave AES-256 en hex (64 chars) |
-| `ALEGRA_BASE_URL` | `https://api.alegra.com/api/v1` |
 | `FRONTEND_URL` | URL del frontend (para CORS) |
 | `PORT` | Puerto del servidor (default: 3000) |
 
@@ -106,12 +105,10 @@ npm run migrate && npm run seed
 
 - **Base de datos:** shared database, shared schema con columna `tenant_id`
 - **Aislamiento:** cada query filtra por `tenant_id` del usuario autenticado
-- **Credenciales Alegra:** encriptadas con AES-256-GCM por tenant, nunca expuestas al frontend
 - **Planes:** starter / básico / profesional / empresarial con límites por usuarios y ventas/día
 
 ## Flujo de onboarding
 
 1. Empresa se registra → crea tenant + usuario admin
-2. Se muestra wizard de 4 pasos para conectar su cuenta Alegra
-3. El sistema valida las credenciales contra la API de Alegra
-4. Si válidas: guarda token encriptado y habilita el POS y facturación
+2. Admin configura la empresa y empieza a operar
+3. La facturación electrónica se activa configurando Factus en las variables de entorno del servidor

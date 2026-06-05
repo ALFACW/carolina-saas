@@ -1,6 +1,6 @@
 # Carolina Backend
 
-Backend SaaS multi-tenant de facturación electrónica DIAN (Colombia) que usa la API de Alegra como proveedor autorizado.
+Backend SaaS multi-tenant de facturación electrónica DIAN (Colombia) que usa la API de Factus como proveedor autorizado.
 
 ## Stack
 
@@ -12,14 +12,14 @@ Backend SaaS multi-tenant de facturación electrónica DIAN (Colombia) que usa l
 - **Cifrado:** AES-256-GCM (crypto nativo de Node.js)
 - **Validación:** Zod
 - **Logging:** Winston
-- **API externa:** Alegra (facturación electrónica DIAN Colombia)
+- **API externa:** Factus (facturación electrónica DIAN Colombia)
 
 ## Requisitos
 
 - Node.js 20 o superior
 - PostgreSQL 14+
 - Redis 6+
-- Una cuenta en [Alegra](https://alegra.com) con acceso a la API
+- Credenciales de Factus API para facturación electrónica DIAN
 
 ## Instalación local
 
@@ -51,7 +51,6 @@ npm run dev
 | `JWT_SECRET` | Secreto para firmar tokens JWT (mín. 32 chars) | `una-cadena-larga-y-aleatoria` |
 | `JWT_EXPIRES_IN` | Duración del access token | `7d` |
 | `ENCRYPTION_KEY` | Clave de 64 chars hex para AES-256-GCM | `a1b2c3...` (32 bytes = 64 hex) |
-| `ALEGRA_BASE_URL` | Base URL de la API de Alegra | `https://api.alegra.com/api/v1` |
 | `FRONTEND_URL` | URL del frontend (CORS) | `https://app.tudominio.com` |
 | `NODE_ENV` | Entorno de ejecución | `production` o `development` |
 | `PORT` | Puerto del servidor | `3000` |
@@ -94,9 +93,7 @@ Las migraciones se ejecutan en orden numérico desde `src/db/migrations/`. Son i
 ### Onboarding (`/api/onboarding`)
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/estado` | Ver estado de conexión Alegra |
-| POST | `/alegra/validar` | Conectar cuenta de Alegra |
-| POST | `/alegra/desconectar` | Desconectar Alegra |
+| GET | `/estado` | Ver estado de onboarding del tenant |
 
 ### POS - Punto de Venta (`/api/pos`)
 | Método | Ruta | Descripción |
@@ -119,7 +116,7 @@ Las migraciones se ejecutan en orden numérico desde `src/db/migrations/`. Son i
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/` | Listar con búsqueda |
-| POST | `/` | Crear (sincroniza en Alegra si está conectado) |
+| POST | `/` | Crear cliente |
 | GET | `/:id` | Obtener por ID |
 | PUT | `/:id` | Actualizar |
 | DELETE | `/:id` | Eliminar |
@@ -129,7 +126,7 @@ Las migraciones se ejecutan en orden numérico desde `src/db/migrations/`. Son i
 |---|---|---|
 | GET | `/` | Listar con filtros |
 | GET | `/:id` | Detalle con ítems |
-| GET | `/:id/pdf` | URL del PDF desde Alegra |
+| GET | `/:id/pdf` | URL del PDF desde Factus |
 | POST | `/:id/anular` | Anular factura (crea nota crédito) |
 
 ### Reportes (`/api/reportes`)
@@ -174,8 +171,6 @@ Las migraciones se ejecutan en orden numérico desde `src/db/migrations/`. Son i
 
 ## Seguridad
 
-- Los tokens de Alegra se cifran con AES-256-GCM antes de guardarse en la base de datos
-- El token nunca se devuelve al frontend en ninguna respuesta
 - Cada query filtra por `tenant_id` para aislamiento de datos
 - Rate limiting de 100 req/min por IP
 - Headers de seguridad via Helmet

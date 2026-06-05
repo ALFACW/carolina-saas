@@ -33,11 +33,6 @@ export default function Clientes() {
     { key: 'email', label: 'Email' },
     { key: 'telefono', label: 'Teléfono' },
     { key: 'ciudad', label: 'Ciudad' },
-    { key: 'alegra_id', label: 'Alegra', render: v => v ? (
-      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Sincronizado</span>
-    ) : (
-      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">No sincronizado</span>
-    )},
     { key: 'acciones', label: '', render: (_, row) => (
       <div className="flex items-center gap-1">
         <Link to={`/clientes/${row.id}/editar`} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg"><Edit className="w-4 h-4" /></Link>

@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { CheckCircle2, Building2, CreditCard, Link2, Eye, EyeOff, Loader2, Printer, Zap, RefreshCw, Volume2, VolumeX } from 'lucide-react'
+import { CheckCircle2, Building2, CreditCard, Loader2, Printer, Zap, RefreshCw, Volume2, VolumeX } from 'lucide-react'
 import { useTenant } from '../hooks/useTenant'
-import { onboardingService } from '../services/onboarding'
 import { useQZTray } from '../hooks/useQZTray'
 import { useSounds, TONOS_SCANNER } from '../hooks/useSounds'
 import { Button } from '../components/Common/Button'
@@ -20,11 +19,6 @@ export default function Configuracion() {
   const [volumen,      setVolumen]      = useState(() => sounds.getVolumen())
   const [tonoId,       setTonoId]       = useState(() => sounds.getTonoId())
   const [msg, setMsg] = useState('')
-  const [alegraUser, setAlegraUser] = useState('')
-  const [alegraToken, setAlegraToken] = useState('')
-  const [showToken, setShowToken] = useState(false)
-  const [alegraMsg, setAlegraMsg] = useState('')
-  const [alegraError, setAlegraError] = useState('')
 
   const { register, handleSubmit } = useForm({ values: tenant })
 
@@ -35,18 +29,6 @@ export default function Configuracion() {
       // Sincronizar sidebar y header con los nuevos datos
       updateTenant({ ...authTenant, ...data })
     },
-  })
-
-  const alegraM = useMutation({
-    mutationFn: () => onboardingService.validarAlegra(alegraUser, alegraToken),
-    onSuccess: (data) => {
-      setAlegraMsg(data.mensaje)
-      setAlegraError('')
-      updateTenant({ alegra_conectado: true })
-      setAlegraUser('')
-      setAlegraToken('')
-    },
-    onError: (err) => setAlegraError(err.response?.data?.error || 'Error al conectar con Alegra'),
   })
 
   const usoPct = (uso, max) => max === 999 ? 0 : Math.min(100, Math.round((uso / max) * 100))
@@ -171,67 +153,6 @@ export default function Configuracion() {
             ))}
           </div>
         )}
-      </div>
-
-      {/* Integración Alegra — solo visible para admin */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
-        <div className="flex items-center gap-3 mb-2">
-          <Link2 className="w-5 h-5 text-gray-400" />
-          <h2 className="font-semibold text-gray-900">Integración Alegra (facturación DIAN)</h2>
-          {authTenant?.alegra_conectado && (
-            <span className="ml-auto flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full">
-              <CheckCircle2 className="w-3 h-3" />Activa
-            </span>
-          )}
-        </div>
-        <p className="text-sm text-gray-500 mb-5">
-          Incluida en tu plan. Ingresa las credenciales que te asignó el equipo de Carolina para activar la facturación electrónica de esta empresa.
-        </p>
-
-        {alegraMsg && (
-          <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm mb-4">
-            <CheckCircle2 className="w-4 h-4" />{alegraMsg}
-          </div>
-        )}
-        {alegraError && (
-          <div className="bg-red-50 text-red-700 px-4 py-3 rounded-xl text-sm mb-4">{alegraError}</div>
-        )}
-
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Usuario Alegra</label>
-            <input
-              type="email"
-              value={alegraUser}
-              onChange={e => setAlegraUser(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="usuario@alegra.com"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Token Alegra</label>
-            <div className="relative">
-              <input
-                type={showToken ? 'text' : 'password'}
-                value={alegraToken}
-                onChange={e => setAlegraToken(e.target.value)}
-                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="token-de-alegra"
-              />
-              <button type="button" onClick={() => setShowToken(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-          <Button
-            onClick={() => alegraM.mutate()}
-            disabled={!alegraUser || !alegraToken}
-            loading={alegraM.isPending}
-          >
-            {alegraM.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-            Guardar y validar credenciales
-          </Button>
-        </div>
       </div>
 
       {/* ── Hardware de caja ── */}

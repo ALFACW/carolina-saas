@@ -112,7 +112,7 @@ export function buildTicketHTML({ empresa, venta, cliente, modoDemo = false, anc
   <div class="sep"></div>
   <div class="center">
     <div class="bold">${modoDemo ? '*** SIN VALIDEZ DIAN ***' : '!Gracias por su compra!'}</div>
-    <div style="font-size:9px;">${modoDemo ? 'Conecta Alegra para facturar legal' : 'Factura valida ante la DIAN'}</div>
+    <div style="font-size:9px;">${modoDemo ? 'Modo demo — sin validez DIAN' : 'Factura valida ante la DIAN'}</div>
   </div>
 </body>
 </html>`

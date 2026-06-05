@@ -1,7 +1,5 @@
 const { z } = require('zod');
 const db = require('../db');
-const { decrypt } = require('../lib/crypto');
-const AlegraClient = require('../lib/alegra');
 const logger = require('../lib/logger');
 
 const clienteSchema = z.object({
@@ -51,20 +49,6 @@ async function create(req, res, next) {
       [req.tenant.id, data.tipo_documento, data.numero_documento, data.nombre, data.email || null, data.telefono || null, data.direccion || null, data.ciudad || null]
     );
     const cliente = rows[0];
-
-    if (req.tenant.alegra_conectado && req.tenant.alegra_token_encrypted) {
-      try {
-        const token = decrypt(req.tenant.alegra_token_encrypted);
-        const alegra = new AlegraClient(req.tenant.alegra_user, token);
-        const contacto = await alegra.crearContacto(data);
-        if (contacto?.id) {
-          await db.query('UPDATE clientes SET alegra_id = $1 WHERE id = $2', [String(contacto.id), cliente.id]);
-          cliente.alegra_id = String(contacto.id);
-        }
-      } catch (alegraErr) {
-        logger.warn('No se pudo sincronizar cliente con Alegra', { error: alegraErr.message, cliente_id: cliente.id });
-      }
-    }
 
     res.status(201).json(cliente);
   } catch (err) { next(err); }

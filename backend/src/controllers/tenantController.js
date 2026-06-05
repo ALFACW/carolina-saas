@@ -5,7 +5,7 @@ const logger = require('../lib/logger');
 async function getMe(req, res, next) {
   try {
     const { rows } = await db.query(
-      'SELECT id, nombre, nit, email, telefono, direccion, ciudad, plan, estado, alegra_conectado, onboarding_completado, fecha_creacion FROM tenants WHERE id = $1',
+      'SELECT id, nombre, nit, email, telefono, direccion, ciudad, plan, estado, onboarding_completado, fecha_creacion FROM tenants WHERE id = $1',
       [req.tenant.id]
     );
     res.json(rows[0]);
