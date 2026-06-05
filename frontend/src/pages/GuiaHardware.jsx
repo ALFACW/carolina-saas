@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { CheckCircle2, Download, Printer, Zap, Monitor, AlertTriangle, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
+import { CheckCircle2, Download, Printer, Zap, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
 
 const Step = ({ num, title, children, done }) => {
   const [open, setOpen] = useState(true)
@@ -89,20 +89,34 @@ export default function GuiaHardware() {
         </div>
 
         {/* Pasos */}
-        <Step num="1" title="Descarga e instala QZ Tray">
+        <Step num="1" title="Instala el servidor de impresión de CarolinaPOS">
           <div className="space-y-3 mt-3 text-sm text-ink-2">
             <p>
-              QZ Tray es un programa gratuito que permite que CarolinaPOS se comunique
-              directamente con tu impresora y gaveta.
+              CarolinaPOS necesita un pequeño programa en tu computador para enviar
+              comandos directamente a la impresora y a la gaveta de dinero.
+              La instalación es automática y tarda menos de 2 minutos.
             </p>
             <ol className="space-y-2 list-decimal list-inside text-ink-2">
-              <li>Entra a <Code>qz.io</Code> desde tu navegador</li>
-              <li>Haz clic en <strong className="text-ink">"Download"</strong> y descarga la versión para Windows</li>
-              <li>Ejecuta el instalador (<Code>.exe</Code>) y sigue los pasos</li>
-              <li>Al terminar QZ Tray se inicia automáticamente en segundo plano</li>
+              <li>
+                Descarga el instalador:{' '}
+                <a href="/instalar.bat" download="instalar.bat"
+                  className="text-accent font-semibold underline hover:no-underline inline-flex items-center gap-1">
+                  <Download className="w-3.5 h-3.5" />
+                  instalar.bat
+                </a>
+              </li>
+              <li>Haz doble clic en el archivo descargado</li>
+              <li>Si Windows pregunta si deseas ejecutarlo, haz clic en <strong className="text-ink">"Ejecutar de todas formas"</strong></li>
+              <li>El programa se instala solo y queda activo en segundo plano</li>
             </ol>
-            <Ok>Sabes que está corriendo cuando ves el icono <strong>QZ</strong> en la barra de tareas (esquina inferior derecha).</Ok>
-            <Tip>Si Windows muestra una advertencia de "publicador desconocido", haz clic en "Más información" y luego "Ejecutar de todas formas". Es seguro.</Tip>
+            <Ok>
+              El servidor arranca automáticamente cada vez que enciendes el computador.
+              No necesitas abrirlo manualmente.
+            </Ok>
+            <Tip>
+              Si Windows muestra "Windows protegió tu PC", haz clic en "Más información"
+              y luego "Ejecutar de todas formas". Es seguro — es un script de instalación de CarolinaPOS.
+            </Tip>
           </div>
         </Step>
 
@@ -125,13 +139,15 @@ export default function GuiaHardware() {
             <ol className="space-y-2 list-decimal list-inside">
               <li>Abre CarolinaPOS en Chrome o Edge</li>
               <li>Ve a <strong className="text-ink">Configuración → Hardware de caja</strong></li>
-              <li>Haz clic en <strong className="text-ink">"Conectar QZ Tray"</strong></li>
-              <li>Aparecerá un popup — haz clic en <strong className="text-ink">"Permitir"</strong> y marca <strong className="text-ink">"Recordar esta decisión"</strong></li>
-              <li>Selecciona tu impresora en la lista</li>
+              <li>El estado debe mostrar <strong className="text-ink">Servidor activo</strong> en verde</li>
+              <li>En el desplegable selecciona tu impresora térmica</li>
               <li>Elige el ancho del papel (58mm o 80mm)</li>
-              <li>Haz clic en <strong className="text-ink">"Imprimir página de prueba"</strong></li>
+              <li>Haz clic en <strong className="text-ink">"Prueba"</strong> para imprimir un ticket de prueba</li>
             </ol>
             <Ok>Si sale el ticket de prueba, todo está correctamente configurado.</Ok>
+            <Tip>
+              Si el estado muestra "Sin servidor", vuelve al Paso 1 y ejecuta <Code>instalar.bat</Code> de nuevo.
+            </Tip>
           </div>
         </Step>
 
@@ -149,62 +165,18 @@ export default function GuiaHardware() {
           </div>
         </Step>
 
-        <Step num="5" title="Instala el certificado de CarolinaPOS (elimina el popup)">
-          <div className="space-y-3 mt-3 text-sm text-ink-2">
-            <p>
-              Sin este paso QZ Tray pedirá permiso cada vez que abras CarolinaPOS.
-              Instalar el certificado lo elimina para siempre.
-            </p>
-            <ol className="space-y-2 list-decimal list-inside">
-              <li>
-                Descarga el certificado:{' '}
-                <a href="/api/qz/certificate" download="carolinapos-qz.pem"
-                  className="text-accent font-semibold underline hover:no-underline inline-flex items-center gap-1">
-                  <Download className="w-3.5 h-3.5" />
-                  carolinapos-qz.pem
-                </a>
-              </li>
-              <li>Abre el Explorador de archivos de Windows</li>
-              <li>
-                Navega a:{' '}
-                <Code>C:\Users\TU_USUARIO\AppData\Roaming\qz</Code>
-              </li>
-              <li>Copia el archivo <strong className="text-ink">carolinapos-qz.pem</strong> dentro de esa carpeta</li>
-              <li>Reinicia QZ Tray (clic derecho en el icono → Exit, luego ábrelo de nuevo)</li>
-            </ol>
-            <Ok>Desde ahora CarolinaPOS se conecta automáticamente sin ningún popup.</Ok>
-            <Tip>
-              La carpeta AppData está oculta. Para verla: en el Explorador escribe{' '}
-              <Code>%APPDATA%\qz</Code>{' '}
-              en la barra de direcciones y presiona Enter.
-            </Tip>
-          </div>
-        </Step>
-
-        <Step num="6" title="Configura inicio automático de QZ Tray">
-          <div className="space-y-3 mt-3 text-sm text-ink-2">
-            <p>Para que QZ Tray arranque solo al encender el computador:</p>
-            <ol className="space-y-2 list-decimal list-inside">
-              <li>Haz clic derecho en el icono de QZ Tray en la barra de tareas</li>
-              <li>Selecciona <strong className="text-ink">"Auto start"</strong> o <strong className="text-ink">"Start automatically"</strong></li>
-              <li>Marca la opción para que inicie con Windows</li>
-            </ol>
-            <Ok>Así no tendrás que abrir QZ Tray manualmente cada vez que enciendes el computador.</Ok>
-          </div>
-        </Step>
-
         {/* Problemas comunes */}
         <div className="bg-white rounded-xl border border-border shadow-sm p-6">
           <h2 className="font-semibold text-ink mb-5">Solución de problemas comunes</h2>
           <div className="space-y-5 text-sm">
             {[
               {
-                p: 'CarolinaPOS dice "QZ Tray desconectado"',
-                s: 'Verifica que el icono de QZ Tray aparece en la barra de tareas. Si no, abre QZ Tray manualmente desde el menú de inicio.',
+                p: 'CarolinaPOS dice "Sin servidor"',
+                s: 'Ejecuta instalar.bat de nuevo. Si el problema persiste, abre el Administrador de tareas y verifica que "pythonw.exe" esté en la lista de procesos.',
               },
               {
                 p: 'No aparece mi impresora en la lista',
-                s: 'Asegúrate de que la impresora está encendida y conectada. Luego haz clic en "Reconectar" en Configuración → Hardware.',
+                s: 'Asegúrate de que la impresora está encendida y conectada. Luego haz clic en el botón de actualizar (ícono ↻) junto al desplegable.',
               },
               {
                 p: 'El ticket sale cortado o con caracteres extraños',
@@ -212,7 +184,7 @@ export default function GuiaHardware() {
               },
               {
                 p: 'La gaveta no se abre',
-                s: 'La gaveta se abre automáticamente al cobrar una venta. Verifica que el cable RJ11 está bien conectado entre gaveta e impresora.',
+                s: 'La gaveta se abre automáticamente al cobrar una venta. Verifica que el cable RJ11 está bien conectado entre gaveta e impresora. Prueba cambiando el "Puerto del cable" entre Pin 2 y Pin 5 en Configuración.',
               },
               {
                 p: 'El escáner no hace nada al escanear',

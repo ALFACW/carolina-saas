@@ -13,7 +13,6 @@
     "axios": "^1.6.2",
     "lucide-react": "^0.292.0",
     "qrcode.react": "^4.2.0",
-    "qz-tray": "^2.2.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.48.2",

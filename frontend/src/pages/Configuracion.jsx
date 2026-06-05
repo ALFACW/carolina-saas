@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { CheckCircle2, Building2, CreditCard, Loader2, Printer, Zap, RefreshCw, Volume2, VolumeX } from 'lucide-react'
+import { CheckCircle2, Building2, CreditCard, Loader2, Printer, Zap, RefreshCw, Volume2, VolumeX, Download } from 'lucide-react'
 import { useTenant } from '../hooks/useTenant'
 import { useLocalPrint } from '../hooks/useLocalPrint'
 import { useSounds, TONOS_SCANNER } from '../hooks/useSounds'
@@ -174,13 +174,14 @@ export default function Configuracion() {
 
       {/* ── Hardware de caja ── */}
       <div className="bg-white rounded-xl border border-border p-6 space-y-6">
-        {/* Encabezado con estado QZ Tray */}
+        {/* Encabezado con estado servidor */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Printer className="w-5 h-5 text-ink-2" />
             <h2 className="font-semibold text-ink">Hardware de caja</h2>
           </div>
           <div className="flex items-center gap-2">
+            <a href="/guia-hardware" target="_blank" className="text-xs text-ink-2 hover:text-ink underline">Ver guía</a>
             {qz.estado === 'conectado'    && <span className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium flex items-center gap-1"><Zap className="w-3 h-3" />Servidor activo</span>}
             {qz.estado === 'desconectado' && <span className="text-xs bg-surface-soft text-ink-2 px-2.5 py-1 rounded-full font-medium">Sin servidor</span>}
             {qz.estado === 'error'        && <span className="text-xs bg-red-50 text-red-600 px-2.5 py-1 rounded-full font-medium">Sin servidor</span>}
@@ -199,10 +200,16 @@ export default function Configuracion() {
               <li>El servidor se instala y queda activo automáticamente</li>
             </ol>
             {qz.errorMsg && <p className="text-red-600 text-xs">{qz.errorMsg}</p>}
-            <button onClick={qz.conectar}
-              className="inline-flex items-center gap-2 bg-amber-700 text-white text-xs px-4 py-2 rounded-md hover:bg-amber-800 font-medium">
-              <RefreshCw className="w-3.5 h-3.5" />Verificar conexión
-            </button>
+            <div className="flex gap-2 flex-wrap">
+              <a href="/instalar.bat" download="instalar.bat"
+                className="inline-flex items-center gap-2 bg-amber-700 text-white text-xs px-4 py-2 rounded-md hover:bg-amber-800 font-medium">
+                <Download className="w-3.5 h-3.5" />Descargar instalar.bat
+              </a>
+              <button onClick={qz.conectar}
+                className="inline-flex items-center gap-2 bg-white border border-amber-300 text-amber-800 text-xs px-4 py-2 rounded-md hover:bg-amber-50 font-medium">
+                <RefreshCw className="w-3.5 h-3.5" />Verificar conexión
+              </button>
+            </div>
           </div>
         )}
 

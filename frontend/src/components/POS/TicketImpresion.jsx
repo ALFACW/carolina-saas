@@ -14,7 +14,6 @@ export function TicketImpresion({ venta, tenant, cliente, qzTray }) {
   const [imprimiendo, setImprimiendo] = useState(false)
   const logo = localStorage.getItem('carolina_logo') || null
 
-  // Imprimir directo via QZ Tray (térmica + gaveta)
   const handleImprimirQZ = async () => {
     setImprimiendo(true)
     try {
@@ -200,7 +199,6 @@ export function TicketImpresion({ venta, tenant, cliente, qzTray }) {
 
       {/* Botones imprimir */}
       <div className="flex gap-2 mt-4 justify-center">
-        {/* QZ Tray — impresión directa + gaveta */}
         {qzTray?.conectado && qzTray?.impTermica ? (
           <button
             onClick={handleImprimirQZ}
@@ -221,10 +219,9 @@ export function TicketImpresion({ venta, tenant, cliente, qzTray }) {
         )}
       </div>
 
-      {/* Aviso si QZ Tray no está instalado */}
       {(!qzTray?.conectado) && (
         <p className="text-center text-xs text-gray-400 mt-2">
-          Instala <a href="https://qz.io" target="_blank" rel="noreferrer" className="underline hover:text-gray-600">QZ Tray</a> para impresión directa y apertura automática del cajón
+          Para impresión directa instala el servidor desde <strong>Configuración → Hardware</strong>
         </p>
       )}
     </div>
