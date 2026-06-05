@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { AlertCircle, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff, ChevronLeft, ChevronRight, Zap } from 'lucide-react'
 
 const SLIDES = [
   { icon: '🏪', title: 'Punto de Venta', desc: 'Escanea productos, cobra al instante y actualiza inventario automáticamente.' },
@@ -66,8 +66,11 @@ export default function Login() {
         <div style={{ padding: 'clamp(32px,5vw,56px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', overflowY: 'auto', background: '#fff' }}>
 
           {/* Logo */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', marginBottom: '36px' }}>
-            <img src="/brand/logo-lockup.svg" alt="CarolinaPOS" style={{ height: '36px', width: 'auto' }} />
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '36px' }}>
+            <div style={{ width: '40px', height: '40px', background: '#2563eb', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Zap size={22} color="#fff" />
+            </div>
+            <span style={{ fontSize: '20px', fontWeight: 700, color: '#111827', letterSpacing: '-0.02em' }}>Carolina</span>
           </Link>
 
           <h1 style={{ fontSize: 'clamp(26px,3vw,32px)', fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '8px', color: '#15151a' }}>
