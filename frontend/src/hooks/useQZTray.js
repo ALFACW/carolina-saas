@@ -120,6 +120,8 @@ export function useQZTray() {
 
     const marcarConectado = async () => {
       setEstado('conectado')
+      // Pequeña espera para que QZ Tray enumere impresoras antes de pedirlas
+      await new Promise(r => setTimeout(r, 800))
       try {
         const lista = await qz.printers.find()
         setImpresoras(Array.isArray(lista) ? lista : (lista ? [lista] : []))
@@ -171,7 +173,7 @@ export function useQZTray() {
   // ── Refrescar lista de impresoras sin reconectar ───────
   const buscarImpresoras = useCallback(async () => {
     const qz = await getQZ()
-    if (!qz?.websocket.isActive()) return
+    if (!qz) return
     try {
       const lista = await qz.printers.find()
       setImpresoras(Array.isArray(lista) ? lista : (lista ? [lista] : []))
