@@ -36,7 +36,7 @@ async function updateMe(req, res, next) {
 
 async function changePlan(req, res, next) {
   try {
-    const { plan } = z.object({ plan: z.enum(['starter', 'basico', 'profesional', 'empresarial']) }).parse(req.body);
+    const { plan } = z.object({ plan: z.enum(['basico', 'profesional', 'empresarial']) }).parse(req.body);
     await db.query('UPDATE tenants SET plan = $1, fecha_actualizacion = NOW() WHERE id = $2', [plan, req.tenant.id]);
     logger.info('Plan cambiado', { tenant_id: req.tenant.id, plan });
     res.json({ mensaje: `Plan actualizado a ${plan}`, plan });

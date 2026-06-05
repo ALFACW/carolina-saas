@@ -11,7 +11,7 @@ const registerSchema = z.object({
     email: z.string().email(),
     telefono: z.string().optional(),
     ciudad: z.string().optional(),
-    plan: z.enum(['starter', 'basico', 'profesional', 'empresarial']).default('starter'),
+    plan: z.enum(['basico', 'profesional', 'empresarial']).default('basico'),
   }),
   admin: z.object({
     nombre: z.string().min(2),

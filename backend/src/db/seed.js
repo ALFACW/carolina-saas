@@ -6,10 +6,9 @@ async function seed() {
   logger.info('Ejecutando seed...');
 
   const planes = [
-    { tipo_plan: 'starter',     max_usuarios: 1,   max_cajas: 1,   max_bodegas: 1,   max_ventas_dia: 30,  precio_mensual: 129000 },
-    { tipo_plan: 'basico',      max_usuarios: 3,   max_cajas: 3,   max_bodegas: 3,   max_ventas_dia: 100, precio_mensual: 179000 },
-    { tipo_plan: 'profesional', max_usuarios: 10,  max_cajas: 999, max_bodegas: 999, max_ventas_dia: 300, precio_mensual: 279000 },
-    { tipo_plan: 'empresarial', max_usuarios: 999, max_cajas: 999, max_bodegas: 999, max_ventas_dia: 800, precio_mensual: 489000 },
+    { tipo_plan: 'basico',      max_usuarios: 3,   max_cajas: 2,   max_bodegas: 1,   max_ventas_dia: 200, precio_mensual: 189000 },
+    { tipo_plan: 'profesional', max_usuarios: 10,  max_cajas: 999, max_bodegas: 999, max_ventas_dia: 500, precio_mensual: 299000 },
+    { tipo_plan: 'empresarial', max_usuarios: 999, max_cajas: 999, max_bodegas: 999, max_ventas_dia: 999, precio_mensual: 549000 },
   ];
 
   for (const plan of planes) {

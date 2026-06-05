@@ -4,10 +4,9 @@ import { useAuth } from '../context/AuthContext'
 import { AlertCircle, CheckCircle2 } from 'lucide-react'
 
 const PLANES = [
-  { id: 'starter', nombre: 'Starter', precio: '$129.000/mes', desc: '1 usuario · 30 ventas/día' },
-  { id: 'basico', nombre: 'Básico', precio: '$179.000/mes', desc: '3 usuarios · 100 ventas/día' },
-  { id: 'profesional', nombre: 'Profesional', precio: '$279.000/mes', desc: '10 usuarios · 300 ventas/día', popular: true },
-  { id: 'empresarial', nombre: 'Empresarial', precio: '$489.000/mes', desc: 'Usuarios ilimitados · 800 ventas/día' },
+  { id: 'basico',      nombre: 'Básico',       precio: '$189.000/mes', desc: '3 usuarios · 2 cajas · 200 ventas/día' },
+  { id: 'profesional', nombre: 'Profesional',  precio: '$299.000/mes', desc: '10 usuarios · cajas ilimitadas · 500 ventas/día', popular: true },
+  { id: 'empresarial', nombre: 'Empresarial',  precio: '$549.000/mes', desc: 'Usuarios ilimitados · todo ilimitado' },
 ]
 
 export default function Register() {
@@ -17,7 +16,7 @@ export default function Register() {
   const { register } = useAuth()
   const navigate = useNavigate()
 
-  const [empresa, setEmpresa] = useState({ nombre: '', nit: '', email: '', telefono: '', ciudad: '', plan: 'profesional' })
+  const [empresa, setEmpresa] = useState({ nombre: '', nit: '', email: '', telefono: '', ciudad: '', plan: 'basico' })
   const [admin, setAdmin] = useState({ nombre: '', email: '', password: '' })
 
   const handleSubmit = async (e) => {

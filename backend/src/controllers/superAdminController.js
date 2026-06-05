@@ -10,7 +10,7 @@ const loginSchema = z.object({
 })
 
 const updateTenantSchema = z.object({
-  plan:              z.enum(['starter', 'basico', 'profesional', 'empresarial']).optional(),
+  plan:              z.enum(['basico', 'profesional', 'empresarial']).optional(),
   estado:            z.enum(['activo', 'suspendido', 'cancelado']).optional(),
   modo_caja:         z.enum(['simple', 'multicaja']).optional(),
   nombre:            z.string().min(2).optional(),
