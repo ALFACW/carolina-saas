@@ -8,7 +8,7 @@ import { Input } from '../components/Common/Input'
 import api from '../services/api'
 
 export default function MiPerfil() {
-  const { user, updateTenant } = useAuth()
+  const { user, updateTenant, updateUser } = useAuth()
   const qc = useQueryClient()
   const [msgPerfil, setMsgPerfil] = useState('')
   const [msgPass, setMsgPass] = useState('')
@@ -29,8 +29,9 @@ export default function MiPerfil() {
       const { data: res } = await api.put('/api/auth/perfil', data)
       return res
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       setMsgPerfil('Perfil actualizado correctamente')
+      updateUser({ nombre: variables.nombre, email: variables.email })
       qc.invalidateQueries({ queryKey: ['tenant-me'] })
       setTimeout(() => setMsgPerfil(''), 3000)
     },

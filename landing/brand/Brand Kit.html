@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CarolinaPOS — Guía de marca</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Grotesk:wght@500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#111111; --bg:#fff; --bg-soft:#f9f9f9; --border:#e8e8ea; --border-strong:#dcdce0;
+    --text:#15151a; --text-2:#565660; --text-3:#8a8a93; --on-dark:#f4f4f6; --on-dark-2:#a9a9b4;
+    --accent:#1e3a8a; --accent-bright:#4f74e0; --accent-soft:#eef1fb;
+    --font:"DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --font-display:"Space Grotesk","DM Sans",sans-serif;
+    --mono:"DM Mono",ui-monospace,Menlo,monospace;
+    --radius:16px; --shadow:0 10px 30px -12px rgba(17,17,17,.18),0 4px 12px -6px rgba(17,17,17,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--font);color:var(--text);background:var(--bg-soft);line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1060px;margin-inline:auto;padding:0 28px;}
+  a{color:inherit;}
+
+  /* page header */
+  .ph{background:var(--ink);color:var(--on-dark);padding:74px 0 64px;}
+  .ph .wrap{display:flex;flex-direction:column;gap:26px;}
+  .ph .lock{height:50px;}
+  .ph h1{font-size:clamp(30px,4.4vw,46px);font-weight:700;letter-spacing:-0.04em;color:#fff;max-width:680px;line-height:1.06;font-family:var(--font-display);}
+  .ph p{color:var(--on-dark-2);max-width:560px;font-size:17px;}
+  .ph .tag{font-family:var(--mono);font-size:12.5px;color:var(--accent-bright);letter-spacing:.06em;text-transform:uppercase;}
+
+  /* sections */
+  section{padding:66px 0;border-bottom:1px solid var(--border);}
+  .sec-head{margin-bottom:34px;}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;}
+  h2{font-size:clamp(24px,3vw,34px);font-weight:700;letter-spacing:-0.035em;font-family:var(--font-display);}
+  .sub{color:var(--text-2);max-width:620px;margin-top:10px;font-size:16px;}
+
+  .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+
+  /* logo showcase */
+  .logo-stage{display:grid;place-items:center;min-height:200px;padding:40px;border-radius:var(--radius);position:relative;}
+  .logo-stage.light{background:#fff;border:1px solid var(--border);}
+  .logo-stage.dark{background:var(--ink);}
+  .logo-stage img{height:46px;}
+  .stage-label{position:absolute;top:14px;left:16px;font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:.04em;}
+  .logo-stage.dark .stage-label{color:var(--on-dark-2);}
+
+  .mark-row{display:flex;gap:18px;flex-wrap:wrap;}
+  .mark-cell{flex:1;min-width:150px;display:flex;flex-direction:column;align-items:center;gap:14px;padding:30px 20px;}
+  .mark-cell img{display:block;}
+  .mark-cell .cap{font-family:var(--mono);font-size:11.5px;color:var(--text-3);}
+
+  /* clearspace */
+  .clear-demo{padding:40px;display:flex;gap:40px;flex-wrap:wrap;align-items:center;justify-content:center;}
+  .cs-box{position:relative;padding:32px;}
+  .cs-box::before{content:"";position:absolute;inset:0;border:1.5px dashed var(--accent-bright);border-radius:10px;opacity:.5;}
+  .cs-box img{height:56px;display:block;position:relative;}
+  .min-demo{display:flex;align-items:flex-end;gap:30px;flex-wrap:wrap;padding:40px;}
+  .min-demo .mi{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .min-demo .mi .cap{font-family:var(--mono);font-size:11px;color:var(--text-3);}
+
+  /* colors */
+  .sw{border-radius:14px;overflow:hidden;border:1px solid var(--border);background:#fff;}
+  .sw .chip{height:108px;}
+  .sw .meta{padding:14px 15px;}
+  .sw .meta b{font-size:14.5px;display:block;}
+  .sw .meta span{font-family:var(--mono);font-size:12px;color:var(--text-3);display:block;margin-top:3px;}
+  .grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+
+  /* type */
+  .type-card{padding:28px 30px;}
+  .type-row{display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding:18px 0;border-bottom:1px solid var(--border);}
+  .type-row:last-child{border-bottom:none;}
+  .type-row .lbl{font-family:var(--mono);font-size:12px;color:var(--text-3);white-space:nowrap;}
+  .specimen{font-weight:700;letter-spacing:-0.03em;line-height:1;}
+  .weights{display:flex;gap:26px;flex-wrap:wrap;margin-top:8px;}
+  .weights div{font-size:30px;letter-spacing:-0.02em;}
+  .weights small{display:block;font-family:var(--mono);font-size:11px;color:var(--text-3);font-weight:400;letter-spacing:0;margin-top:6px;}
+
+  /* do / dont */
+  .dd-card{padding:26px;display:flex;flex-direction:column;gap:18px;}
+  .dd-stage{height:120px;border-radius:11px;display:grid;place-items:center;}
+  .dd-stage img{height:34px;}
+  .dd-head{display:flex;align-items:center;gap:9px;font-weight:600;font-size:15px;}
+  .dd-head .ic{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:#fff;}
+  .ok .ic{background:#1f9d61;} .no .ic{background:#d4493f;}
+  .dd-card p{font-size:14px;color:var(--text-2);}
+
+  /* downloads */
+  .dl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .dl{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid var(--border);border-radius:12px;background:#fff;transition:border-color .15s,transform .15s;}
+  .dl:hover{border-color:var(--border-strong);transform:translateY(-2px);}
+  .dl .ico{width:42px;height:42px;border-radius:10px;background:var(--accent-soft);display:grid;place-items:center;flex:none;}
+  .dl .ico img{width:24px;height:24px;}
+  .dl b{font-size:14px;display:block;}
+  .dl span{font-family:var(--mono);font-size:11.5px;color:var(--text-3);}
+
+  .foot{padding:40px 0 70px;color:var(--text-3);font-size:13.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .foot a{color:var(--accent);text-decoration:none;font-weight:600;}
+
+  @media(max-width:760px){
+    .grid2,.grid3,.grid5,.dl-grid{grid-template-columns:1fr;}
+    .grid5{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<header class="ph">
+  <div class="wrap">
+    <span class="tag">Brand Kit · v1.0</span>
+    <img class="lock" src="logo-lockup-light.svg" alt="CarolinaPOS" />
+    <h1>Identidad de marca CarolinaPOS</h1>
+    <p>El sistema visual del punto de venta y la facturación electrónica para Colombia. Serio, moderno y directo — sin adornos.</p>
+  </div>
+</header>
+
+<!-- LOGO -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">01 — Logotipo</div>
+      <h2>El logo</h2>
+      <p class="sub">El isotipo es un <b>código de barras</b> dentro de un badge redondeado: la señal universal del punto de venta y el escaneo. La línea azul brillante representa el "scan" que conecta cada venta con la DIAN. Acompaña al logotipo <b>Carolina<span style="color:var(--accent)">POS</span></b> en DM Sans.</p>
+    </div>
+    <div class="grid2">
+      <div class="logo-stage light">
+        <span class="stage-label">Principal · fondo claro</span>
+        <img src="logo-lockup.svg" alt="CarolinaPOS logo" />
+      </div>
+      <div class="logo-stage dark">
+        <span class="stage-label">Inverso · fondo oscuro</span>
+        <img src="logo-lockup-light.svg" alt="CarolinaPOS logo inverso" />
+      </div>
+    </div>
+
+    <div class="card mark-row" style="margin-top:18px;">
+      <div class="mark-cell">
+        <img src="logo-mark.svg" width="76" height="76" alt="Isotipo navy" />
+        <span class="cap">Isotipo · navy</span>
+      </div>
+      <div class="mark-cell" style="border-left:1px solid var(--border);">
+        <img src="logo-mark-ink.svg" width="76" height="76" alt="Isotipo ink" />
+        <span class="cap">Isotipo · ink</span>
+      </div>
+      <div class="mark-cell" style="border-left:1px solid var(--border);background:var(--ink);border-radius:0 var(--radius) var(--radius) 0;">
+        <img src="favicon.svg" width="64" height="64" alt="Favicon" />
+        <span class="cap" style="color:var(--on-dark-2);">Favicon · 64px</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CLEARSPACE + MIN -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">02 — Uso correcto</div>
+      <h2>Espacio libre y tamaño mínimo</h2>
+      <p class="sub">Deja un margen de protección equivalente a la altura del isotipo alrededor del logo. No reduzcas el lockup por debajo de 120px de ancho ni el isotipo por debajo de 24px.</p>
+    </div>
+    <div class="grid2">
+      <div class="card clear-demo">
+        <div class="cs-box"><img src="logo-lockup.svg" alt="clearspace" /></div>
+      </div>
+      <div class="card min-demo">
+        <div class="mi"><img src="logo-mark.svg" width="56" height="56" alt="" /><span class="cap">56px ✓</span></div>
+        <div class="mi"><img src="logo-mark.svg" width="32" height="32" alt="" /><span class="cap">32px ✓</span></div>
+        <div class="mi"><img src="logo-mark.svg" width="24" height="24" alt="" /><span class="cap">24px mín.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COLORS -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">03 — Color</div>
+      <h2>Paleta</h2>
+      <p class="sub">Base monocromática de gris casi negro y blanco, con un único acento azul navy. El azul brillante se reserva para detalles y estados activos sobre fondos oscuros.</p>
+    </div>
+    <div class="grid5">
+      <div class="sw"><div class="chip" style="background:#111111;"></div><div class="meta"><b>Ink</b><span>#111111</span></div></div>
+      <div class="sw"><div class="chip" style="background:#1e3a8a;"></div><div class="meta"><b>Navy / Acento</b><span>#1E3A8A</span></div></div>
+      <div class="sw"><div class="chip" style="background:#4f74e0;"></div><div class="meta"><b>Azul brillante</b><span>#4F74E0</span></div></div>
+      <div class="sw"><div class="chip" style="background:#f9f9f9;border-bottom:1px solid var(--border);"></div><div class="meta"><b>Gris suave</b><span>#F9F9F9</span></div></div>
+      <div class="sw"><div class="chip" style="background:#fff;border-bottom:1px solid var(--border);"></div><div class="meta"><b>Blanco</b><span>#FFFFFF</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TYPE -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">04 — Tipografía</div>
+      <h2>Space Grotesk + DM Sans</h2>
+      <p class="sub"><b>Space Grotesk</b> da carácter a los titulares y al logotipo: una grotesca geométrica con letterforms distintivas, moderna y seria. <b>DM Sans</b> sostiene el cuerpo y la interfaz por su legibilidad, y <b>DM Mono</b> se usa para datos, precios y etiquetas técnicas.</p>
+    </div>
+    <div class="grid2">
+      <div class="card type-card">
+        <div class="type-row"><span class="specimen" style="font-size:52px;font-family:var(--font-display);">Aa</span><span class="lbl">Space Grotesk<br>Display / titulares</span></div>
+        <div class="weights" style="font-family:var(--font-display);">
+          <div style="font-weight:500;">Medium<small>500</small></div>
+          <div style="font-weight:600;">SemiBold<small>600</small></div>
+          <div style="font-weight:700;">Bold<small>700</small></div>
+        </div>
+      </div>
+      <div class="card type-card">
+        <div class="type-row"><span class="specimen" style="font-size:52px;">Aa</span><span class="lbl">DM Sans<br>Cuerpo / interfaz</span></div>
+        <div class="weights">
+          <div style="font-weight:400;">Regular<small>400</small></div>
+          <div style="font-weight:500;">Medium<small>500</small></div>
+          <div style="font-weight:700;">Bold<small>700</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="card type-card" style="margin-top:18px;">
+      <div class="type-row"><span class="specimen" style="font-size:36px;font-family:var(--font-display);">Vende, factura y controla</span><span class="lbl">Space Grotesk / 700</span></div>
+      <div class="type-row"><span style="font-size:18px;font-weight:600;">Punto de venta + facturación DIAN</span><span class="lbl">DM Sans / 600</span></div>
+      <div class="type-row"><span style="font-size:15px;color:var(--text-2);">Cuerpo de texto para descripciones y párrafos largos.</span><span class="lbl">DM Sans / 400</span></div>
+      <div class="type-row"><span style="font-family:var(--mono);font-size:15px;">$279.000 / mes</span><span class="lbl">DM Mono · datos</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- DO / DONT -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">05 — Recomendaciones</div>
+      <h2>Sí y no</h2>
+    </div>
+    <div class="grid3">
+      <div class="card dd-card">
+        <div class="dd-stage" style="background:#fff;border:1px solid var(--border);"><img src="logo-lockup.svg" alt="" /></div>
+        <div class="dd-head ok"><span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Usa los colores oficiales</div>
+        <p>Navy sobre claro, o la versión inversa sobre fondos oscuros.</p>
+      </div>
+      <div class="card dd-card">
+        <div class="dd-stage" style="background:linear-gradient(120deg,#e85d9b,#f3a536);"><img src="logo-lockup-light.svg" alt="" /></div>
+        <div class="dd-head no"><span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>No uses fondos llamativos</div>
+        <p>Evita degradados o colores ajenos a la paleta detrás del logo.</p>
+      </div>
+      <div class="card dd-card">
+        <div class="dd-stage" style="background:#fff;border:1px solid var(--border);"><img src="logo-lockup.svg" alt="" style="transform:scaleX(1.5);"/></div>
+        <div class="dd-head no"><span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>No deformes el logo</div>
+        <p>No lo estires, gires ni cambies la proporción entre marca y texto.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOADS -->
+<section style="border-bottom:none;">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">06 — Archivos</div>
+      <h2>Descargas</h2>
+      <p class="sub">Todos los activos en SVG vectorial, listos para web, impresión y producto.</p>
+    </div>
+    <div class="dl-grid">
+      <a class="dl" href="logo-lockup.svg" download><span class="ico"><img src="logo-mark.svg" alt=""/></span><span><b>Lockup principal</b><span>logo-lockup.svg</span></span></a>
+      <a class="dl" href="logo-lockup-light.svg" download><span class="ico"><img src="logo-mark.svg" alt=""/></span><span><b>Lockup inverso</b><span>logo-lockup-light.svg</span></span></a>
+      <a class="dl" href="logo-mark.svg" download><span class="ico"><img src="logo-mark.svg" alt=""/></span><span><b>Isotipo navy</b><span>logo-mark.svg</span></span></a>
+      <a class="dl" href="logo-mark-ink.svg" download><span class="ico"><img src="logo-mark-ink.svg" alt=""/></span><span><b>Isotipo ink</b><span>logo-mark-ink.svg</span></span></a>
+      <a class="dl" href="favicon.svg" download><span class="ico"><img src="favicon.svg" alt=""/></span><span><b>Favicon</b><span>favicon.svg</span></span></a>
+    </div>
+  </div>
+</section>
+
+<div class="wrap foot">
+  <span>CarolinaPOS · Identidad de marca · Hecho en Colombia 🇨🇴</span>
+  <a href="../CarolinaPOS Landing.html">← Volver a la landing</a>
+</div>
+
+</body>
+</html>

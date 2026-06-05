@@ -5,7 +5,7 @@ import { authService } from '../services/auth'
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const { user, tenant, isAuthenticated, setAuth, logout, updateTenant } = useAuthStore()
+  const { user, tenant, isAuthenticated, setAuth, logout, updateTenant, updateUser } = useAuthStore()
 
   const loginFn = async (loginInput, password) => {
     const data = await authService.login(loginInput, password)
@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, tenant, isAuthenticated, login: loginFn, register: registerFn, logout: logoutFn, updateTenant }}>
+    <AuthContext.Provider value={{ user, tenant, isAuthenticated, login: loginFn, register: registerFn, logout: logoutFn, updateTenant, updateUser }}>
       {children}
     </AuthContext.Provider>
   )

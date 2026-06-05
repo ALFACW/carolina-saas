@@ -16,6 +16,7 @@ export const useAuthStore = create(
       },
 
       updateTenant: (tenant) => set((s) => ({ tenant: { ...s.tenant, ...tenant } })),
+      updateUser: (user) => set((s) => ({ user: { ...s.user, ...user } })),
 
       logout: () => {
         // Limpiar TODO — tokens + estado + persist
