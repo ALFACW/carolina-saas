@@ -26,17 +26,20 @@ router.get('/sign', authenticateToken, (req, res) => {
   }
 })
 
-// Devuelve la clave pública para que el cliente la descargue
+const PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhS0ha/PoUf7jk+1pFPP2
+hW42rEU//Tn93BCaBqLWvjacU25yxMQTPl2mU2wLKDLuiV/ONlo8ZQ5SPv0mMOQh
+29sGniCnTkfZDx6mgnf4BG4crYEqOJuEz2o4LLdXqKn3JDmWTujvAY+LMavqOSOO
+2MfGhrywbg3Ymo9fbPiVhbEUdCxtcvyEG5ig7vs6p/8FhFSL9GKs4ss6OybL41JZ
+84P5ztpi3Im25ORWNOofSzyt+DfYJerqWYj8euNIY7TxVsjHtKjZC9s5bIcHaMtF
+LvYzuZ67hR9x+xcn72keYn/3kDEZ7lbRXf4kSyeUV5gRhC3F68bYoFcGcDVSavZ8
+OQIDAQAB
+-----END PUBLIC KEY-----`
+
 router.get('/certificate', (req, res) => {
-  try {
-    const PUBLIC_KEY_PATH = path.join(__dirname, '../../qz-public.pem')
-    const cert = fs.readFileSync(PUBLIC_KEY_PATH, 'utf8')
-    res.setHeader('Content-Type', 'text/plain')
-    res.setHeader('Content-Disposition', 'attachment; filename="carolinapos-qz.pem"')
-    res.send(cert)
-  } catch (err) {
-    res.status(500).json({ error: 'Certificado no encontrado' })
-  }
+  res.setHeader('Content-Type', 'text/plain')
+  res.setHeader('Content-Disposition', 'attachment; filename="carolinapos-qz.pem"')
+  res.send(PUBLIC_KEY)
 })
 
 module.exports = router
