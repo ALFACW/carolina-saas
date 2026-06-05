@@ -19,14 +19,20 @@ if %errorlevel% neq 0 (
 echo  Verificando componentes...
 python -m pip install flask pywin32 --quiet --disable-pip-version-check
 
-:: ── 3. Configurar inicio automatico (solo la primera vez) ────────────────────
-set "TASKNAME=CarolinaPOS Print Server"
-schtasks /query /tn "%TASKNAME%" >nul 2>&1
-if %errorlevel% neq 0 (
-    echo  Configurando inicio automatico con Windows...
-    schtasks /create /tn "%TASKNAME%" /sc onlogon /tr "pythonw \"%~dp0servidor.py\"" /rl limited /f >nul 2>&1
-    if %errorlevel% == 0 (
-        echo  Listo. El servidor se iniciara solo al encender el PC.
+:: ── 3. Configurar inicio automatico via carpeta Startup (no requiere admin) ──
+set "STARTUP=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
+set "LAUNCHER=%STARTUP%\CarolinaPOS-Print.bat"
+if not exist "%LAUNCHER%" (
+    echo  Configurando inicio automatico...
+    (
+        echo @echo off
+        echo cd /d "%~dp0"
+        echo start "" pythonw "%~dp0servidor.py"
+    ) > "%LAUNCHER%"
+    if exist "%LAUNCHER%" (
+        echo  Listo. El servidor se iniciara automaticamente al encender el PC.
+    ) else (
+        echo  No se pudo configurar inicio automatico.
     )
 )
 
