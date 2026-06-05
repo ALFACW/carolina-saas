@@ -1,7 +1,15 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Zap, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react'
+
+const SLIDES = [
+  { icon: '🏪', title: 'Punto de Venta', desc: 'Escanea productos, cobra al instante y actualiza inventario automáticamente.' },
+  { icon: '📄', title: 'Facturación DIAN', desc: 'Emite facturas electrónicas válidas legalmente sin trámites complicados.' },
+  { icon: '📊', title: 'Reportes en vivo', desc: 'Visualiza ventas, utilidades y productos top en tiempo real.' },
+  { icon: '💳', title: 'Cartera controlada', desc: 'Lleva el registro de fiados y recibe abonos sin perder dinero.' },
+  { icon: '🔒', title: 'Seguridad garantizada', desc: 'Tus datos y transacciones están protegidos con encriptación de banco.' },
+]
 
 export default function Login() {
   const [loginInput, setLoginInput] = useState('')
@@ -9,8 +17,21 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [current, setCurrent] = useState(0)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const timerRef = useRef(null)
+
+  const goTo = (n) => {
+    setCurrent((n + SLIDES.length) % SLIDES.length)
+    clearInterval(timerRef.current)
+    timerRef.current = setInterval(() => setCurrent(c => (c + 1) % SLIDES.length), 6000)
+  }
+
+  useEffect(() => {
+    timerRef.current = setInterval(() => setCurrent(c => (c + 1) % SLIDES.length), 6000)
+    return () => clearInterval(timerRef.current)
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -27,70 +48,170 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-2xl mb-4">
-            <Zap className="w-7 h-7 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Carolina</h1>
-          <p className="text-gray-500 mt-1 text-sm">Facturación Electrónica DIAN</p>
+    <div style={{
+      fontFamily: '"DM Sans", -apple-system, sans-serif',
+      background: 'linear-gradient(135deg, #e3f0ff 0%, #d9ebf9 50%, #dce8f5 100%)',
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px',
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: '1100px',
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)',
+        borderRadius: '24px',
+        overflow: 'hidden',
+        boxShadow: '0 30px 60px -12px rgba(17,17,17,.22)',
+        background: '#fff',
+      }} className="login-grid">
+
+        {/* ---- IZQUIERDA: formulario ---- */}
+        <div style={{ padding: 'clamp(36px,5vw,56px)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+
+          {/* Logo */}
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', marginBottom: '36px' }}>
+            <img src="/brand/logo-lockup.svg" alt="CarolinaPOS" style={{ height: '36px', width: 'auto' }} />
+          </Link>
+
+          <h1 style={{ fontSize: 'clamp(26px,3vw,32px)', fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '8px', color: '#15151a' }}>
+            Bienvenido
+          </h1>
+          <p style={{ fontSize: '15px', color: '#565660', marginBottom: '32px', lineHeight: 1.6 }}>
+            Accede a tu punto de venta y facturación electrónica DIAN.
+          </p>
+
+          {error && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fff5f5', color: '#c0392b', padding: '12px 16px', borderRadius: '10px', marginBottom: '20px', fontSize: '14px', border: '1px solid #fecdd3' }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '7px', color: '#15151a' }}>
+                Correo o usuario
+              </label>
+              <input
+                type="text"
+                required
+                value={loginInput}
+                onChange={e => setLoginInput(e.target.value)}
+                placeholder="tus@negocios.co o usuario"
+                autoComplete="username"
+                style={{ width: '100%', padding: '13px 16px', border: '1.5px solid #e8e8ea', borderRadius: '11px', fontSize: '15px', fontFamily: 'inherit', outline: 'none', transition: 'border-color .2s, box-shadow .2s', color: '#15151a' }}
+                onFocus={e => { e.target.style.borderColor = '#bfe1fe'; e.target.style.boxShadow = '0 0 0 3px rgba(92,180,250,.12)' }}
+                onBlur={e => { e.target.style.borderColor = '#e8e8ea'; e.target.style.boxShadow = 'none' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '8px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '7px', color: '#15151a' }}>
+                Contraseña
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  style={{ width: '100%', padding: '13px 44px 13px 16px', border: '1.5px solid #e8e8ea', borderRadius: '11px', fontSize: '15px', fontFamily: 'inherit', outline: 'none', transition: 'border-color .2s, box-shadow .2s', color: '#15151a' }}
+                  onFocus={e => { e.target.style.borderColor = '#bfe1fe'; e.target.style.boxShadow = '0 0 0 3px rgba(92,180,250,.12)' }}
+                  onBlur={e => { e.target.style.borderColor = '#e8e8ea'; e.target.style.boxShadow = 'none' }}
+                />
+                <button type="button" onClick={() => setShowPassword(v => !v)}
+                  style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#8a8a93', padding: 0 }}>
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '28px', marginTop: '8px' }}>
+              <a href="#" style={{ fontSize: '13px', color: '#1c61c0', fontWeight: 600, textDecoration: 'none' }}>
+                ¿Olvidaste tu contraseña?
+              </a>
+            </div>
+
+            <button type="submit" disabled={loading} style={{
+              width: '100%', padding: '14px', background: loading ? '#5e94d4' : '#1c61c0', color: '#fff',
+              border: 'none', borderRadius: '11px', fontSize: '16px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
+              fontFamily: 'inherit', transition: 'all .18s ease', boxShadow: '0 4px 12px -4px rgba(28,97,192,.35)',
+            }}>
+              {loading ? 'Ingresando...' : 'Iniciar sesión'}
+            </button>
+          </form>
+
+          <p style={{ textAlign: 'center', marginTop: '28px', fontSize: '14px', color: '#565660' }}>
+            ¿No tienes cuenta?{' '}
+            <Link to="/register" style={{ color: '#1c61c0', fontWeight: 600, textDecoration: 'none' }}>Regístrate gratis</Link>
+          </p>
         </div>
 
-        {error && (
-          <div className="flex items-center gap-2 bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Correo o usuario</label>
-            <input
-              type="text"
-              required
-              value={loginInput}
-              onChange={e => setLoginInput(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              placeholder="tu@empresa.com o usuario"
-              autoComplete="username"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                required
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full px-3 py-2.5 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(v => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+        {/* ---- DERECHA: carrusel ---- */}
+        <div style={{
+          background: 'linear-gradient(135deg, #1c61c0 0%, #1a4da8 100%)',
+          position: 'relative', overflow: 'hidden',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          minHeight: '520px',
+        }}>
+          {SLIDES.map((s, i) => (
+            <div key={i} style={{
+              position: 'absolute', inset: 0,
+              opacity: i === current ? 1 : 0,
+              transition: 'opacity .6s ease-in-out',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              padding: '60px 40px', textAlign: 'center', color: '#fff',
+              pointerEvents: i === current ? 'auto' : 'none',
+            }}>
+              <div style={{
+                width: '110px', height: '110px', borderRadius: '24px',
+                background: 'rgba(255,255,255,.12)', border: '2px solid rgba(255,255,255,.25)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '54px', marginBottom: '24px',
+              }}>{s.icon}</div>
+              <h2 style={{ fontSize: '26px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '12px' }}>{s.title}</h2>
+              <p style={{ fontSize: '15px', color: 'rgba(255,255,255,.88)', maxWidth: '300px', lineHeight: 1.65 }}>{s.desc}</p>
             </div>
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 mt-2"
-          >
-            {loading ? 'Ingresando...' : 'Ingresar'}
-          </button>
-        </form>
+          ))}
 
-        <p className="text-center text-sm text-gray-500 mt-6">
-          ¿No tienes cuenta?{' '}
-          <Link to="/register" className="text-blue-600 hover:underline font-medium">Regístrate gratis</Link>
-        </p>
+          {/* Prev / Next */}
+          {[['prev', -1, '20px', 'auto'], ['next', 1, 'auto', '20px']].map(([cls, dir, l, r]) => (
+            <button key={cls} onClick={() => goTo(current + dir)} style={{
+              position: 'absolute', top: '50%', transform: 'translateY(-50%)',
+              left: l, right: r,
+              width: '42px', height: '42px', borderRadius: '50%',
+              background: 'rgba(255,255,255,.15)', border: '1px solid rgba(255,255,255,.3)',
+              color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 4, transition: 'background .2s',
+            }}>
+              {dir === -1 ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+            </button>
+          ))}
+
+          {/* Dots */}
+          <div style={{ position: 'absolute', bottom: '28px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 5 }}>
+            {SLIDES.map((_, i) => (
+              <button key={i} onClick={() => goTo(i)} style={{
+                width: i === current ? '28px' : '10px', height: '10px',
+                borderRadius: '5px', border: 'none', cursor: 'pointer',
+                background: i === current ? '#fff' : 'rgba(255,255,255,.4)',
+                transition: 'all .3s ease', padding: 0,
+              }} />
+            ))}
+          </div>
+        </div>
       </div>
+
+      <style>{`
+        @media (max-width: 860px) {
+          .login-grid { grid-template-columns: 1fr !important; }
+          .login-grid > div:last-child { min-height: 340px !important; order: -1; }
+        }
+      `}</style>
     </div>
   )
 }
