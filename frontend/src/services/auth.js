@@ -1,8 +1,8 @@
 import api from './api'
 
 export const authService = {
-  async login(email, password) {
-    const { data } = await api.post('/api/auth/login', { email, password })
+  async login(loginInput, password) {
+    const { data } = await api.post('/api/auth/login', { login: loginInput, password })
     return data
   },
   async register(empresa, admin) {

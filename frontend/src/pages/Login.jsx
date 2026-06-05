@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { Zap, AlertCircle, Eye, EyeOff } from 'lucide-react'
 
 export default function Login() {
-  const [email, setEmail] = useState('')
+  const [loginInput, setLoginInput] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
@@ -17,7 +17,7 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      await login(email, password)
+      await login(loginInput, password)
       navigate('/dashboard')
     } catch (err) {
       setError(err.response?.data?.error || 'Error al iniciar sesión')
@@ -46,14 +46,15 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Correo o usuario</label>
             <input
-              type="email"
+              type="text"
               required
-              value={email}
-              onChange={e => setEmail(e.target.value)}
+              value={loginInput}
+              onChange={e => setLoginInput(e.target.value)}
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              placeholder="tu@empresa.com"
+              placeholder="tu@empresa.com o usuario"
+              autoComplete="username"
             />
           </div>
           <div>

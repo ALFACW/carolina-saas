@@ -21,7 +21,7 @@ const registerSchema = z.object({
 });
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  login: z.string().min(1),   // acepta email o username
   password: z.string().min(1),
 });
 
@@ -65,13 +65,15 @@ async function register(req, res, next) {
 
 async function login(req, res, next) {
   try {
-    const { email, password } = loginSchema.parse(req.body);
+    const { login: loginInput, password } = loginSchema.parse(req.body);
 
+    // Acepta email o username
+    const isEmail = loginInput.includes('@')
     const { rows } = await db.query(
       `SELECT u.*, t.nombre as tenant_nombre, t.plan, t.estado as tenant_estado, t.onboarding_completado, t.alegra_conectado
        FROM users u JOIN tenants t ON u.tenant_id = t.id
-       WHERE u.email = $1 AND u.activo = true`,
-      [email]
+       WHERE ${isEmail ? 'u.email = $1' : 'u.username = $1'} AND u.activo = true`,
+      [loginInput]
     );
 
     if (!rows.length) return res.status(401).json({ error: 'Credenciales incorrectas' });

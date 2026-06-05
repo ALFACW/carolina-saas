@@ -7,8 +7,8 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const { user, tenant, isAuthenticated, setAuth, logout, updateTenant } = useAuthStore()
 
-  const loginFn = async (email, password) => {
-    const data = await authService.login(email, password)
+  const loginFn = async (loginInput, password) => {
+    const data = await authService.login(loginInput, password)
     setAuth(data.token, data.refresh_token, data.user, data.tenant)
     return data
   }
