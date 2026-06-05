@@ -554,20 +554,28 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; font-
   /* --- PRICING CAROUSEL --- */
   .plans {
     display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: scroll;
     -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
     scrollbar-width: none;
+    -ms-overflow-style: none;
     gap: 16px;
-    padding: 8px var(--pad) 20px;
-    margin-left: calc(var(--pad) * -1);
-    margin-right: calc(var(--pad) * -1);
-    width: calc(100% + var(--pad) * 2);
+    padding: 8px 24px 20px;
+    margin-left: -24px;
+    margin-right: -24px;
+    width: calc(100% + 48px);
     margin-top: 28px;
+    align-items: stretch;
   }
   .plans::-webkit-scrollbar { display: none; }
   .plan {
-    flex: 0 0 min(84vw, 360px);
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: auto;
+    width: 82vw;
+    max-width: 340px;
     scroll-snap-align: center;
     transform: none !important;
   }
@@ -592,7 +600,7 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; font-
 
 /* --- 420px: teléfonos muy pequeños --- */
 @media (max-width: 420px) {
-  .plan { flex: 0 0 88vw; }
+  .plan { width: 88vw; max-width: none; }
   .hero h1 { font-size: clamp(34px, 9vw, 44px); }
   .mock-float-1 { display: none; }
 }
