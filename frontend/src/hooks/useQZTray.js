@@ -33,7 +33,8 @@ OQIDAQAB
 
 async function firmarQZ(mensaje) {
   try {
-    const res = await fetch(`/api/qz/sign?request=${encodeURIComponent(mensaje)}`)
+    const base = import.meta.env.VITE_API_URL || ''
+    const res = await fetch(`${base}/api/qz/sign?request=${encodeURIComponent(mensaje)}`)
     if (!res.ok) return ''
     return await res.text()
   } catch {
