@@ -50,26 +50,20 @@ export default function Login() {
   return (
     <div style={{
       fontFamily: '"DM Sans", -apple-system, sans-serif',
-      background: 'linear-gradient(135deg, #e3f0ff 0%, #d9ebf9 50%, #dce8f5 100%)',
-      minHeight: '100vh',
+      position: 'fixed',
+      inset: 0,
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '1100px',
+        height: '100%',
         display: 'grid',
         gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)',
-        borderRadius: '24px',
-        overflow: 'hidden',
-        boxShadow: '0 30px 60px -12px rgba(17,17,17,.22)',
         background: '#fff',
       }} className="login-grid">
 
         {/* ---- IZQUIERDA: formulario ---- */}
-        <div style={{ padding: 'clamp(36px,5vw,56px)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{ padding: 'clamp(32px,5vw,56px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', overflowY: 'auto', background: '#fff' }}>
 
           {/* Logo */}
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', marginBottom: '36px' }}>
@@ -156,7 +150,6 @@ export default function Login() {
           background: 'linear-gradient(135deg, #1c61c0 0%, #1a4da8 100%)',
           position: 'relative', overflow: 'hidden',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          minHeight: '520px',
         }}>
           {SLIDES.map((s, i) => (
             <div key={i} style={{
@@ -208,8 +201,13 @@ export default function Login() {
 
       <style>{`
         @media (max-width: 860px) {
-          .login-grid { grid-template-columns: 1fr !important; }
-          .login-grid > div:last-child { min-height: 340px !important; order: -1; }
+          .login-grid {
+            grid-template-columns: 1fr !important;
+            grid-template-rows: 280px 1fr;
+            overflow-y: auto;
+          }
+          .login-grid > div:last-child { order: -1; min-height: unset !important; }
+          .login-grid > div:first-child { overflow-y: auto; }
         }
       `}</style>
     </div>
