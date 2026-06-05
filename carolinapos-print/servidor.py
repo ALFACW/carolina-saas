@@ -1,12 +1,34 @@
 """
-CarolinaPOS Print Server v1.0
-Servidor local de impresion ESC/POS para impresoras termicas USB.
-Corre en http://localhost:8765
+CarolinaPOS Print Server v1.1
+Ejecutar con: python servidor.py
+Se instala las dependencias automaticamente la primera vez.
 """
+import subprocess, sys, os
+
+# ── Auto-instalar dependencias ──────────────────────────────────────────────
+
+def _instalar(paquete):
+    print(f'  Instalando {paquete}...')
+    subprocess.check_call(
+        [sys.executable, '-m', 'pip', 'install', paquete, '--quiet', '--disable-pip-version-check'],
+        stdout=subprocess.DEVNULL
+    )
+    print(f'  {paquete} instalado. Reiniciando...')
+    os.execv(sys.executable, [sys.executable] + sys.argv)
+
+try:
+    import flask
+except ImportError:
+    _instalar('flask')
+
+try:
+    import win32print
+except ImportError:
+    _instalar('pywin32')
+
+# ── Servidor ─────────────────────────────────────────────────────────────────
+
 from flask import Flask, request, jsonify
-import win32print
-import sys
-import os
 
 app = Flask(__name__)
 
@@ -43,7 +65,7 @@ def health():
         default = win32print.GetDefaultPrinter()
     except:
         pass
-    return jsonify({'ok': True, 'version': '1.0', 'default': default})
+    return jsonify({'ok': True, 'version': '1.1', 'default': default})
 
 @app.route('/printers')
 def listar_printers():
@@ -78,6 +100,11 @@ def imprimir():
         return jsonify({'ok': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
-    print('CarolinaPOS Print Server corriendo en http://localhost:8765')
-    print('Presiona Ctrl+C para detener.')
+    print()
+    print('  ┌─────────────────────────────────────┐')
+    print('  │   CarolinaPOS Print Server v1.1      │')
+    print('  │   http://localhost:8765               │')
+    print('  │   Deja esta ventana abierta           │')
+    print('  └─────────────────────────────────────┘')
+    print()
     app.run(host='127.0.0.1', port=8765, debug=False, use_reloader=False)

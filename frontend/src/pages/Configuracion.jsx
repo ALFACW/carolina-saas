@@ -224,25 +224,43 @@ export default function Configuracion() {
 
               {/* Panel instalación cuando no hay servidor */}
               {(qz.estado === 'desconectado' || qz.estado === 'error') && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-3">
-                  <p className="font-semibold text-amber-900 text-sm">Servidor de impresión no disponible</p>
-                  <p className="text-amber-800 text-sm">Para imprimir tickets y abrir el cajón necesitas instalar el servidor local de CarolinaPOS en este computador.</p>
-                  <ol className="text-amber-800 text-xs space-y-1 list-decimal list-inside">
-                    <li>Descarga <strong>instalar.bat</strong> y ejecútalo con doble clic</li>
-                    <li>Si Windows pide confirmación, haz clic en "Ejecutar de todas formas"</li>
-                    <li>El servidor queda activo y se inicia automáticamente con Windows</li>
-                  </ol>
-                  {qz.errorMsg && <p className="text-red-600 text-xs">{qz.errorMsg}</p>}
-                  <div className="flex gap-2 flex-wrap pt-1">
-                    <a href="/instalar.bat" download="instalar.bat"
-                      className="inline-flex items-center gap-2 bg-amber-700 text-white text-xs px-4 py-2 rounded-lg hover:bg-amber-800 font-medium">
-                      <Download className="w-3.5 h-3.5" />Descargar instalar.bat
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  {/* Paso 1 */}
+                  <div className="bg-surface-soft rounded-xl p-5 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
+                      <p className="font-semibold text-ink text-sm">Instala Python (si no lo tienes)</p>
+                    </div>
+                    <p className="text-xs text-ink-2">Python es gratuito. Al instalarlo marca la opción <strong>"Add Python to PATH"</strong>.</p>
+                    <a href="https://python.org/downloads" target="_blank" rel="noreferrer"
+                      className="inline-flex items-center gap-2 bg-white border border-border text-ink text-xs px-4 py-2 rounded-lg hover:border-border-strong font-medium transition-colors">
+                      <Download className="w-3.5 h-3.5" />Descargar Python gratis
                     </a>
-                    <button onClick={qz.conectar}
-                      className="inline-flex items-center gap-2 bg-white border border-amber-300 text-amber-800 text-xs px-4 py-2 rounded-lg hover:bg-amber-50 font-medium">
-                      <RefreshCw className="w-3.5 h-3.5" />Verificar conexión
-                    </button>
+                    <p className="text-xs text-ink-2">Si ya tienes Python instalado, salta al paso 2.</p>
                   </div>
+
+                  {/* Paso 2 */}
+                  <div className="bg-surface-soft rounded-xl p-5 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
+                      <p className="font-semibold text-ink text-sm">Descarga el servidor de impresión</p>
+                    </div>
+                    <p className="text-xs text-ink-2">Descarga <strong>servidor.py</strong> y guárdalo en una carpeta fija (ej. <code className="bg-white px-1 rounded">Documentos\CarolinaPOS\</code>).</p>
+                    <p className="text-xs text-ink-2">Luego haz <strong>doble clic</strong> en el archivo. Se instala solo y queda corriendo.</p>
+                    {qz.errorMsg && <p className="text-red-600 text-xs">{qz.errorMsg}</p>}
+                    <div className="flex gap-2 flex-wrap">
+                      <a href="/servidor.py" download="servidor.py"
+                        className="inline-flex items-center gap-2 bg-accent text-white text-xs px-4 py-2 rounded-lg hover:bg-accent/90 font-medium">
+                        <Download className="w-3.5 h-3.5" />Descargar servidor.py
+                      </a>
+                      <button onClick={qz.conectar}
+                        className="inline-flex items-center gap-2 bg-white border border-border text-ink-2 text-xs px-4 py-2 rounded-lg hover:bg-surface-soft font-medium">
+                        <RefreshCw className="w-3.5 h-3.5" />Verificar
+                      </button>
+                    </div>
+                  </div>
+
                 </div>
               )}
 
