@@ -112,6 +112,12 @@ export function useQZTray() {
       intentando.current = false
       return
     }
+    // Detectar desconexiones inesperadas (ej: se enchufa impresora USB)
+    qz.websocket.closed = () => {
+      setEstado('error')
+      setErrorMsg('QZ Tray se desconectó. Haz clic en ↻ para reconectar.')
+    }
+
     try {
       if (!qz.websocket.isActive()) {
         await qz.websocket.connect({
