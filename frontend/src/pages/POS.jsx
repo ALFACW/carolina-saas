@@ -744,7 +744,7 @@ export default function POS() {
                 <button
                   onClick={async () => {
                     try {
-                      const cmds = buildTicket({ empresa: tenant || {}, venta: ventaResult, cliente: clienteSeleccionado, cajero: user?.nombre || '', modoDemo: !tenant?.alegra_conectado, W: parseInt(localStorage.getItem('carolina_printer_ancho') === '58' ? 32 : 48), densidad: qzTray.densidad, avancePapel: qzTray.avancePapel, modoCortePapel: qzTray.modoCortePapel })
+                      const cmds = buildTicket({ empresa: tenant || {}, venta: ventaResult, cliente: clienteSeleccionado, cajero: user?.nombre || '', modoDemo: !tenant?.alegra_conectado, W: parseInt(localStorage.getItem('carolina_printer_ancho') === '58' ? 32 : 48), densidad: qzTray.densidad, avancePapel: qzTray.avancePapel, modoCortePapel: qzTray.modoCortePapel, abrirGaveta: false })
                       await qzTray.imprimirTicket(cmds)
                     } catch {}
                   }}
