@@ -147,31 +147,17 @@ export function useQZTray() {
       if (qz.websocket.isActive()) {
         await marcarConectado()
       } else {
-        // Timeout de 6s: si el WebSocket ya está activo aunque connect() no resolvió → conectado
-        const timeout = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('__timeout__')), 6000)
-        )
-        try {
-          await Promise.race([
-            qz.websocket.connect({
-              host: 'localhost',
-              port: { secure: [8183], insecure: [8182] },
-              usingSecure: false,
-              retries: 2,
-              delay: 1,
-            }),
-            timeout,
-          ])
-          await marcarConectado()
-        } catch (raceErr) {
-          if (raceErr.message === '__timeout__' && qz.websocket.isActive()) {
-            // connect() colgó pero el WebSocket SÍ está activo
-            console.warn('[QZ] connect() timeout pero WebSocket activo → conectado')
-            await marcarConectado()
-          } else {
-            throw raceErr
-          }
-        }
+        // Avisar al usuario que puede aparecer el popup de QZ Tray
+        setErrorMsg('Si aparece una ventana de QZ Tray, haz clic en Allow para continuar...')
+        await qz.websocket.connect({
+          host: 'localhost',
+          port: { secure: [8183], insecure: [8182] },
+          usingSecure: false,
+          retries: 2,
+          delay: 1,
+        })
+        setErrorMsg('')
+        await marcarConectado()
       }
     } catch (err) {
       setEstado('error')
