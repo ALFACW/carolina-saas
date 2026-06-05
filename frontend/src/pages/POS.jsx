@@ -15,7 +15,7 @@ import { MetodoPago } from '../components/POS/MetodoPago'
 import { Modal } from '../components/Common/Modal'
 import { useAuth } from '../context/AuthContext'
 import { useSounds } from '../hooks/useSounds'
-import { useUSBPrinter } from "../hooks/useUSBPrinter"
+import { useLocalPrint } from "../hooks/useLocalPrint"
 import { buildTicket } from '../lib/escpos'
 import { COP } from '../lib/format'
 
@@ -24,7 +24,7 @@ export default function POS() {
   const navigate = useNavigate()
   const { tenant, user } = useAuth()
   const { success: soundSuccess, error: soundError, scan } = useSounds()
-  const qzTray = useUSBPrinter()
+  const qzTray = useLocalPrint()
   const { setSidebar } = useUIStore()
   const [vistaTicket, setVistaTicket] = useState('ticket')
 

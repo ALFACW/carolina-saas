@@ -7,7 +7,7 @@ import { Loading } from '../components/Common/Loading'
 import { Button } from '../components/Common/Button'
 import { COP } from '../lib/format'
 import { TicketImpresion } from '../components/POS/TicketImpresion'
-import { useUSBPrinter } from '../hooks/useUSBPrinter'
+import { useLocalPrint } from '../hooks/useLocalPrint'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
 
@@ -16,7 +16,7 @@ export default function FacturaDetalle() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const { tenant } = useAuth()
-  const qzTray = useUSBPrinter()
+  const qzTray = useLocalPrint()
 
   const [showTicket, setShowTicket] = useState(false)
 
