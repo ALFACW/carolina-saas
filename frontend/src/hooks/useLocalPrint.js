@@ -21,7 +21,6 @@ const save = (key, val) => localStorage.setItem(key, String(val))
 async function api(path, opts = {}) {
   const res = await fetch(`${SERVER}${path}`, {
     ...opts,
-    targetAddressSpace: 'local',
     headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
   })
   if (!res.ok) throw new Error(`Error ${res.status}`)
