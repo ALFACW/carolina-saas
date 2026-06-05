@@ -104,6 +104,36 @@
     revealAll();
   }
 
+  /* ---- Pricing carousel dots ---- */
+  var plansEl = document.querySelector(".plans");
+  var dotEls = document.querySelectorAll(".plans-dots .dot");
+  function getActivePlanIndex() {
+    if (!plansEl) return 0;
+    var cards = plansEl.querySelectorAll(".plan");
+    var scrollCenter = plansEl.scrollLeft + plansEl.offsetWidth / 2;
+    var closest = 0, minDist = Infinity;
+    cards.forEach(function (card, i) {
+      var dist = Math.abs((card.offsetLeft + card.offsetWidth / 2) - scrollCenter);
+      if (dist < minDist) { minDist = dist; closest = i; }
+    });
+    return closest;
+  }
+  function updatePlanDots() {
+    var idx = getActivePlanIndex();
+    dotEls.forEach(function (d, i) { d.classList.toggle("active", i === idx); });
+  }
+  if (plansEl && dotEls.length) {
+    plansEl.addEventListener("scroll", updatePlanDots, { passive: true });
+    dotEls.forEach(function (dot, i) {
+      dot.addEventListener("click", function () {
+        var cards = plansEl.querySelectorAll(".plan");
+        if (!cards[i]) return;
+        var target = cards[i].offsetLeft + cards[i].offsetWidth / 2 - plansEl.offsetWidth / 2;
+        plansEl.scrollTo({ left: target, behavior: "smooth" });
+      });
+    });
+  }
+
   /* ---- Smooth anchor offset for sticky nav ---- */
   document.querySelectorAll('a[href^="#"]').forEach(function (link) {
     link.addEventListener("click", function (e) {
