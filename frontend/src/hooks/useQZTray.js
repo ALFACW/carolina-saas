@@ -118,32 +118,50 @@ export function useQZTray() {
       setErrorMsg('QZ Tray se desconectó. Haz clic en ↻ para reconectar.')
     }
 
-    try {
-      if (!qz.websocket.isActive()) {
-        await qz.websocket.connect({
-          host: 'localhost',
-          port: { secure: [8183], insecure: [8182] },
-          usingSecure: false,
-          retries: 3,
-          delay: 1,
-        })
-      }
-
-      // WebSocket activo → marcar conectado de inmediato
+    const marcarConectado = async () => {
       setEstado('conectado')
-
-      // Listar impresoras por separado — un fallo aquí no afecta el estado
       try {
         const lista = await qz.printers.find()
         setImpresoras(Array.isArray(lista) ? lista : (lista ? [lista] : []))
       } catch (e) {
         console.warn('[QZ] No se listaron impresoras:', e.message)
       }
+    }
 
+    try {
+      if (qz.websocket.isActive()) {
+        await marcarConectado()
+      } else {
+        // Timeout de 6s: si el WebSocket ya está activo aunque connect() no resolvió → conectado
+        const timeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('__timeout__')), 6000)
+        )
+        try {
+          await Promise.race([
+            qz.websocket.connect({
+              host: 'localhost',
+              port: { secure: [8183], insecure: [8182] },
+              usingSecure: false,
+              retries: 2,
+              delay: 1,
+            }),
+            timeout,
+          ])
+          await marcarConectado()
+        } catch (raceErr) {
+          if (raceErr.message === '__timeout__' && qz.websocket.isActive()) {
+            // connect() colgó pero el WebSocket SÍ está activo
+            console.warn('[QZ] connect() timeout pero WebSocket activo → conectado')
+            await marcarConectado()
+          } else {
+            throw raceErr
+          }
+        }
+      }
     } catch (err) {
       setEstado('error')
       setErrorMsg(err?.message?.includes('Unable') || err?.message?.includes('disconnect')
-        ? 'QZ Tray no acepta conexiones. Verifica que "Allow unsigned requests" esté activo.'
+        ? 'QZ Tray no acepta conexiones.'
         : 'QZ Tray no está corriendo.')
     } finally {
       intentando.current = false
