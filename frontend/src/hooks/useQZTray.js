@@ -49,7 +49,8 @@ async function getQZ() {
     qzInstance = mod.default || mod
     qzLoaded   = true
     // Certificado propio → elimina el popup de seguridad
-    qzInstance.security.setCertificatePromise(() => Promise.resolve(QZ_CERT))
+    // QZ Tray hace: new Promise(certHandler) → el executor DEBE llamar resolve()
+    qzInstance.security.setCertificatePromise((resolve) => resolve(QZ_CERT))
     qzInstance.security.setSignatureAlgorithm('SHA512')
     // QZ Tray hace: new Promise( signaturePromise(toSign) )
     // → el retorno debe ser la función ejecutora (resolve, reject) => ...
