@@ -246,13 +246,13 @@ export default function Configuracion() {
                       <span className="w-6 h-6 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
                       <p className="font-semibold text-ink text-sm">Descarga el servidor de impresión</p>
                     </div>
-                    <p className="text-xs text-ink-2">Descarga <strong>servidor.py</strong> y guárdalo en una carpeta fija (ej. <code className="bg-white px-1 rounded">Documentos\CarolinaPOS\</code>).</p>
-                    <p className="text-xs text-ink-2">Luego haz <strong>doble clic</strong> en el archivo. Se instala solo y queda corriendo.</p>
+                    <p className="text-xs text-ink-2">Descarga el ZIP, extráelo en una carpeta fija (ej. <code className="bg-white px-1 rounded">Documentos\CarolinaPOS\</code>) y haz doble clic en <strong>Iniciar.bat</strong>.</p>
+                    <p className="text-xs text-ink-2">Si no tienes Python, abre el navegador automáticamente para descargarlo. Una vez instalado, haz doble clic en <strong>Iniciar.bat</strong> de nuevo — se configura todo solo.</p>
                     {qz.errorMsg && <p className="text-red-600 text-xs">{qz.errorMsg}</p>}
                     <div className="flex gap-2 flex-wrap">
-                      <a href="/servidor.py" download="servidor.py"
+                      <a href="/carolinapos-print.zip" download="carolinapos-print.zip"
                         className="inline-flex items-center gap-2 bg-accent text-white text-xs px-4 py-2 rounded-lg hover:bg-accent/90 font-medium">
-                        <Download className="w-3.5 h-3.5" />Descargar servidor.py
+                        <Download className="w-3.5 h-3.5" />Descargar carolinapos-print.zip
                       </a>
                       <button onClick={qz.conectar}
                         className="inline-flex items-center gap-2 bg-white border border-border text-ink-2 text-xs px-4 py-2 rounded-lg hover:bg-surface-soft font-medium">

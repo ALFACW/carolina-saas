@@ -117,27 +117,35 @@ export default function GuiaHardware() {
         <Step num="2" title="Descarga e inicia el servidor de impresión">
           <div className="space-y-3 mt-3 text-sm text-ink-2">
             <p>
-              El servidor es un archivo Python que se instala solo la primera vez que lo ejecutas.
+              El servidor viene en un archivo ZIP. Solo necesitas descargarlo, extraerlo y hacer doble clic.
             </p>
             <ol className="space-y-2 list-decimal list-inside">
               <li>
                 Descarga el servidor:{' '}
-                <a href="/servidor.py" download="servidor.py"
+                <a href="/carolinapos-print.zip" download="carolinapos-print.zip"
                   className="text-accent font-semibold underline hover:no-underline inline-flex items-center gap-1">
                   <Download className="w-3.5 h-3.5" />
-                  servidor.py
+                  carolinapos-print.zip
                 </a>
               </li>
-              <li>Guárdalo en una carpeta fija, por ejemplo <Code>Documentos\CarolinaPOS\</Code></li>
-              <li>Haz <strong className="text-ink">doble clic</strong> en el archivo</li>
+              <li>
+                Extrae el ZIP en una carpeta fija, por ejemplo{' '}
+                <Code>Documentos\CarolinaPOS\</Code>
+              </li>
+              <li>
+                Dentro encontrarás dos archivos: <Code>servidor.py</Code> y <Code>Iniciar.bat</Code>
+              </li>
+              <li>
+                Haz <strong className="text-ink">doble clic</strong> en <Code>Iniciar.bat</Code>
+              </li>
               <li>La primera vez instala sus componentes automáticamente (tarda ~1 minuto)</li>
-              <li>Deja la ventana abierta — es el servidor corriendo</li>
+              <li>Deja la ventana abierta — es el servidor corriendo en segundo plano</li>
             </ol>
             <Ok>
               Cuando veas el mensaje <Code>http://localhost:8765</Code> en la ventana, el servidor está listo.
             </Ok>
             <Tip>
-              Para que inicie automáticamente con Windows: crea un acceso directo a <Code>servidor.py</Code>
+              Para que inicie automáticamente con Windows: crea un acceso directo a <Code>Iniciar.bat</Code>
               y cópialo a la carpeta <Code>%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup</Code>
             </Tip>
           </div>
