@@ -72,14 +72,19 @@ export default function Configuracion() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-ink mb-2">Configuración</h1>
+        <p className="text-ink-2">Ajusta la configuración de tu negocio</p>
+      </div>
+
       {msg && (
-        <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm">
+        <div className="flex items-center gap-2 bg-green-50 text-success px-4 py-3 rounded-xl text-sm">
           <CheckCircle2 className="w-4 h-4" />{msg}
         </div>
       )}
 
       {/* Datos empresa */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
+      <div className="bg-white rounded-xl border border-border p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-5">
           <Building2 className="w-5 h-5 text-gray-400" />
           <h2 className="font-semibold text-gray-900">Datos de la empresa</h2>

@@ -205,12 +205,12 @@ export default function Usuarios() {
   const mutacionActiva = crearMutation.isPending || editarMutation.isPending
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Encabezado */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Usuarios</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Gestiona los usuarios y sus roles</p>
+          <h1 className="text-3xl font-bold text-ink mb-2">Usuarios</h1>
+          <p className="text-ink-2">Gestiona los usuarios y sus roles</p>
         </div>
         <Button onClick={abrirCrear}>
           <Plus className="w-4 h-4" />

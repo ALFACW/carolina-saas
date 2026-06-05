@@ -117,10 +117,13 @@ export default function Productos() {
   ]
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Encabezado */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-900">Productos <span className="text-gray-400 font-normal">({data?.total || 0})</span></h2>
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-ink mb-2">Inventario</h1>
+          <p className="text-ink-2">Gestiona tu stock de productos ({data?.total || 0})</p>
+        </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => exportarProductos(data?.productos || [])}>
             <Download className="w-3.5 h-3.5" />Excel
@@ -136,11 +139,11 @@ export default function Productos() {
 
       {/* Búsqueda */}
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-2" />
         <input
           value={search}
           onChange={e => { setSearch(e.target.value); setPage(1) }}
-          className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
+          className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-line focus:border-accent text-ink placeholder:text-ink-2/60"
           placeholder="Buscar por nombre o código..."
         />
       </div>

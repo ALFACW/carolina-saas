@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply antialiased bg-surface-soft text-ink;
     font-feature-settings: "kern" 1, "liga" 1;
   }
   h1, h2, h3, h4 {
@@ -13,23 +13,28 @@
   input, select, textarea {
     @apply text-sm;
   }
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
 
 @layer components {
   .card {
-    @apply bg-white rounded-lg border border-gray-100 p-6;
+    @apply bg-white rounded-xl border border-border p-6 shadow-sm;
   }
   .section-title {
-    @apply text-xs font-semibold text-gray-400 uppercase tracking-wider;
+    @apply text-xs font-semibold text-ink-2 uppercase tracking-wider;
   }
   .badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold;
   }
-  .badge-green  { @apply bg-green-50 text-green-700; }
-  .badge-red    { @apply bg-red-50 text-red-700; }
-  .badge-yellow { @apply bg-yellow-50 text-yellow-700; }
-  .badge-gray   { @apply bg-gray-50 text-gray-600; }
-  .badge-blue   { @apply bg-blue-50 text-blue-700; }
+  .badge-green  { @apply bg-green-50 text-success; }
+  .badge-red    { @apply bg-red-50 text-danger; }
+  .badge-yellow { @apply bg-yellow-50 text-warning; }
+  .badge-gray   { @apply bg-surface-soft text-ink-2; }
+  .badge-blue   { @apply bg-accent-soft text-accent; }
 }
 
 /* Impresión térmica */

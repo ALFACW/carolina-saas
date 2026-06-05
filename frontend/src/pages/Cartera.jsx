@@ -263,13 +263,16 @@ export default function Cartera() {
   ).size
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Título */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Cartera</h2>
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-ink mb-2">Cartera</h1>
+          <p className="text-ink-2">Gestiona tus créditos pendientes</p>
+        </div>
         <button
           onClick={() => exportarCartera(facturasFiltradas)}
-          className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2.5 bg-success text-white text-sm font-semibold rounded-lg hover:bg-success/90 transition-colors"
         >
           <Download className="w-4 h-4" />
           Exportar Excel

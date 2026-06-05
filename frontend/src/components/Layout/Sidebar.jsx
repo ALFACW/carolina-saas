@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import {
+  Home, ShoppingCart, FileText, Package, Users, Wallet, Clock,
+  BarChart3, Settings, LogOut, Truck, ShoppingBag,
+} from 'lucide-react'
 
 const NAV_POR_ROL = {
   admin:      ['/dashboard', '/pos', '/facturas', '/productos', '/clientes', '/proveedores', '/compras', '/cartera', '/reportes', '/cajas', '/usuarios', '/configuracion'],
@@ -10,20 +14,44 @@ const NAV_POR_ROL = {
   inventario: ['/productos', '/clientes'],
 }
 
-const TODOS_NAV = [
-  { to: '/dashboard',     label: 'Dashboard' },
-  { to: '/pos',           label: 'Punto de Venta' },
-  { to: '/caja/abrir',    label: 'Mi Caja' },
-  { to: '/facturas',      label: 'Facturas' },
-  { to: '/productos',     label: 'Productos' },
-  { to: '/clientes',      label: 'Clientes' },
-  { to: '/proveedores',   label: 'Proveedores' },
-  { to: '/compras',       label: 'Compras' },
-  { to: '/cartera',       label: 'Cartera' },
-  { to: '/reportes',      label: 'Reportes' },
-  { to: '/cajas',         label: 'Cajas y Turnos' },
-  { to: '/usuarios',      label: 'Usuarios' },
-  { to: '/configuracion', label: 'Configuración' },
+const MENU_GROUPS = [
+  {
+    group: 'Ventas',
+    items: [
+      { icon: Home,         label: 'Dashboard',       path: '/dashboard' },
+      { icon: ShoppingCart, label: 'Punto de Venta',  path: '/pos' },
+      { icon: FileText,     label: 'Facturación',     path: '/facturas' },
+    ]
+  },
+  {
+    group: 'Gestión',
+    items: [
+      { icon: Package,      label: 'Inventario',   path: '/productos' },
+      { icon: Users,        label: 'Clientes',     path: '/clientes' },
+      { icon: Truck,        label: 'Proveedores',  path: '/proveedores' },
+      { icon: ShoppingBag,  label: 'Compras',      path: '/compras' },
+    ]
+  },
+  {
+    group: 'Finanzas',
+    items: [
+      { icon: Wallet,   label: 'Cartera',         path: '/cartera' },
+      { icon: Clock,    label: 'Caja y Sesiones', path: '/cajas' },
+      { icon: BarChart3,label: 'Reportes',        path: '/reportes' },
+    ]
+  },
+  {
+    group: 'Admin',
+    items: [
+      { icon: Settings, label: 'Configuración', path: '/configuracion' },
+      { icon: Users,    label: 'Usuarios',      path: '/usuarios' },
+    ]
+  },
+]
+
+// Keep the extra items that are role-accessible but not in the grouped menu
+const EXTRA_NAV = [
+  { to: '/caja/abrir', label: 'Mi Caja' },
 ]
 
 export function Sidebar() {
@@ -32,15 +60,11 @@ export function Sidebar() {
   const navigate = useNavigate()
   const [fotoPerfil, setFotoPerfil] = useState(() => localStorage.getItem('carolina_foto_perfil') || null)
 
-  // Actualizar foto cuando cambie en localStorage (navegación entre páginas)
   useEffect(() => {
     const onStorage = (e) => {
-      if (e.key === 'carolina_foto_perfil') {
-        setFotoPerfil(e.newValue)
-      }
+      if (e.key === 'carolina_foto_perfil') setFotoPerfil(e.newValue)
     }
     window.addEventListener('storage', onStorage)
-    // Polling liviano para cambios dentro de la misma pestaña
     const interval = setInterval(() => {
       const stored = localStorage.getItem('carolina_foto_perfil')
       setFotoPerfil(prev => prev !== stored ? stored : prev)
@@ -61,73 +85,118 @@ export function Sidebar() {
   }
 
   const navPermitido = NAV_POR_ROL[user?.rol] || []
-  const navFiltrado = TODOS_NAV.filter(n => navPermitido.includes(n.to))
+
+  const filteredGroups = MENU_GROUPS.map(group => ({
+    ...group,
+    items: group.items.filter(item => navPermitido.includes(item.path)),
+  })).filter(group => group.items.length > 0)
+
+  const extraItems = EXTRA_NAV.filter(n => navPermitido.includes(n.to))
 
   return (
-    <aside className="w-56 bg-white border-r border-gray-100 min-h-screen flex flex-col">
-      {/* Marca */}
-      <div className="px-6 py-5 border-b border-gray-100">
-        <p className="text-base font-bold text-gray-900 tracking-tight">Carolina</p>
-        <p className="text-xs text-gray-400 mt-0.5">Facturación DIAN</p>
+    <aside className="w-60 bg-white border-r border-border min-h-screen flex flex-col">
+      {/* Logo + tenant */}
+      <div className="p-6 border-b border-border">
+        {logo ? (
+          <img src={logo} alt="Logo" className="h-10 w-auto object-contain" />
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="w-9 h-9 rounded-full bg-accent flex items-center justify-center font-brand font-bold text-lg text-white flex-shrink-0">
+              C
+            </span>
+            <span className="font-brand font-semibold text-base text-ink flex items-center">
+              Carolina
+              <span className="bg-accent text-white font-bold text-xs px-2 py-0.5 rounded-md ml-1.5">POS</span>
+            </span>
+          </div>
+        )}
+        {tenant && (
+          <div className="mt-3">
+            <p className="text-xs font-semibold text-ink truncate">{tenant.nombre}</p>
+            <p className="text-xs text-ink-2 capitalize mt-0.5">Plan {tenant.plan}</p>
+          </div>
+        )}
       </div>
 
-      {/* Empresa activa */}
-      {tenant && (
-        <div className="px-4 py-3 border-b border-gray-100">
-          {/* Logo si existe */}
-          {logo && (
-            <div className="mb-2">
-              <img src={logo} alt="Logo" className="h-10 w-auto object-contain mx-auto" />
-            </div>
-          )}
-          <p className="text-xs font-semibold text-gray-800 truncate">{tenant.nombre}</p>
-          <p className="text-xs text-gray-400 capitalize mt-0.5">Plan {tenant.plan}</p>
-        </div>
-      )}
+      {/* Navegación por grupos */}
+      <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+        {/* Extra items (caja/abrir para cajero/vendedor) */}
+        {extraItems.length > 0 && (
+          <ul className="space-y-1">
+            {extraItems.map(({ to, label }) => (
+              <li key={to}>
+                <NavLink
+                  to={to}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-accent-soft text-accent'
+                        : 'text-ink-2 hover:bg-surface-soft hover:text-ink'
+                    }`
+                  }
+                >
+                  {label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        )}
 
-      {/* Navegación filtrada por rol */}
-      <nav className="flex-1 py-3 px-3 space-y-0.5">
-        {navFiltrado.map(({ to, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `block px-3 py-2 rounded-md text-sm transition-colors ${
-                isActive
-                  ? 'bg-gray-900 text-white font-medium'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-              }`
-            }
-          >
-            {label}
-          </NavLink>
+        {filteredGroups.map((group) => (
+          <div key={group.group}>
+            <h3 className="text-xs font-semibold text-ink-2 uppercase tracking-wider px-2 mb-3">
+              {group.group}
+            </h3>
+            <ul className="space-y-1">
+              {group.items.map((item) => {
+                const Icon = item.icon
+                return (
+                  <li key={item.path}>
+                    <NavLink
+                      to={item.path}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                          isActive
+                            ? 'bg-accent-soft text-accent'
+                            : 'text-ink-2 hover:bg-surface-soft hover:text-ink'
+                        }`
+                      }
+                    >
+                      <Icon size={18} />
+                      {item.label}
+                    </NavLink>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
         ))}
       </nav>
 
-      {/* Usuario */}
-      <div className="px-5 py-4 border-t border-gray-100">
-        <Link to="/mi-perfil" className="flex items-center gap-2.5 group mb-1">
-          {/* Avatar circular */}
-          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-gray-200 group-hover:border-gray-400 transition-colors">
+      {/* Usuario + logout */}
+      <div className="p-4 border-t border-border space-y-1">
+        <Link to="/mi-perfil" className="flex items-center gap-2.5 group px-2 py-1.5 rounded-lg hover:bg-surface-soft transition-colors">
+          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border">
             {fotoPerfil ? (
               <img src={fotoPerfil} alt="Foto de perfil" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+              <div className="w-full h-full bg-accent flex items-center justify-center">
                 <span className="text-white text-xs font-bold">{iniciales}</span>
               </div>
             )}
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-gray-800 truncate group-hover:text-gray-900">{user?.nombre}</p>
-            <p className="text-xs text-gray-400 capitalize mt-0.5 group-hover:text-gray-500">
+            <p className="text-xs font-semibold text-ink truncate">{user?.nombre}</p>
+            <p className="text-xs text-ink-2 capitalize mt-0.5">
               {user?.rol} · <span className="underline">Mi perfil</span>
             </p>
           </div>
         </Link>
         <button
           onClick={handleLogout}
-          className="text-xs text-gray-400 hover:text-gray-700 transition-colors mt-2"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-danger hover:bg-red-50 transition-colors"
         >
+          <LogOut size={18} />
           Cerrar sesión
         </button>
       </div>

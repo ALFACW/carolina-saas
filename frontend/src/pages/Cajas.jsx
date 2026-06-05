@@ -200,13 +200,21 @@ export default function Cajas() {
   ]
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-8">
+      {/* Encabezado */}
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <h1 className="text-3xl font-bold text-ink mb-2">Caja y Sesiones</h1>
+          <p className="text-ink-2">Gestiona tus sesiones de caja</p>
+        </div>
+      </div>
+
       {/* Sección 1: Cajas */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Cajas registradoras</h1>
-            <p className="text-sm text-gray-400 mt-0.5">Administra las cajas del negocio</p>
+            <h2 className="text-lg font-semibold text-ink">Cajas registradoras</h2>
+            <p className="text-sm text-ink-2 mt-0.5">Administra las cajas del negocio</p>
           </div>
           <Button onClick={abrirCrearCaja}>
             <Plus className="w-4 h-4" />

@@ -65,17 +65,20 @@ export default function Facturas() {
   ]
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Facturas ({data?.total || 0})</h2>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-ink mb-2">Facturación DIAN</h1>
+          <p className="text-ink-2">Gestiona tus facturas electrónicas ({data?.total || 0})</p>
+        </div>
         <Button variant="secondary" onClick={() => exportarFacturas(data?.facturas || [])}>
           <Download className="w-3.5 h-3.5" />Excel
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 p-4 flex flex-wrap gap-3">
+      <div className="bg-white rounded-xl border border-border p-4 flex flex-wrap gap-3">
         <select value={search.estado} onChange={e => setSearch(p => ({ ...p, estado: e.target.value }))}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          className="px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-line focus:border-accent bg-white text-ink">
           <option value="">Todos los estados</option>
           <option value="enviada">Enviada</option>
           <option value="aceptada">Aceptada</option>
@@ -83,9 +86,9 @@ export default function Facturas() {
           <option value="anulada">Anulada</option>
         </select>
         <input type="date" value={search.fecha_desde} onChange={e => setSearch(p => ({ ...p, fecha_desde: e.target.value }))}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none" placeholder="Desde" />
+          className="px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-line text-ink" />
         <input type="date" value={search.fecha_hasta} onChange={e => setSearch(p => ({ ...p, fecha_hasta: e.target.value }))}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none" placeholder="Hasta" />
+          className="px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-line text-ink" />
       </div>
 
       <Table
@@ -98,9 +101,9 @@ export default function Facturas() {
 
       {data && data.total > 20 && (
         <div className="flex items-center justify-center gap-2">
-          <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-40">Anterior</button>
-          <span className="text-sm text-gray-500">Página {page} de {Math.ceil(data.total / 20)}</span>
-          <button disabled={page >= Math.ceil(data.total / 20)} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-40">Siguiente</button>
+          <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-sm border border-border rounded-lg disabled:opacity-40 text-ink hover:bg-surface-soft">Anterior</button>
+          <span className="text-sm text-ink-2">Página {page} de {Math.ceil(data.total / 20)}</span>
+          <button disabled={page >= Math.ceil(data.total / 20)} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 text-sm border border-border rounded-lg disabled:opacity-40 text-ink hover:bg-surface-soft">Siguiente</button>
         </div>
       )}
     </div>

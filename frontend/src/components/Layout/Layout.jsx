@@ -10,8 +10,8 @@ export function Layout() {
   const esPOS = pathname === '/pos'
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className={`flex-shrink-0 transition-all duration-300 ${sidebarAbierto ? 'w-56' : 'w-0 overflow-hidden'}`}>
+    <div className="flex min-h-screen bg-surface-soft">
+      <div className={`flex-shrink-0 transition-all duration-300 ${sidebarAbierto ? 'w-60' : 'w-0 overflow-hidden'}`}>
         <Sidebar />
       </div>
       <div className="flex-1 flex flex-col min-w-0">

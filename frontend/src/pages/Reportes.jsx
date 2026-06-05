@@ -38,13 +38,16 @@ export default function Reportes() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Reportes</h2>
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-ink mb-2">Reportes</h1>
+          <p className="text-ink-2">Análisis de tu negocio</p>
+        </div>
         <div className="flex items-center gap-2">
-          <select value={mes} onChange={e => setMes(Number(e.target.value))} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+          <select value={mes} onChange={e => setMes(Number(e.target.value))} className="px-3 py-2.5 border border-border rounded-lg text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-accent-line">
             {MESES.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
           </select>
-          <select value={anio} onChange={e => setAnio(Number(e.target.value))} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+          <select value={anio} onChange={e => setAnio(Number(e.target.value))} className="px-3 py-2.5 border border-border rounded-lg text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-accent-line">
             {[2024, 2025, 2026].map(a => <option key={a} value={a}>{a}</option>)}
           </select>
           <Button variant="secondary" onClick={() => exportarVentasDia(ventasMes?.ventas || ventasMes?.por_dia || [], `${anio}-${String(mes).padStart(2,'0')}`)}>
@@ -55,44 +58,44 @@ export default function Reportes() {
 
       {/* Cards resumen mes */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
+        <div className="bg-white rounded-xl border border-border p-5 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <TrendingUp className="w-5 h-5 text-blue-600" />
-            <span className="text-sm text-gray-500">Ventas del mes</span>
+            <TrendingUp className="w-5 h-5 text-accent" />
+            <span className="text-sm text-ink-2">Ventas del mes</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{ventasMes?.por_dia?.reduce((s, d) => s + parseInt(d.cantidad), 0) || 0}</p>
-          <p className="text-sm text-gray-400">transacciones</p>
+          <p className="text-2xl font-bold text-ink">{ventasMes?.por_dia?.reduce((s, d) => s + parseInt(d.cantidad), 0) || 0}</p>
+          <p className="text-sm text-ink-2">transacciones</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
+        <div className="bg-white rounded-xl border border-border p-5 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <TrendingUp className="w-5 h-5 text-green-600" />
-            <span className="text-sm text-gray-500">Ingresos del mes</span>
+            <TrendingUp className="w-5 h-5 text-success" />
+            <span className="text-sm text-ink-2">Ingresos del mes</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{COP(ventasMes?.total_mes || 0)}</p>
+          <p className="text-2xl font-bold text-ink">{COP(ventasMes?.total_mes || 0)}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
+        <div className="bg-white rounded-xl border border-border p-5 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <AlertTriangle className="w-5 h-5 text-orange-500" />
-            <span className="text-sm text-gray-500">Stock bajo</span>
+            <AlertTriangle className="w-5 h-5 text-warning" />
+            <span className="text-sm text-ink-2">Stock bajo</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{stockBajo?.length || 0}</p>
-          <p className="text-sm text-gray-400">productos</p>
+          <p className="text-2xl font-bold text-ink">{stockBajo?.length || 0}</p>
+          <p className="text-sm text-ink-2">productos</p>
         </div>
       </div>
 
       {/* Gráfico ventas por día */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5">
-        <h3 className="font-semibold text-gray-900 mb-4">Ingresos por día — {MESES[mes - 1]} {anio}</h3>
+      <div className="bg-white rounded-xl border border-border p-5 shadow-sm">
+        <h3 className="font-semibold text-ink mb-4">Ingresos por día — {MESES[mes - 1]} {anio}</h3>
         {loadingMes ? <Loading /> : chartData.length === 0 ? (
-          <p className="text-gray-400 text-sm text-center py-8">Sin datos para este período</p>
+          <p className="text-ink-2 text-sm text-center py-8">Sin datos para este período</p>
         ) : (
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e8e8ea" />
+              <XAxis dataKey="dia" tick={{ fontSize: 12, fill: '#565660' }} />
+              <YAxis tick={{ fontSize: 12, fill: '#565660' }} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
               <Tooltip formatter={v => COP(v)} labelFormatter={l => `Día ${l}`} />
-              <Bar dataKey="total" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Ingresos" />
+              <Bar dataKey="total" fill="#1c61c0" radius={[4, 4, 0, 0]} name="Ingresos" />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -100,22 +103,22 @@ export default function Reportes() {
 
       {/* Top productos */}
       {topProductos?.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
-          <h3 className="font-semibold text-gray-900 mb-4">Productos más vendidos</h3>
+        <div className="bg-white rounded-xl border border-border p-5 shadow-sm">
+          <h3 className="font-semibold text-ink mb-4">Productos más vendidos</h3>
           <div className="space-y-3">
             {topProductos.map((p, i) => (
               <div key={p.id} className="flex items-center gap-3">
-                <span className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs font-bold text-gray-500">{i + 1}</span>
+                <span className="w-6 h-6 bg-accent-soft rounded-full flex items-center justify-center text-xs font-bold text-accent">{i + 1}</span>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{p.nombre}</p>
+                  <p className="text-sm font-medium text-ink">{p.nombre}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <div className="flex-1 bg-gray-100 rounded-full h-1.5">
-                      <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, (p.total_vendido / (topProductos[0]?.total_vendido || 1)) * 100)}%` }} />
+                    <div className="flex-1 bg-border rounded-full h-1.5">
+                      <div className="bg-accent h-1.5 rounded-full" style={{ width: `${Math.min(100, (p.total_vendido / (topProductos[0]?.total_vendido || 1)) * 100)}%` }} />
                     </div>
-                    <span className="text-xs text-gray-400">{p.total_vendido} uds</span>
+                    <span className="text-xs text-ink-2">{p.total_vendido} uds</span>
                   </div>
                 </div>
-                <span className="text-sm font-bold text-gray-700">{COP(p.ingresos)}</span>
+                <span className="text-sm font-bold text-accent">{COP(p.ingresos)}</span>
               </div>
             ))}
           </div>
@@ -124,24 +127,24 @@ export default function Reportes() {
 
       {/* Stock bajo */}
       {stockBajo?.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-orange-500" />
+        <div className="bg-white rounded-xl border border-border p-5 shadow-sm">
+          <h3 className="font-semibold text-ink mb-4 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-warning" />
             Productos con stock bajo ({stockBajo.length})
           </h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="border-b">
-                <th className="text-left py-2 text-gray-500 font-medium">Producto</th>
-                <th className="text-right py-2 text-gray-500 font-medium">Stock actual</th>
-                <th className="text-right py-2 text-gray-500 font-medium">Mínimo</th>
+              <thead><tr className="border-b border-border">
+                <th className="text-left py-2 text-ink-2 font-medium">Producto</th>
+                <th className="text-right py-2 text-ink-2 font-medium">Stock actual</th>
+                <th className="text-right py-2 text-ink-2 font-medium">Mínimo</th>
               </tr></thead>
               <tbody>
                 {stockBajo.map(p => (
-                  <tr key={p.id} className="border-b border-gray-50">
-                    <td className="py-2 text-gray-900">{p.nombre}</td>
-                    <td className="py-2 text-right font-bold text-red-600">{p.stock_actual}</td>
-                    <td className="py-2 text-right text-gray-500">{p.stock_minimo}</td>
+                  <tr key={p.id} className="border-b border-border/50">
+                    <td className="py-2 text-ink">{p.nombre}</td>
+                    <td className="py-2 text-right font-bold text-danger">{p.stock_actual}</td>
+                    <td className="py-2 text-right text-ink-2">{p.stock_minimo}</td>
                   </tr>
                 ))}
               </tbody>
