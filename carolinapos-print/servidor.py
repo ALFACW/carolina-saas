@@ -1,34 +1,32 @@
 """
-CarolinaPOS Print Server v1.1
-Ejecutar con: python servidor.py
-Se instala las dependencias automaticamente la primera vez.
+CarolinaPOS Print Server v1.2
+Ejecutar con: Iniciar.bat
 """
-import subprocess, sys, os
+import sys
 
-# ── Auto-instalar dependencias ──────────────────────────────────────────────
-
-def _instalar(paquete):
-    print(f'  Instalando {paquete}...')
-    subprocess.check_call(
-        [sys.executable, '-m', 'pip', 'install', paquete, '--quiet', '--disable-pip-version-check'],
-        stdout=subprocess.DEVNULL
-    )
-    print(f'  {paquete} instalado. Reiniciando...')
-    os.execv(sys.executable, [sys.executable] + sys.argv)
-
+# Las dependencias ya fueron instaladas por Iniciar.bat
+# Si falta alguna, mostrar mensaje claro
 try:
-    import flask
+    from flask import Flask, request, jsonify
 except ImportError:
-    _instalar('flask')
+    print()
+    print('  ERROR: Flask no esta instalado.')
+    print('  Usa Iniciar.bat para arrancar el servidor, no servidor.py directamente.')
+    print()
+    input('Presiona Enter para salir...')
+    sys.exit(1)
 
 try:
     import win32print
 except ImportError:
-    _instalar('pywin32')
+    print()
+    print('  ERROR: pywin32 no esta instalado.')
+    print('  Cierra esta ventana y abre Iniciar.bat de nuevo.')
+    print()
+    input('Presiona Enter para salir...')
+    sys.exit(1)
 
 # ── Servidor ─────────────────────────────────────────────────────────────────
-
-from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
@@ -65,7 +63,7 @@ def health():
         default = win32print.GetDefaultPrinter()
     except:
         pass
-    return jsonify({'ok': True, 'version': '1.1', 'default': default})
+    return jsonify({'ok': True, 'version': '1.2', 'default': default})
 
 @app.route('/printers')
 def listar_printers():
@@ -101,10 +99,10 @@ def imprimir():
 
 if __name__ == '__main__':
     print()
-    print('  ┌─────────────────────────────────────┐')
-    print('  │   CarolinaPOS Print Server v1.1      │')
-    print('  │   http://localhost:8765               │')
-    print('  │   Deja esta ventana abierta           │')
-    print('  └─────────────────────────────────────┘')
+    print('  +-----------------------------------------+')
+    print('  |   CarolinaPOS Print Server v1.2          |')
+    print('  |   http://localhost:8765                   |')
+    print('  |   Deja esta ventana abierta               |')
+    print('  +-----------------------------------------+')
     print()
     app.run(host='127.0.0.1', port=8765, debug=False, use_reloader=False)
