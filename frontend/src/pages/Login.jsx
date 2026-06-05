@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { AlertCircle, Eye, EyeOff, ChevronLeft, ChevronRight, Zap } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const SLIDES = [
   { icon: '🏪', title: 'Punto de Venta', desc: 'Escanea productos, cobra al instante y actualiza inventario automáticamente.' },
@@ -67,10 +67,11 @@ export default function Login() {
 
           {/* Logo */}
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '36px' }}>
-            <div style={{ width: '40px', height: '40px', background: '#2563eb', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Zap size={22} color="#fff" />
-            </div>
-            <span style={{ fontSize: '20px', fontWeight: 700, color: '#111827', letterSpacing: '-0.02em' }}>Carolina</span>
+            <span style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#1c61c0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: '"Quicksand", sans-serif', fontWeight: 700, fontSize: '20px', color: '#fff' }}>C</span>
+            <span style={{ fontFamily: '"Quicksand", sans-serif', fontWeight: 600, fontSize: '18px', color: '#111111', display: 'flex', alignItems: 'center' }}>
+              Carolina
+              <span style={{ background: '#1c61c0', color: '#fff', fontWeight: 700, fontSize: '13px', padding: '2px 8px', borderRadius: '6px', marginLeft: '5px' }}>POS</span>
+            </span>
           </Link>
 
           <h1 style={{ fontSize: 'clamp(26px,3vw,32px)', fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '8px', color: '#15151a' }}>
