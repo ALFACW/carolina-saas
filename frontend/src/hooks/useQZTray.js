@@ -20,16 +20,26 @@ const save = (key, val) => localStorage.setItem(key, String(val))
 let qzInstance = null
 let qzLoaded   = false
 
-// Clave pública RSA de CarolinaPOS para eliminar popup de seguridad QZ Tray
-const QZ_CERT = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhS0ha/PoUf7jk+1pFPP2
-hW42rEU//Tn93BCaBqLWvjacU25yxMQTPl2mU2wLKDLuiV/ONlo8ZQ5SPv0mMOQh
-29sGniCnTkfZDx6mgnf4BG4crYEqOJuEz2o4LLdXqKn3JDmWTujvAY+LMavqOSOO
-2MfGhrywbg3Ymo9fbPiVhbEUdCxtcvyEG5ig7vs6p/8FhFSL9GKs4ss6OybL41JZ
-84P5ztpi3Im25ORWNOofSzyt+DfYJerqWYj8euNIY7TxVsjHtKjZC9s5bIcHaMtF
-LvYzuZ67hR9x+xcn72keYn/3kDEZ7lbRXf4kSyeUV5gRhC3F68bYoFcGcDVSavZ8
-OQIDAQAB
------END PUBLIC KEY-----`
+// Certificado X.509 autofirmado de CarolinaPOS para eliminar popup de seguridad QZ Tray
+const QZ_CERT = `-----BEGIN CERTIFICATE-----
+MIIDDTCCAfWgAwIBAgIUXilb7R9B5I0vE/svUw+YasP4zBgwDQYJKoZIhvcNAQEL
+BQAwFjEUMBIGA1UEAwwLQ2Fyb2xpbmFQT1MwHhcNMjYwNjA1MjEzODAxWhcNMzYw
+NjAyMjEzODAxWjAWMRQwEgYDVQQDDAtDYXJvbGluYVBPUzCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAIUtIWvz6FH+45PtaRTz9oVuNqxFP/05/dwQmgai
+1r42nFNucsTEEz5dplNsCygy7olfzjZaPGUOUj79JjDkIdvbBp4gp05H2Q8epoJ3
++ARuHK2BKjibhM9qOCy3V6ip9yQ5lk7o7wGPizGr6jkjjtjHxoa8sG4N2JqPX2z4
+lYWxFHQsbXL8hBuYoO77Oqf/BYRUi/RirOLLOjsmy+NSWfOD+c7aYtyJtuTkVjTq
+H0s8rfg32CXq6lmI/HrjSGO08VbIx7So2QvbOWyHB2jLRS72M7meu4UfcfsXJ+9p
+HmJ/95AxGe5W0V3+JEsnlFeYEYQtxevG2KBXBnA1Umr2fDkCAwEAAaNTMFEwHQYD
+VR0OBBYEFHi+cxvX/Kd12OeLvFUWX7Fm5LSkMB8GA1UdIwQYMBaAFHi+cxvX/Kd1
+2OeLvFUWX7Fm5LSkMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEB
+ABk7d25RGHl5vCjCYGx8JLvYaAwE2XOt3Cd0o5VcsHRn73ZkaW4bcUbBhKh18Tnp
+/cf0dPGWyVyWzNc4V/c2eYyvJWaIZBk0cGaUxm/wrAXqGzZcVfAJZpTuLhpu2vXP
+Qvs1Yd/G2eXt1dNqn0xMH2gNjAcZ8nZ8UjE3jKR5/48U5tmZAj6gxzfKtUKrTIz4
+Qafhld4o0Um1VA6iYLgN72M4SolO6w8d5Ievo5ZmZ3pWhcAIoV9W65XIlKlWTXtg
+OgJR4XFiVy/HGD52bGiYYmhQViNOow5r/aRx9RKQxjMxlpQUiYf6hlbE3mpGLYX3
+vP3fjL/OPPcTDnntiLXXAfs=
+-----END CERTIFICATE-----`
 
 async function firmarQZ(mensaje) {
   try {
