@@ -96,87 +96,103 @@ export default function Configuracion() {
 
           {/* ═══════════ TAB: EMPRESA ═══════════ */}
           {tab === 'empresa' && (
-            <div className="max-w-xl space-y-6">
-              {msg && (
-                <div className="flex items-center gap-2 bg-green-50 text-success px-4 py-3 rounded-xl text-sm">
-                  <CheckCircle2 className="w-4 h-4" />{msg}
-                </div>
-              )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-              <form onSubmit={handleSubmit(d => updateMutation.mutate(d))} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2">
-                    <Input label="Nombre de la empresa" {...register('nombre')} />
+              {/* Columna izquierda: datos */}
+              <div className="bg-surface-soft rounded-xl p-5 space-y-4">
+                <p className="text-xs font-bold text-ink-2 uppercase tracking-widest">Datos de la empresa</p>
+                {msg && (
+                  <div className="flex items-center gap-2 bg-green-50 text-success px-4 py-3 rounded-xl text-sm">
+                    <CheckCircle2 className="w-4 h-4" />{msg}
                   </div>
+                )}
+                <form onSubmit={handleSubmit(d => updateMutation.mutate(d))} className="space-y-3">
+                  <Input label="Nombre de la empresa" {...register('nombre')} />
                   <div>
                     <label className="block text-sm font-medium text-ink mb-1">NIT</label>
-                    <input disabled value={tenant?.nit || ''} className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface-soft text-ink-2" />
+                    <input disabled value={tenant?.nit || ''} className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white text-ink-2" />
                   </div>
-                  <Input label="Teléfono" {...register('telefono')} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input label="Teléfono" {...register('telefono')} />
+                    <Input label="Ciudad" {...register('ciudad')} />
+                  </div>
                   <Input label="Dirección" {...register('direccion')} />
-                  <Input label="Ciudad" {...register('ciudad')} />
-                </div>
-                <Button type="submit" loading={updateMutation.isPending}>Guardar cambios</Button>
-              </form>
+                  <Button type="submit" loading={updateMutation.isPending}>Guardar cambios</Button>
+                </form>
+              </div>
 
-              {/* Logo */}
-              <div className="border-t border-border pt-5">
-                <p className="text-sm font-semibold text-ink mb-3">Logo de la empresa</p>
-                <p className="text-xs text-ink-2 mb-3">Aparece en la parte superior de cada ticket impreso.</p>
+              {/* Columna derecha: logo */}
+              <div className="bg-surface-soft rounded-xl p-5 space-y-4">
+                <p className="text-xs font-bold text-ink-2 uppercase tracking-widest">Logo de la empresa</p>
+                <p className="text-sm text-ink-2">Aparece en la parte superior de cada ticket impreso.</p>
                 {logo ? (
-                  <div className="flex items-center gap-4">
-                    <img src={logo} alt="Logo empresa" className="h-16 w-auto object-contain border border-border rounded-lg p-1 bg-white" />
-                    <div className="space-y-2">
-                      <p className="text-xs text-success font-medium flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Logo cargado</p>
-                      <div className="flex gap-3 text-xs">
-                        <label className="cursor-pointer text-accent hover:underline">
-                          Cambiar
-                          <input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" onChange={handleLogo} className="hidden" />
-                        </label>
-                        <button onClick={eliminarLogo} className="text-red-500 hover:underline">Eliminar</button>
-                      </div>
+                  <div className="flex flex-col gap-4">
+                    <div className="bg-white border border-border rounded-xl p-4 flex items-center justify-center" style={{ minHeight: '120px' }}>
+                      <img src={logo} alt="Logo empresa" className="max-h-24 max-w-full object-contain" />
                     </div>
+                    <div className="flex gap-3 text-sm">
+                      <label className="cursor-pointer flex-1 text-center py-2 border border-border rounded-lg text-ink-2 hover:bg-white transition-colors">
+                        Cambiar logo
+                        <input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" onChange={handleLogo} className="hidden" />
+                      </label>
+                      <button onClick={eliminarLogo} className="flex-1 py-2 border border-red-200 rounded-lg text-red-500 hover:bg-red-50 transition-colors text-sm">
+                        Eliminar
+                      </button>
+                    </div>
+                    <p className="text-xs text-success flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Logo cargado correctamente</p>
                   </div>
                 ) : (
-                  <label className="cursor-pointer flex flex-col items-center gap-2 border-2 border-dashed border-border rounded-lg px-8 py-6 hover:border-border-strong transition-colors w-fit">
-                    <div className="text-2xl">🖼️</div>
-                    <p className="text-sm text-ink-2">Subir logo</p>
-                    <p className="text-xs text-ink-2">PNG, JPG, WebP o SVG — máx 2MB</p>
+                  <label className="cursor-pointer flex flex-col items-center justify-center gap-3 border-2 border-dashed border-border rounded-xl p-8 hover:border-accent hover:bg-white transition-colors" style={{ minHeight: '160px' }}>
+                    <div className="text-3xl">🖼️</div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-ink-2">Haz clic para subir tu logo</p>
+                      <p className="text-xs text-ink-2 mt-1">PNG, JPG, WebP o SVG — máx 2MB</p>
+                      <p className="text-xs text-ink-2">Recomendado: fondo blanco o transparente</p>
+                    </div>
                     <input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" onChange={handleLogo} className="hidden" />
                   </label>
                 )}
-                {logoError && <p className="text-xs text-danger mt-2">{logoError}</p>}
+                {logoError && <p className="text-xs text-danger">{logoError}</p>}
               </div>
+
             </div>
           )}
 
           {/* ═══════════ TAB: PLAN ═══════════ */}
           {tab === 'plan' && (
-            <div className="max-w-lg space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-ink">Plan actual</p>
-                <span className="px-3 py-1 bg-accent-soft text-accent rounded-full text-sm font-semibold capitalize">{tenant?.plan}</span>
-              </div>
-              {usage && (
-                <div className="space-y-4">
-                  <div className="p-4 bg-surface-soft rounded-xl text-sm">
-                    Precio mensual: <strong className="text-ink">{COP(usage.limites.precio_mensual)}</strong>
+            <div className="space-y-4">
+              {/* Fila superior: plan + precio */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-surface-soft rounded-xl p-5">
+                  <p className="text-xs font-bold text-ink-2 uppercase tracking-widest mb-3">Plan activo</p>
+                  <span className="px-4 py-1.5 bg-accent-soft text-accent rounded-full text-sm font-bold capitalize">{tenant?.plan}</span>
+                </div>
+                {usage && (
+                  <div className="bg-surface-soft rounded-xl p-5">
+                    <p className="text-xs font-bold text-ink-2 uppercase tracking-widest mb-3">Precio mensual</p>
+                    <p className="text-2xl font-bold text-ink">{COP(usage.limites.precio_mensual)}</p>
                   </div>
+                )}
+              </div>
+
+              {/* Barras de uso */}
+              {usage && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
                     { label: 'Usuarios',   uso: usage.uso.usuarios,   max: usage.limites.max_usuarios   },
                     { label: 'Ventas hoy', uso: usage.uso.ventas_hoy, max: usage.limites.max_ventas_dia },
                   ].map(({ label, uso, max }) => (
-                    <div key={label} className="bg-surface-soft rounded-xl p-4 space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-ink-2">{label}</span>
-                        <span className={`font-semibold ${uso >= max * 0.8 ? 'text-orange-600' : 'text-ink'}`}>
-                          {uso} / {max === 999 ? '∞' : max}
+                    <div key={label} className="bg-surface-soft rounded-xl p-5 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <p className="text-sm font-medium text-ink">{label}</p>
+                        <span className={`text-lg font-bold ${uso >= max * 0.8 ? 'text-orange-600' : 'text-ink'}`}>
+                          {uso} <span className="text-sm font-normal text-ink-2">/ {max === 999 ? '∞' : max}</span>
                         </span>
                       </div>
                       {max !== 999 && (
-                        <div className="w-full bg-border rounded-full h-1.5">
+                        <div className="w-full bg-border rounded-full h-2">
                           <div
-                            className={`h-1.5 rounded-full transition-all ${usoPct(uso, max) >= 80 ? 'bg-orange-500' : 'bg-accent'}`}
+                            className={`h-2 rounded-full transition-all ${usoPct(uso, max) >= 80 ? 'bg-orange-500' : 'bg-accent'}`}
                             style={{ width: `${usoPct(uso, max)}%` }}
                           />
                         </div>
@@ -356,29 +372,40 @@ export default function Configuracion() {
 
           {/* ═══════════ TAB: SCANNER ═══════════ */}
           {tab === 'scanner' && (
-            <div className="max-w-xl space-y-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-              {/* Velocidad y longitud */}
-              <div className="bg-surface-soft rounded-xl p-5 space-y-4">
-                <p className="text-xs font-bold text-ink-2 uppercase tracking-widest">Sensibilidad</p>
-                <div className="grid grid-cols-2 gap-4">
+              {/* Columna izquierda: sensibilidad + prueba */}
+              <div className="space-y-5">
+                <div className="bg-surface-soft rounded-xl p-5 space-y-5">
+                  <p className="text-xs font-bold text-ink-2 uppercase tracking-widest">Sensibilidad</p>
                   <div className="space-y-1.5">
-                    <label className="text-xs text-ink-2">Velocidad máx entre teclas: <strong className="text-ink">{qz.scannerMs}ms</strong></label>
+                    <label className="text-xs text-ink-2">Velocidad máx entre teclas: <strong className="text-ink">{qz.scannerMs} ms</strong></label>
                     <input type="range" min="20" max="150" step="10" value={qz.scannerMs}
                       onChange={e => qz.guardarScannerMs(e.target.value)} className="w-full" />
-                    <div className="flex justify-between text-xs text-ink-2"><span>Rápida</span><span>Lenta</span></div>
-                    <p className="text-xs text-ink-2">Sube si no detecta el scanner. Baja si el teclado activa el escaneo.</p>
+                    <div className="flex justify-between text-xs text-ink-2"><span>Rápida (20ms)</span><span>Lenta (150ms)</span></div>
+                    <p className="text-xs text-ink-2 mt-1">Sube si el scanner no detecta el código. Baja si el teclado activa el escaneo.</p>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs text-ink-2">Longitud mínima: <strong className="text-ink">{qz.scannerMin} chars</strong></label>
+                    <label className="text-xs text-ink-2">Longitud mínima del código: <strong className="text-ink">{qz.scannerMin} caracteres</strong></label>
                     <input type="range" min="2" max="15" step="1" value={qz.scannerMin}
                       onChange={e => qz.guardarScannerMin(e.target.value)} className="w-full" />
                     <div className="flex justify-between text-xs text-ink-2"><span>2</span><span>15</span></div>
                   </div>
                 </div>
+
+                <div className="bg-surface-soft rounded-xl p-5 space-y-3">
+                  <p className="text-xs font-bold text-ink-2 uppercase tracking-widest">Campo de prueba</p>
+                  <input
+                    type="text"
+                    placeholder="Escanea un código de barras aquí..."
+                    onKeyDown={e => e.stopPropagation()}
+                    className="w-full px-3 py-2.5 border border-border rounded-lg text-sm bg-white font-mono focus:outline-none focus:ring-2 focus:ring-accent/30"
+                  />
+                  <p className="text-xs text-ink-2">El scanner funciona como teclado USB — no requiere software adicional.</p>
+                </div>
               </div>
 
-              {/* Sonidos */}
+              {/* Columna derecha: sonidos */}
               <div className="bg-surface-soft rounded-xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -396,7 +423,7 @@ export default function Configuracion() {
                 </div>
 
                 {sonidoActivo && (
-                  <div className="space-y-4 pt-2 border-t border-border">
+                  <div className="space-y-4 pt-3 border-t border-border">
                     <div className="space-y-2">
                       <label className="text-xs text-ink-2">Tono del scanner</label>
                       <div className="grid grid-cols-5 gap-1.5">
@@ -429,18 +456,12 @@ export default function Configuracion() {
                     </div>
                   </div>
                 )}
-              </div>
 
-              {/* Campo de prueba */}
-              <div className="bg-surface-soft rounded-xl p-5 space-y-2">
-                <p className="text-xs font-bold text-ink-2 uppercase tracking-widest">Campo de prueba</p>
-                <input
-                  type="text"
-                  placeholder="Escanea un código de barras aquí..."
-                  onKeyDown={e => e.stopPropagation()}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white font-mono focus:outline-none focus:ring-2 focus:ring-accent/30"
-                />
-                <p className="text-xs text-ink-2">El scanner funciona como teclado USB — no requiere software adicional.</p>
+                {!sonidoActivo && (
+                  <div className="pt-3 border-t border-border">
+                    <p className="text-xs text-ink-2">Activa los sonidos para configurar el tono y el volumen.</p>
+                  </div>
+                )}
               </div>
 
             </div>
