@@ -307,9 +307,9 @@ export default function POS() {
           Salir
         </button>
 
-        <div className="w-px h-5 bg-border" />
+        <div className="hidden sm:block w-px h-5 bg-border" />
 
-        <div className="flex items-center gap-2">
+        <div className="hidden sm:flex items-center gap-2">
           <span className="w-7 h-7 rounded-full bg-accent flex items-center justify-center font-brand font-bold text-sm text-white">C</span>
           <span className="font-brand font-semibold text-sm text-ink flex items-center">
             Carolina<span className="bg-accent text-white font-bold text-xs px-1.5 py-0.5 rounded ml-1">POS</span>
@@ -343,9 +343,9 @@ export default function POS() {
         <div className="flex-1 flex flex-col overflow-hidden">
 
           {/* Buscador */}
-          <div className="bg-white border-b border-border px-6 py-4 space-y-3">
+          <div className="bg-white border-b border-border px-4 sm:px-6 py-3 sm:py-4 space-y-2 sm:space-y-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink-2 uppercase tracking-wider">
+              <label className="hidden sm:block text-xs font-semibold text-ink-2 uppercase tracking-wider">
                 Buscar producto o escanear código
               </label>
               <div className="relative">
@@ -374,8 +374,8 @@ export default function POS() {
               </div>
             </div>
 
-            {/* Atajos */}
-            <div className="flex items-center gap-4 text-xs text-ink-2">
+            {/* Atajos — solo desktop (sin sentido en móvil táctil) */}
+            <div className="hidden sm:flex items-center gap-4 text-xs text-ink-2">
               <span><kbd className="bg-surface-soft border border-border rounded px-1.5 py-0.5 font-mono text-xs">F2</kbd> Cliente</span>
               <span><kbd className="bg-surface-soft border border-border rounded px-1.5 py-0.5 font-mono text-xs">F3</kbd> Cobrar</span>
               <span><kbd className="bg-surface-soft border border-border rounded px-1.5 py-0.5 font-mono text-xs">Esc</kbd> Limpiar</span>
@@ -385,7 +385,7 @@ export default function POS() {
           </div>
 
           {/* Resultados */}
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-5">
             {searchText.trim().length > 0 ? (
               <div>
                 {productos.length > 0 && (
@@ -401,7 +401,7 @@ export default function POS() {
                     <p className="text-sm">Sin resultados para <strong>"{searchText}"</strong></p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3">
                     {productos.map((p, idx) => {
                       const sinStock = p.stock_actual <= 0
                       const activo   = idx === resultIndex
@@ -410,7 +410,7 @@ export default function POS() {
                           key={p.id}
                           onClick={() => agregarDesdeResultado(p)}
                           disabled={sinStock}
-                          className={`text-left rounded-xl border p-4 transition-all ${
+                          className={`text-left rounded-xl border p-3 sm:p-4 transition-all w-full ${
                             activo
                               ? 'border-accent bg-accent-soft shadow-sm'
                               : sinStock
@@ -418,27 +418,26 @@ export default function POS() {
                               : 'border-border bg-white hover:border-accent/40 hover:shadow-sm'
                           }`}
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
+                          {/* Precio arriba-derecha + info abajo: layout compacto en móvil */}
+                          <div className="flex items-start justify-between gap-2 min-w-0">
+                            <div className="flex-1 min-w-0 overflow-hidden">
                               {p.codigo && (
-                                <p className="font-mono text-xs text-accent font-semibold mb-1">{p.codigo}</p>
+                                <p className="font-mono text-xs text-accent font-semibold mb-0.5 truncate">{p.codigo}</p>
                               )}
-                              <h4 className="text-sm font-semibold text-ink leading-tight">{p.nombre}</h4>
-                              <div className="flex items-center gap-3 mt-1.5 text-xs text-ink-2">
-                                {p.nombre_categoria && <span>{p.nombre_categoria}</span>}
-                                {p.nombre_categoria && <span className="w-1 h-1 rounded-full bg-border" />}
-                                {sinStock
-                                  ? <span className="text-danger font-medium">Sin stock</span>
-                                  : <span>Stock: {p.stock_actual}</span>
-                                }
-                              </div>
+                              <h4 className="text-sm font-semibold text-ink leading-tight line-clamp-2">{p.nombre}</h4>
                             </div>
-                            <div className="text-right flex-shrink-0">
-                              <p className="text-base font-bold text-ink">{COP(p.precio_venta)}</p>
-                              {p.impuesto_iva > 0 && (
-                                <p className="text-xs text-ink-2 mt-0.5">IVA {p.impuesto_iva}% inc.</p>
-                              )}
-                            </div>
+                            <p className="text-sm font-bold text-ink flex-shrink-0 ml-2">{COP(p.precio_venta)}</p>
+                          </div>
+                          <div className="flex items-center gap-2 mt-2 text-xs text-ink-2 flex-wrap">
+                            {p.nombre_categoria && <span className="truncate max-w-[120px]">{p.nombre_categoria}</span>}
+                            {p.nombre_categoria && <span className="w-1 h-1 rounded-full bg-border flex-shrink-0" />}
+                            {sinStock
+                              ? <span className="text-danger font-medium">Sin stock</span>
+                              : <span className="flex-shrink-0">Stock: {p.stock_actual}</span>
+                            }
+                            {p.impuesto_iva > 0 && !sinStock && (
+                              <span className="flex-shrink-0 text-ink-2/60">IVA inc.</span>
+                            )}
                           </div>
                         </button>
                       )
