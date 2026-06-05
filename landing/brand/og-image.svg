@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0a"/>
+      <stop offset="100%" style="stop-color:#1a1a2e"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Línea decorativa superior -->
+  <rect x="0" y="0" width="1200" height="4" fill="url(#accent)"/>
+
+  <!-- Círculos decorativos -->
+  <circle cx="1050" cy="150" r="200" fill="#6366f1" opacity="0.06"/>
+  <circle cx="1100" cy="500" r="150" fill="#8b5cf6" opacity="0.05"/>
+  <circle cx="100" cy="500" r="120" fill="#6366f1" opacity="0.04"/>
+
+  <!-- Badge logo -->
+  <rect x="80" y="80" width="72" height="72" rx="18" fill="url(#accent)"/>
+  <text x="116" y="133" font-family="Arial, sans-serif" font-size="36" font-weight="700" fill="white" text-anchor="middle">C</text>
+
+  <!-- Nombre marca -->
+  <text x="172" y="115" font-family="Arial, sans-serif" font-size="38" font-weight="700" fill="white">Carolina</text>
+  <text x="172" y="115" font-family="Arial, sans-serif" font-size="38" font-weight="700" fill="#6366f1">
+    <tspan dx="215">POS</tspan>
+  </text>
+
+  <!-- Tagline principal -->
+  <text x="80" y="280" font-family="Arial, sans-serif" font-size="58" font-weight="700" fill="white">Vende, factura y controla</text>
+  <text x="80" y="350" font-family="Arial, sans-serif" font-size="58" font-weight="700" fill="white">tu negocio en Colombia.</text>
+
+  <!-- Subtítulo -->
+  <text x="80" y="420" font-family="Arial, sans-serif" font-size="26" fill="#a1a1aa">POS · Facturación DIAN · Inventario · Cartera</text>
+
+  <!-- Chips / badges -->
+  <rect x="80" y="480" width="200" height="46" rx="23" fill="#6366f1" opacity="0.15"/>
+  <text x="180" y="509" font-family="Arial, sans-serif" font-size="18" fill="#a5b4fc" text-anchor="middle">✓ 100% DIAN</text>
+
+  <rect x="298" y="480" width="230" height="46" rx="23" fill="#6366f1" opacity="0.15"/>
+  <text x="413" y="509" font-family="Arial, sans-serif" font-size="18" fill="#a5b4fc" text-anchor="middle">✓ Sin límite ventas</text>
+
+  <rect x="546" y="480" width="230" height="46" rx="23" fill="#6366f1" opacity="0.15"/>
+  <text x="661" y="509" font-family="Arial, sans-serif" font-size="18" fill="#a5b4fc" text-anchor="middle">✓ Desde $189.000/mes</text>
+
+  <!-- URL -->
+  <text x="1120" y="590" font-family="Arial, sans-serif" font-size="20" fill="#52525b" text-anchor="end">carolinapos.co</text>
+</svg>
