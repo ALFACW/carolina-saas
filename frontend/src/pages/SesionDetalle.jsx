@@ -268,9 +268,10 @@ function InfoFila({ label, valor, highlight }) {
 }
 
 function duracion(desde, hasta) {
+  if (!hasta) return '—'
   const ms = new Date(hasta) - new Date(desde)
   if (ms < 0) return '—'
   const h = Math.floor(ms / 3600000)
-  const m = Math.floor((ms % 3600000) / 60000)
-  return `${h}h ${m}m`
+  const minutos = Math.max(0, Math.round((ms % 3600000) / 60000))
+  return `${h}h ${minutos}m`
 }

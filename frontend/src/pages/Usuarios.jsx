@@ -19,7 +19,7 @@ const ROL_BADGE = {
 
 function RolBadge({ rol }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${ROL_BADGE[rol] || 'bg-gray-100 text-gray-600'}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${ROL_BADGE[rol] || 'bg-gray-100 text-ink-2'}`}>
       {rol}
     </span>
   )
@@ -113,7 +113,7 @@ export default function Usuarios() {
     const e = {}
     if (!form.nombre.trim()) e.nombre = 'Requerido'
     if (!form.email.trim()) e.email = 'Requerido'
-    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Email inválido'
+    else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(form.email)) e.email = 'Email inválido'
     if (!editando && !form.password) e.password = 'Requerido'
     if (!form.rol) e.rol = 'Requerido'
     return e
@@ -165,7 +165,7 @@ export default function Usuarios() {
       key: 'activo',
       label: 'Estado',
       render: (val) => (
-        <span className={`inline-flex items-center gap-1 text-xs font-medium ${val ? 'text-green-600' : 'text-gray-400'}`}>
+        <span className={`inline-flex items-center gap-1 text-xs font-medium ${val ? 'text-green-600' : 'text-ink-2'}`}>
           {val ? <UserCheck className="w-3.5 h-3.5" /> : <UserX className="w-3.5 h-3.5" />}
           {val ? 'Activo' : 'Inactivo'}
         </span>
@@ -178,21 +178,21 @@ export default function Usuarios() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => abrirEditar(row)}
-            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+            className="p-1.5 text-ink-2 hover:text-ink hover:bg-surface-soft rounded transition-colors"
             title="Editar"
           >
             <Edit className="w-4 h-4" />
           </button>
           <button
             onClick={() => abrirResetPassword(row)}
-            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+            className="p-1.5 text-ink-2 hover:text-accent hover:bg-accent-soft rounded transition-colors"
             title="Resetear contraseña"
           >
             <Key className="w-4 h-4" />
           </button>
           <button
             onClick={() => confirmarEliminar(row)}
-            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+            className="p-1.5 text-ink-2 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
             title="Eliminar"
           >
             <Trash2 className="w-4 h-4" />
@@ -262,14 +262,14 @@ export default function Usuarios() {
             />
           )}
           <div className="space-y-1">
-            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide">
+            <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide">
               Rol
             </label>
             <select
               name="rol"
               value={form.rol}
               onChange={cambiar}
-              className="w-full px-3 py-2 border border-gray-200 text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+              className="w-full px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent"
             >
               {ROLES.map(r => (
                 <option key={r} value={r} className="capitalize">{r}</option>
@@ -284,9 +284,9 @@ export default function Usuarios() {
                 name="activo"
                 checked={form.activo}
                 onChange={cambiar}
-                className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                className="w-4 h-4 rounded border-border text-ink focus:ring-accent/30"
               />
-              <span className="text-sm text-gray-700">Usuario activo</span>
+              <span className="text-sm text-ink">Usuario activo</span>
             </label>
           )}
           {(crearMutation.isError || editarMutation.isError) && (
@@ -311,7 +311,7 @@ export default function Usuarios() {
         size="sm"
       >
         <form onSubmit={handleResetPassword} className="space-y-4">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-ink-2">
             Establece una nueva contraseña para este usuario. Se le pedirá que la cambie en su próximo inicio de sesión.
           </p>
           <Input
@@ -342,7 +342,7 @@ export default function Usuarios() {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-ink-2">
             ¿Estás seguro de que quieres eliminar a <strong>{usuarioEliminar?.nombre}</strong>? Esta acción no se puede deshacer.
           </p>
           {eliminarMutation.isError && (

@@ -145,7 +145,7 @@ export default function ProductoForm() {
             onSubmit={handleSubmit(onSubmit)}
             className="space-y-5"
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && e.target.type !== 'submit') {
+              if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.type !== 'submit') {
                 e.preventDefault()
               }
             }}

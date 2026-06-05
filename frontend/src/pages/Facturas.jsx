@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, Eye, XCircle, FileDown, Download } from 'lucide-react'
+import { Search, Eye, XCircle, Download } from 'lucide-react'
 import { facturasService } from '../services/facturas'
 import { Table } from '../components/Common/Table'
 import { Button } from '../components/Common/Button'
@@ -78,7 +78,7 @@ export default function Facturas() {
 
       <div className="bg-white rounded-xl border border-border p-4 flex flex-wrap gap-3">
         <select value={search.estado} onChange={e => setSearch(p => ({ ...p, estado: e.target.value }))}
-          className="px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-line focus:border-accent bg-white text-ink">
+          className="px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent bg-white text-ink">
           <option value="">Todos los estados</option>
           <option value="enviada">Enviada</option>
           <option value="aceptada">Aceptada</option>
@@ -86,9 +86,9 @@ export default function Facturas() {
           <option value="anulada">Anulada</option>
         </select>
         <input type="date" value={search.fecha_desde} onChange={e => setSearch(p => ({ ...p, fecha_desde: e.target.value }))}
-          className="px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-line text-ink" />
+          className="px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 text-ink" />
         <input type="date" value={search.fecha_hasta} onChange={e => setSearch(p => ({ ...p, fecha_hasta: e.target.value }))}
-          className="px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-line text-ink" />
+          className="px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 text-ink" />
       </div>
 
       <Table

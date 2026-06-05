@@ -17,7 +17,7 @@ const ESTADO_BADGE = {
 
 function EstadoBadge({ estado }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${ESTADO_BADGE[estado] || 'bg-gray-100 text-gray-600'}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${ESTADO_BADGE[estado] || 'bg-surface-soft text-ink-2'}`}>
       {estado}
     </span>
   )
@@ -120,7 +120,7 @@ export default function Cajas() {
       key: 'activa',
       label: 'Estado',
       render: (val) => (
-        <span className={`inline-flex items-center gap-1 text-xs font-medium ${val ? 'text-green-600' : 'text-gray-400'}`}>
+        <span className={`inline-flex items-center gap-1 text-xs font-medium ${val ? 'text-green-600' : 'text-ink-2'}`}>
           {val ? <CheckCircle className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
           {val ? 'Activa' : 'Inactiva'}
         </span>
@@ -132,7 +132,7 @@ export default function Cajas() {
       render: (_, row) => (
         <button
           onClick={() => abrirEditarCaja(row)}
-          className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+          className="p-1.5 text-ink-2 hover:text-ink hover:bg-surface-soft rounded transition-colors"
           title="Editar"
         >
           <Edit className="w-4 h-4" />
@@ -158,7 +158,7 @@ export default function Cajas() {
         if (val === undefined || val === null) return '—'
         const n = Number(val)
         return (
-          <span className={`font-medium ${n > 0 ? 'text-green-600' : n < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+          <span className={`font-medium ${n > 0 ? 'text-green-600' : n < 0 ? 'text-red-600' : 'text-ink-2'}`}>
             {n > 0 ? '+' : ''}{COP(n)}
           </span>
         )
@@ -178,7 +178,7 @@ export default function Cajas() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate(`/sesiones/${id}`)}
-              className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+              className="p-1.5 text-ink-2 hover:text-ink hover:bg-surface-soft rounded transition-colors"
               title="Ver detalle"
             >
               <Eye className="w-4 h-4" />
@@ -187,7 +187,7 @@ export default function Cajas() {
               <button
                 onClick={() => aprobarMutation.mutate(id)}
                 disabled={aprobarMutation.isPending}
-                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                className="p-1.5 text-ink-2 hover:text-accent hover:bg-accent-soft rounded transition-colors"
                 title="Aprobar cuadratura"
               >
                 <Check className="w-4 h-4" />
@@ -232,18 +232,18 @@ export default function Cajas() {
       {/* Sección 2: Historial de sesiones */}
       <div className="space-y-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Historial de turnos</h2>
-          <p className="text-sm text-gray-400 mt-0.5">Registro de aperturas y cierres de caja</p>
+          <h2 className="text-lg font-semibold text-ink">Historial de turnos</h2>
+          <p className="text-sm text-ink-2 mt-0.5">Registro de aperturas y cierres de caja</p>
         </div>
 
         {/* Filtros */}
-        <div className="flex flex-wrap gap-3 p-4 bg-white rounded-lg border border-gray-100">
+        <div className="flex flex-wrap gap-3 p-4 bg-white rounded-lg border border-border">
           <div className="flex-1 min-w-36">
-            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Caja</label>
+            <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide mb-1">Caja</label>
             <select
               value={filtros.caja_id}
               onChange={(e) => setFiltros(prev => ({ ...prev, caja_id: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-200 text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-900"
+              className="w-full px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-900"
             >
               <option value="">Todas las cajas</option>
               {cajas.map(c => (
@@ -252,21 +252,21 @@ export default function Cajas() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Desde</label>
+            <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide mb-1">Desde</label>
             <input
               type="date"
               value={filtros.fecha_desde}
               onChange={(e) => setFiltros(prev => ({ ...prev, fecha_desde: e.target.value }))}
-              className="px-3 py-2 border border-gray-200 text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-900"
+              className="px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-900"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Hasta</label>
+            <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide mb-1">Hasta</label>
             <input
               type="date"
               value={filtros.fecha_hasta}
               onChange={(e) => setFiltros(prev => ({ ...prev, fecha_hasta: e.target.value }))}
-              className="px-3 py-2 border border-gray-200 text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-900"
+              className="px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-900"
             />
           </div>
           <div className="flex items-end">
@@ -317,9 +317,9 @@ export default function Cajas() {
               name="activa"
               checked={formCaja.activa}
               onChange={cambiarCaja}
-              className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+              className="w-4 h-4 rounded border-border text-ink focus:ring-gray-900"
             />
-            <span className="text-sm text-gray-700">Caja activa</span>
+            <span className="text-sm text-ink">Caja activa</span>
           </label>
           {(crearCajaMutation.isError || editarCajaMutation.isError) && (
             <p className="text-xs text-red-500">

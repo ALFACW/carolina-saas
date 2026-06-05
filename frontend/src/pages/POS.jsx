@@ -615,7 +615,6 @@ export default function POS() {
           <button
             onClick={() => carrito.length > 0 && setShowCobroModal(true)}
             disabled={carrito.length === 0}
-            onKeyDown={e => { if (e.key === 'Enter' && !ventaMutation.isPending) setShowCobroModal(true) }}
             className="w-full py-3.5 rounded-xl font-bold text-sm transition-colors disabled:opacity-30 text-white bg-accent hover:bg-accent/90"
           >
             Cobrar

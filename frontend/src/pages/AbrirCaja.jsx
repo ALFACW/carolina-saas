@@ -48,11 +48,8 @@ export default function AbrirCaja() {
     e.preventDefault()
     let valido = true
 
-    if (!fondo && fondo !== '0') {
+    if (!fondo.trim() || isNaN(Number(fondo)) || Number(fondo) < 0) {
       setErrorFondo('Ingresa el fondo inicial (puede ser 0)')
-      valido = false
-    } else if (isNaN(Number(fondo)) || Number(fondo) < 0) {
-      setErrorFondo('Monto inválido')
       valido = false
     } else {
       setErrorFondo('')
@@ -212,7 +209,7 @@ export default function AbrirCaja() {
                 <button
                   type="submit"
                   disabled={abrirMutation.isPending}
-                  className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-semibold px-4 py-3 rounded-lg text-sm transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-semibold px-4 py-3 rounded-lg text-sm transition-colors disabled:opacity-50 focus:ring-2 focus:ring-accent/50 focus:outline-none"
                 >
                   <ShoppingCart className="w-4 h-4" />
                   {abrirMutation.isPending ? 'Abriendo...' : 'Abrir mi caja'}

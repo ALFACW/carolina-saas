@@ -118,8 +118,8 @@ export default function Proveedores() {
       label: 'Proveedor',
       render: (v, row) => (
         <div>
-          <p className="font-medium text-gray-900">{v}</p>
-          {row.nit && <p className="text-xs text-gray-400">NIT: {row.nit}</p>}
+          <p className="font-medium text-ink">{v}</p>
+          {row.nit && <p className="text-xs text-ink-2">NIT: {row.nit}</p>}
         </div>
       ),
     },
@@ -134,7 +134,7 @@ export default function Proveedores() {
         <div className="flex items-center gap-1">
           <button
             onClick={() => openEdit(row)}
-            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+            className="p-1.5 text-accent hover:bg-accent-soft rounded-lg transition-colors"
             title="Editar"
           >
             <Edit className="w-4 h-4" />
@@ -173,7 +173,7 @@ export default function Proveedores() {
         <input
           value={search}
           onChange={e => { setSearch(e.target.value); setPage(1) }}
-          className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-line focus:border-accent text-ink placeholder:text-ink-2/60"
+          className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent text-ink placeholder:text-ink-2/60"
           placeholder="Buscar por nombre o NIT..."
         />
       </div>
@@ -261,14 +261,14 @@ export default function Proveedores() {
               />
             </div>
             <div className="col-span-2 space-y-1">
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide">
                 Notas
               </label>
               <textarea
                 value={form.notas}
                 onChange={e => setField('notas', e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-200 text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 hover:border-gray-300 resize-none"
+                className="w-full px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent hover:border-border-strong resize-none"
                 placeholder="Observaciones adicionales..."
               />
             </div>

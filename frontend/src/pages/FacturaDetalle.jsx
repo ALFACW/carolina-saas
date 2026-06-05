@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, FileDown, XCircle, Printer, Send, CheckCircle2, X } from 'lucide-react'
+import { ArrowLeft, Download, XCircle, Printer, Send, CheckCircle2, X, Loader2 } from 'lucide-react'
 import { facturasService } from '../services/facturas'
 import { Loading } from '../components/Common/Loading'
 import { Button } from '../components/Common/Button'
@@ -155,8 +155,11 @@ export default function FacturaDetalle() {
             disabled={pdfMutation.isPending}
             className="flex items-center gap-2 border border-border hover:bg-surface-soft text-ink font-medium px-4 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50"
           >
-            <FileDown className="w-4 h-4" />
-            {pdfMutation.isPending ? 'Cargando...' : 'Descargar PDF'}
+            {pdfMutation.isPending ? (
+              <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Generando...</span>
+            ) : (
+              <span className="flex items-center gap-2"><Download className="w-4 h-4" /> Descargar PDF</span>
+            )}
           </button>
           <button
             onClick={handleOpenEmail}
@@ -323,7 +326,7 @@ export default function FacturaDetalle() {
                     placeholder="cliente@email.com"
                     className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
                     autoFocus
-                    onKeyDown={e => e.key === 'Enter' && handleEnviarEmail()}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); handleEnviarEmail(); } }}
                   />
                 </div>
                 {emailErr && (

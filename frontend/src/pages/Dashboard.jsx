@@ -71,7 +71,7 @@ export default function Dashboard() {
 
       {/* Acciones rápidas */}
       <div>
-        <p className="section-title mb-3">Acceso rápido</p>
+        <p className="text-base font-semibold text-ink mb-3">Acceso rápido</p>
         <div className="flex flex-wrap gap-2">
           {[
             { to: '/pos',            label: 'Nueva venta' },

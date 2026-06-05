@@ -26,8 +26,8 @@ export default function Clientes() {
   const columns = [
     { key: 'nombre', label: 'Nombre', render: (v, row) => (
       <div>
-        <p className="font-medium text-gray-900">{v}</p>
-        <p className="text-xs text-gray-400">{row.tipo_documento}: {row.numero_documento}</p>
+        <p className="font-medium text-ink">{v}</p>
+        <p className="text-xs text-ink-2">{row.tipo_documento}: {row.numero_documento}</p>
       </div>
     )},
     { key: 'email', label: 'Email' },
@@ -35,7 +35,7 @@ export default function Clientes() {
     { key: 'ciudad', label: 'Ciudad' },
     { key: 'acciones', label: '', render: (_, row) => (
       <div className="flex items-center gap-1">
-        <Link to={`/clientes/${row.id}/editar`} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg"><Edit className="w-4 h-4" /></Link>
+        <Link to={`/clientes/${row.id}/editar`} className="p-1.5 text-accent hover:bg-accent-soft rounded-lg"><Edit className="w-4 h-4" /></Link>
         <button onClick={() => { if (window.confirm('¿Eliminar cliente?')) deleteMutation.mutate(row.id) }}
           className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
       </div>
@@ -59,7 +59,7 @@ export default function Clientes() {
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-2" />
         <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
-          className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-line focus:border-accent text-ink placeholder:text-ink-2/60"
+          className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent text-ink placeholder:text-ink-2/60"
           placeholder="Buscar clientes..." />
       </div>
       <Table columns={columns} data={data?.clientes || []} loading={isLoading} emptyMessage="No hay clientes" />
