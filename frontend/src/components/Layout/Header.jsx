@@ -3,6 +3,13 @@ import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { PanelLeftClose, PanelLeftOpen, Bell, LogOut } from 'lucide-react'
 
+const PLAN_LABELS = {
+  basico:       'Básico',
+  profesional:  'Profesional',
+  empresarial:  'Empresarial',
+  starter:      'Básico',   // fallback hasta migrar DB
+}
+
 const TITLES = {
   '/dashboard':    'Dashboard',
   '/pos':          'Punto de Venta',
@@ -44,7 +51,7 @@ export function Header({ onToggleSidebar, sidebarAbierto }) {
       <div className="flex items-center gap-3">
         {tenant?.plan && (
           <span className="text-xs uppercase tracking-widest font-semibold text-ink-2 hidden md:block">
-            Plan {tenant.plan}
+            Plan {PLAN_LABELS[tenant.plan] ?? tenant.plan}
           </span>
         )}
 

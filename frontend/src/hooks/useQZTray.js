@@ -50,7 +50,10 @@ async function getQZ() {
     // Certificado propio → elimina el popup de seguridad
     qzInstance.security.setCertificatePromise(() => Promise.resolve(QZ_CERT))
     qzInstance.security.setSignatureAlgorithm('SHA512')
-    qzInstance.security.setSignaturePromise((toSign) => firmarQZ(toSign))
+    // QZ Tray requiere un objeto {then: (resolve, reject) => ...}, NO una Promise nativa
+    qzInstance.security.setSignaturePromise((toSign) => ({
+      then: (resolve, reject) => firmarQZ(toSign).then(resolve).catch(reject),
+    }))
     return qzInstance
   } catch (err) {
     console.error('Error cargando qz-tray:', err)
