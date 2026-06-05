@@ -209,7 +209,14 @@ export default function Configuracion() {
 
               {/* Selección impresora */}
               <div>
-                <label className="text-xs text-ink-2 block mb-1">Impresora</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs text-ink-2">Impresora</label>
+                  <button onClick={qz.buscarImpresoras}
+                    className="flex items-center gap-1 text-xs text-accent hover:underline">
+                    <RefreshCw className="w-3 h-3" />
+                    Actualizar lista
+                  </button>
+                </div>
                 <div className="flex gap-2">
                   <select value={qz.impTermica} onChange={e => qz.guardarImpTermica(e.target.value)}
                     className="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-accent/30">

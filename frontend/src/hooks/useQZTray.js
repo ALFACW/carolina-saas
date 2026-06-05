@@ -144,6 +144,18 @@ export function useQZTray() {
     }
   }, [])
 
+  // ── Refrescar lista de impresoras sin reconectar ───────
+  const buscarImpresoras = useCallback(async () => {
+    const qz = await getQZ()
+    if (!qz?.websocket.isActive()) return
+    try {
+      const lista = await qz.printers.find()
+      setImpresoras(Array.isArray(lista) ? lista : (lista ? [lista] : []))
+    } catch (e) {
+      console.warn('[QZ] buscarImpresoras:', e.message)
+    }
+  }, [])
+
   useEffect(() => { conectar() }, [])
 
   // ── Imprimir ticket ESC/POS (con logo si existe) ───────
@@ -261,6 +273,6 @@ export function useQZTray() {
     scannerMs, guardarScannerMs,
     scannerMin, guardarScannerMin,
     // Acciones
-    imprimirTicket, abrirGaveta, imprimirPrueba, imprimirA4,
+    imprimirTicket, abrirGaveta, imprimirPrueba, imprimirA4, buscarImpresoras,
   }
 }
