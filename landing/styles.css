@@ -554,29 +554,21 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; font-
   /* --- PRICING CAROUSEL --- */
   .plans {
     display: flex;
-    flex-direction: row;
     flex-wrap: nowrap;
-    overflow-x: scroll;
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
     -ms-overflow-style: none;
     gap: 16px;
-    padding: 8px 24px 20px;
-    margin-left: -24px;
-    margin-right: -24px;
-    width: calc(100% + 48px);
+    padding-bottom: 12px;
     margin-top: 28px;
-    align-items: stretch;
+    width: 100%;
   }
   .plans::-webkit-scrollbar { display: none; }
   .plan {
-    flex-grow: 0;
-    flex-shrink: 0;
-    flex-basis: auto;
-    width: 82vw;
-    max-width: 340px;
-    scroll-snap-align: center;
+    flex: 0 0 85%;
+    scroll-snap-align: start;
     transform: none !important;
   }
   .plans-dots { display: flex; }
@@ -600,7 +592,7 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; font-
 
 /* --- 420px: teléfonos muy pequeños --- */
 @media (max-width: 420px) {
-  .plan { width: 88vw; max-width: none; }
+  .plan { flex: 0 0 90%; }
   .hero h1 { font-size: clamp(34px, 9vw, 44px); }
   .mock-float-1 { display: none; }
 }
