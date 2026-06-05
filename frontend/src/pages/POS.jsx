@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -15,7 +15,7 @@ import { MetodoPago } from '../components/POS/MetodoPago'
 import { Modal } from '../components/Common/Modal'
 import { useAuth } from '../context/AuthContext'
 import { useSounds } from '../hooks/useSounds'
-import { useQZTray } from '../hooks/useQZTray'
+import { useUSBPrinter } from "../hooks/useUSBPrinter"
 import { buildTicket } from '../lib/escpos'
 import { COP } from '../lib/format'
 
@@ -24,7 +24,7 @@ export default function POS() {
   const navigate = useNavigate()
   const { tenant, user } = useAuth()
   const { success: soundSuccess, error: soundError, scan } = useSounds()
-  const qzTray = useQZTray()
+  const qzTray = useUSBPrinter()
   const { setSidebar } = useUIStore()
   const [vistaTicket, setVistaTicket] = useState('ticket')
 
@@ -297,7 +297,7 @@ export default function POS() {
   return (
     <div className="h-screen bg-surface-soft flex flex-col overflow-hidden">
 
-      {/* ── BARRA SUPERIOR ── */}
+      {/* â”€â”€ BARRA SUPERIOR â”€â”€ */}
       <header className="bg-white border-b border-border h-12 px-5 flex items-center gap-4 flex-shrink-0">
         <button
           onClick={() => navigate('/dashboard')}
@@ -321,7 +321,7 @@ export default function POS() {
           <span className={`ml-4 text-xs font-medium px-3 py-1 rounded-lg ${
             scanMsg.tipo === 'ok' ? 'bg-green-50 text-success border border-green-200' : 'bg-red-50 text-danger border border-red-200'
           }`}>
-            {scanMsg.tipo === 'ok' ? '✓' : '✕'} {scanMsg.texto}
+            {scanMsg.tipo === 'ok' ? 'âœ“' : 'âœ•'} {scanMsg.texto}
           </span>
         )}
 
@@ -336,17 +336,17 @@ export default function POS() {
         )}
       </header>
 
-      {/* ── CONTENIDO PRINCIPAL ── */}
+      {/* â”€â”€ CONTENIDO PRINCIPAL â”€â”€ */}
       <div className="flex flex-1 overflow-hidden">
 
-        {/* ══ PANEL IZQUIERDO: búsqueda + resultados ══ */}
+        {/* â•â• PANEL IZQUIERDO: bÃºsqueda + resultados â•â• */}
         <div className="flex-1 flex flex-col overflow-hidden">
 
           {/* Buscador */}
           <div className="bg-white border-b border-border px-4 sm:px-6 py-3 sm:py-4 space-y-2 sm:space-y-3">
             <div className="space-y-1.5">
               <label className="hidden sm:block text-xs font-semibold text-ink-2 uppercase tracking-wider">
-                Buscar producto o escanear código
+                Buscar producto o escanear cÃ³digo
               </label>
               <div className="relative">
                 <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-2" />
@@ -357,7 +357,7 @@ export default function POS() {
                   onChange={e => setSearchText(e.target.value)}
                   autoFocus
                   autoComplete="off"
-                  placeholder="Nombre, código de barras o referencia..."
+                  placeholder="Nombre, cÃ³digo de barras o referencia..."
                   className="w-full pl-9 pr-9 py-2.5 border-2 border-border rounded-lg text-sm focus:outline-none focus:ring-0 focus:border-accent hover:border-border-strong transition-colors"
                 />
                 {buscando ? (
@@ -374,12 +374,12 @@ export default function POS() {
               </div>
             </div>
 
-            {/* Atajos — solo desktop (sin sentido en móvil táctil) */}
+            {/* Atajos â€” solo desktop (sin sentido en mÃ³vil tÃ¡ctil) */}
             <div className="hidden sm:flex items-center gap-4 text-xs text-ink-2">
               <span><kbd className="bg-surface-soft border border-border rounded px-1.5 py-0.5 font-mono text-xs">F2</kbd> Cliente</span>
               <span><kbd className="bg-surface-soft border border-border rounded px-1.5 py-0.5 font-mono text-xs">F3</kbd> Cobrar</span>
               <span><kbd className="bg-surface-soft border border-border rounded px-1.5 py-0.5 font-mono text-xs">Esc</kbd> Limpiar</span>
-              <span><kbd className="bg-surface-soft border border-border rounded px-1.5 py-0.5 font-mono text-xs">↑↓</kbd> Navegar</span>
+              <span><kbd className="bg-surface-soft border border-border rounded px-1.5 py-0.5 font-mono text-xs">â†‘â†“</kbd> Navegar</span>
               <span><kbd className="bg-surface-soft border border-border rounded px-1.5 py-0.5 font-mono text-xs">+/-</kbd> Cantidad</span>
             </div>
           </div>
@@ -391,7 +391,7 @@ export default function POS() {
                 {productos.length > 0 && (
                   <p className="text-xs font-medium text-ink-2 mb-3">
                     {productos.length} resultado{productos.length !== 1 ? 's' : ''}
-                    {productos.length > 1 && <span className="ml-2 opacity-60">↑↓ para navegar · Enter para agregar</span>}
+                    {productos.length > 1 && <span className="ml-2 opacity-60">â†‘â†“ para navegar Â· Enter para agregar</span>}
                   </p>
                 )}
 
@@ -418,7 +418,7 @@ export default function POS() {
                               : 'border-border bg-white hover:border-accent/40 hover:shadow-sm'
                           }`}
                         >
-                          {/* Precio arriba-derecha + info abajo: layout compacto en móvil */}
+                          {/* Precio arriba-derecha + info abajo: layout compacto en mÃ³vil */}
                           <div className="flex items-start justify-between gap-2 min-w-0">
                             <div className="flex-1 min-w-0 overflow-hidden">
                               {p.codigo && (
@@ -448,19 +448,19 @@ export default function POS() {
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-ink-2 py-16">
                 <Barcode size={48} className="mb-4 opacity-15" />
-                <p className="text-sm font-medium">Busca un producto o escanea un código</p>
-                <p className="text-xs mt-1 opacity-60">El scanner funciona automáticamente</p>
+                <p className="text-sm font-medium">Busca un producto o escanea un cÃ³digo</p>
+                <p className="text-xs mt-1 opacity-60">El scanner funciona automÃ¡ticamente</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Overlay móvil */}
+        {/* Overlay mÃ³vil */}
         {mobileCartOpen && (
           <div className="fixed inset-0 bg-black/40 z-40 md:hidden" onClick={() => setMobileCartOpen(false)} />
         )}
 
-        {/* ══ PANEL DERECHO: carrito ══ */}
+        {/* â•â• PANEL DERECHO: carrito â•â• */}
         <div className={`
           fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl max-h-[88vh] overflow-hidden
           flex flex-col transform transition-transform
@@ -469,7 +469,7 @@ export default function POS() {
           md:shadow-none md:rounded-none md:w-80 md:flex-shrink-0 md:border-l md:border-border
         `}>
 
-          {/* Handle móvil */}
+          {/* Handle mÃ³vil */}
           <div className="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
             <div className="w-10 h-1 bg-border rounded-full" />
           </div>
@@ -519,7 +519,7 @@ export default function POS() {
             {carrito.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-ink-2 py-10">
                 <ShoppingCart size={28} className="mb-2 opacity-20" />
-                <p className="text-xs">El carrito está vacío</p>
+                <p className="text-xs">El carrito estÃ¡ vacÃ­o</p>
               </div>
             ) : (
               carrito.map(item => {
@@ -569,7 +569,7 @@ export default function POS() {
             )}
           </div>
 
-          {/* Método de pago */}
+          {/* MÃ©todo de pago */}
           <div className="border-t border-border flex-shrink-0">
             <MetodoPago />
           </div>
@@ -587,7 +587,7 @@ export default function POS() {
             </div>
           </div>
 
-          {/* Botón cobrar */}
+          {/* BotÃ³n cobrar */}
           <div className="px-4 pb-4 flex-shrink-0">
             <button
               onClick={() => carrito.length > 0 && setShowCobroModal(true)}
@@ -595,14 +595,14 @@ export default function POS() {
               className="w-full py-3 rounded-xl font-bold text-sm transition-colors disabled:opacity-30 text-white bg-accent hover:bg-accent/90 flex items-center justify-center gap-2"
             >
               {carrito.length === 0
-                ? 'Carrito vacío'
+                ? 'Carrito vacÃ­o'
                 : <>Cobrar {COP(total)} <span className="text-xs bg-white/20 px-1.5 py-0.5 rounded font-mono">F3</span></>
               }
             </button>
           </div>
         </div>
 
-        {/* Botón flotante carrito (solo móvil) */}
+        {/* BotÃ³n flotante carrito (solo mÃ³vil) */}
         <div className="fixed bottom-5 right-5 z-40 md:hidden">
           <button
             onClick={() => setMobileCartOpen(true)}
@@ -619,7 +619,7 @@ export default function POS() {
         </div>
       </div>
 
-      {/* ── Modal: cliente ── */}
+      {/* â”€â”€ Modal: cliente â”€â”€ */}
       <Modal isOpen={showClienteModal} onClose={() => setShowClienteModal(false)} title="Seleccionar cliente">
         <div className="space-y-3">
           <div className="relative">
@@ -654,7 +654,7 @@ export default function POS() {
         </div>
       </Modal>
 
-      {/* ── Modal: cobro ── */}
+      {/* â”€â”€ Modal: cobro â”€â”€ */}
       <Modal isOpen={showCobroModal} onClose={() => { setShowCobroModal(false); setErrorVenta('') }} title="Confirmar cobro" size="sm">
         <div
           className="space-y-5"
@@ -724,7 +724,7 @@ export default function POS() {
         </div>
       </Modal>
 
-      {/* ── Modal: resultado venta ── */}
+      {/* â”€â”€ Modal: resultado venta â”€â”€ */}
       <Modal isOpen={showTicketModal} onClose={() => setShowTicketModal(false)} title="" size="sm">
         {ventaResult && (
           <div className="text-center space-y-4 py-2">
@@ -733,7 +733,7 @@ export default function POS() {
               <p className="text-lg font-bold text-ink">{COP(ventaResult.total)}</p>
               <p className="text-sm text-ink-2 mt-1">
                 {ventaResult.numero_factura ? `Factura ${ventaResult.numero_factura}` : 'Venta registrada'}
-                {qzTray.conectado && qzTray.impTermica && ' · Ticket impreso'}
+                {qzTray.conectado && qzTray.impTermica && ' Â· Ticket impreso'}
               </p>
               {ventaResult.efectivo_recibido > 0 && (
                 <p className="text-base font-semibold text-ink mt-2">

@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { CheckCircle2, Building2, CreditCard, Loader2, Printer, Zap, RefreshCw, Volume2, VolumeX } from 'lucide-react'
 import { useTenant } from '../hooks/useTenant'
-import { useQZTray } from '../hooks/useQZTray'
+import { useUSBPrinter } from '../hooks/useUSBPrinter'
 import { useSounds, TONOS_SCANNER } from '../hooks/useSounds'
 import { Button } from '../components/Common/Button'
 import { Input } from '../components/Common/Input'
@@ -13,7 +13,7 @@ import { COP } from '../lib/format'
 export default function Configuracion() {
   const { tenant: authTenant, updateTenant } = useAuth()
   const { tenant, usage, update } = useTenant()
-  const qz     = useQZTray()
+  const qz     = useUSBPrinter()
   const sounds = useSounds()
   const [sonidoActivo, setSonidoActivo] = useState(() => sounds.isEnabled())
   const [volumen,      setVolumen]      = useState(() => sounds.getVolumen())
@@ -182,21 +182,23 @@ export default function Configuracion() {
           </div>
           <div className="flex items-center gap-2">
             <a href="/guia-hardware" target="_blank" className="text-xs text-ink-2 hover:text-ink underline">Ver guia de instalacion</a>
-            {qz.estado === 'conectado'  && <span className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium flex items-center gap-1"><Zap className="w-3 h-3" />QZ Tray activo</span>}
-            {qz.estado === 'error'      && <span className="text-xs bg-red-50 text-red-600 px-2.5 py-1 rounded-full font-medium">Sin conexión</span>}
-            {qz.estado === 'conectando' && <span className="text-xs bg-surface-soft text-ink-2 px-2.5 py-1 rounded-full font-medium flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" />Buscando...</span>}
+            {qz.estado === 'conectado'    && <span className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium flex items-center gap-1"><Zap className="w-3 h-3" />USB conectado</span>}
+            {qz.estado === 'desconectado' && <span className="text-xs bg-surface-soft text-ink-2 px-2.5 py-1 rounded-full font-medium">Sin impresora</span>}
+            {qz.estado === 'error'        && <span className="text-xs bg-red-50 text-red-600 px-2.5 py-1 rounded-full font-medium">Error USB</span>}
+            {qz.estado === 'conectando'   && <span className="text-xs bg-surface-soft text-ink-2 px-2.5 py-1 rounded-full font-medium flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" />Buscando...</span>}
             <button onClick={qz.conectar} className="p-1.5 text-ink-2 hover:text-ink rounded transition-colors" title="Reconectar"><RefreshCw className="w-3.5 h-3.5" /></button>
           </div>
         </div>
 
-        {qz.estado === 'error' && (
-          <div className="bg-surface-soft rounded-lg p-4 text-sm text-ink-2 space-y-2">
-            <p className="font-medium text-ink">QZ Tray no está corriendo</p>
-            <p className="text-ink-2">Necesario para impresión directa y apertura del cajón.</p>
-            <a href="https://qz.io/download/" target="_blank" rel="noreferrer"
+        {(qz.estado === 'desconectado' || qz.estado === 'error') && (
+          <div className="bg-surface-soft rounded-lg p-4 text-sm space-y-3">
+            <p className="font-medium text-ink">Conectar impresora USB</p>
+            <p className="text-ink-2">Haz clic en el botón, selecciona tu impresora térmica en la lista y el navegador la recordará para siempre.</p>
+            {qz.errorMsg && <p className="text-red-600 text-xs">{qz.errorMsg}</p>}
+            <button onClick={qz.seleccionarImpresora}
               className="inline-flex items-center gap-2 bg-accent text-white text-xs px-4 py-2 rounded-md hover:bg-accent/80 font-medium">
-              <Printer className="w-3.5 h-3.5" />Descargar QZ Tray (gratis)
-            </a>
+              <Printer className="w-3.5 h-3.5" />Seleccionar impresora USB
+            </button>
           </div>
         )}
 
@@ -207,26 +209,20 @@ export default function Configuracion() {
             <p className="text-xs font-bold text-ink-2 uppercase tracking-widest mb-3">Impresora Térmica (tickets)</p>
             <div className="space-y-3">
 
-              {/* Selección impresora */}
+              {/* Dispositivo USB activo */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs text-ink-2">Impresora</label>
-                  <button onClick={qz.buscarImpresoras}
-                    className="flex items-center gap-1 text-xs text-accent hover:underline">
-                    <RefreshCw className="w-3 h-3" />
-                    Actualizar lista
-                  </button>
-                </div>
+                <label className="text-xs text-ink-2 block mb-1">Dispositivo conectado</label>
                 <div className="flex gap-2">
-                  <select value={qz.impTermica} onChange={e => qz.guardarImpTermica(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-accent/30">
-                    <option value="">— Seleccionar —</option>
-                    {qz.impresoras.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
+                  <div className="flex-1 px-3 py-2 border border-border rounded-md text-sm bg-green-50 text-green-800 font-medium truncate">
+                    {qz.impTermica}
+                  </div>
+                  <button onClick={qz.seleccionarImpresora}
+                    className="px-3 py-2 border border-border rounded-md text-xs font-medium text-ink-2 hover:bg-surface-soft">
+                    Cambiar
+                  </button>
                   <button onClick={async () => { try { await qz.imprimirPrueba() } catch(e) { alert(e.message) } }}
-                    disabled={!qz.impTermica}
-                    className="px-3 py-2 border border-border rounded-md text-xs font-medium text-ink-2 hover:bg-surface-soft disabled:opacity-40">
-                    Imprimir prueba
+                    className="px-3 py-2 border border-border rounded-md text-xs font-medium text-ink-2 hover:bg-surface-soft">
+                    Prueba
                   </button>
                 </div>
               </div>
@@ -318,11 +314,7 @@ export default function Configuracion() {
           {/* ── SECCIÓN: Impresora A4 ── */}
           <div className="border-t pt-4">
             <p className="text-xs font-bold text-ink-2 uppercase tracking-widest mb-3">Impresora Facturas A4</p>
-            <select value={qz.impA4} onChange={e => qz.guardarImpA4(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-accent/30">
-              <option value="">— Seleccionar impresora —</option>
-              {qz.impresoras.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
+            <p className="text-xs text-ink-2">Usa el diálogo de impresión del navegador. No requiere configuración — al imprimir una factura puedes elegir cualquier impresora instalada en Windows.</p>
           </div>
 
         </>)}
