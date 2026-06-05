@@ -113,7 +113,9 @@ export function Sidebar() {
         {tenant && (
           <div className="mt-3">
             <p className="text-xs font-semibold text-ink truncate">{tenant.nombre}</p>
-            <p className="text-xs text-ink-2 capitalize mt-0.5">Plan {tenant.plan}</p>
+            <p className="text-xs text-ink-2 mt-0.5">
+              Plan {({ basico: 'Básico', profesional: 'Profesional', empresarial: 'Empresarial', starter: 'Básico' })[tenant.plan] ?? tenant.plan}
+            </p>
           </div>
         )}
       </div>
