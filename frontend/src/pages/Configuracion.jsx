@@ -221,7 +221,7 @@ export default function Configuracion() {
                 <div className="bg-surface-soft rounded-xl p-6 space-y-4">
                   <div>
                     <p className="font-semibold text-ink text-sm mb-1">Instala el servidor de impresión</p>
-                    <p className="text-xs text-ink-2">Un solo archivo que configura todo automáticamente en tu PC.</p>
+                    <p className="text-xs text-ink-2">El ZIP incluye todo preconfigurado para tu tienda. Solo descarga y ejecuta.</p>
                   </div>
 
                   {/* Botón descarga única */}
@@ -241,14 +241,13 @@ export default function Configuracion() {
                   </button>
 
                   {/* Instrucciones */}
-                  <ol className="text-xs text-ink-2 space-y-1 list-none">
+                  <ol className="text-xs text-ink-2 space-y-2 list-none">
                     <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-accent/10 text-accent font-bold flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">1</span>Extrae el ZIP en cualquier carpeta (ej. <code className="bg-white px-1 rounded">Documentos\CarolinaPOS\</code>)</li>
-                    <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-accent/10 text-accent font-bold flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">2</span>Abre la carpeta y haz doble clic en <strong>Iniciar.bat</strong></li>
-                    <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-accent/10 text-accent font-bold flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">3</span>Si no tienes Python, se instala solo. Espera y vuelve a abrir el .bat cuando termine.</li>
-                    <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-accent/10 text-accent font-bold flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">4</span>Cuando veas <em>"Esperando trabajos de impresión..."</em> ya está listo. Deja esa ventana abierta.</li>
+                    <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-accent/10 text-accent font-bold flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">2</span>Haz doble clic en <strong>Iniciar.bat</strong> — instala todo automáticamente</li>
+                    <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-accent/10 text-accent font-bold flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">3</span>Cuando veas <em>"Esperando trabajos de impresión..."</em> ya está listo. Deja esa ventana abierta.</li>
                   </ol>
 
-                  <p className="text-xs text-ink-2 opacity-70">Tras el primer arranque, el servidor se inicia solo cada vez que enciendas el PC.</p>
+                  <p className="text-xs text-ink-2 opacity-70">Desde el segundo encendido el servidor arranca solo con Windows. No necesitas repetir estos pasos.</p>
 
                   {qz.errorMsg && <p className="text-red-600 text-xs">{qz.errorMsg}</p>}
                   <button onClick={qz.conectar}
