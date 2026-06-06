@@ -485,8 +485,8 @@ export default function POS() {
       {/* ── CONTENIDO PRINCIPAL ── */}
       <div className="flex flex-1 overflow-hidden">
 
-        {/* ════ PANEL IZQUIERDO: items del carrito ════ */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        {/* ════ PANEL IZQUIERDO: tabla del carrito ════ */}
+        <div className="flex-1 overflow-hidden flex flex-col">
           {carrito.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-ink-2 select-none">
               <ShoppingCart size={56} className="mb-4 opacity-10" />
@@ -494,56 +494,75 @@ export default function POS() {
               <p className="text-sm mt-1 opacity-50">Busca un producto arriba o escanea un código</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {carrito.map(item => {
-                const itemTotal = item.precio_unitario * item.cantidad * (1 - item.descuento / 100)
-                return (
-                  <div key={item.producto_id}
-                    className="bg-white rounded-xl border border-border px-4 py-3 flex items-center gap-4">
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      {item.codigo && (
-                        <p className="font-mono text-xs text-accent font-semibold mb-0.5">{item.codigo}</p>
-                      )}
-                      <p className="text-sm font-semibold text-ink leading-tight">{item.nombre}</p>
-                      <p className="text-xs text-ink-2 mt-0.5">{COP(item.precio_unitario)} c/u
-                        {item.descuento > 0 && <span className="ml-2 text-accent font-medium">-{item.descuento}%</span>}
-                      </p>
-                    </div>
+            <div className="flex flex-col h-full overflow-hidden">
+              {/* Cabecera tabla */}
+              <div className="flex-shrink-0 bg-surface-soft border-b border-border px-4 py-2 grid items-center text-xs font-bold text-ink-2 uppercase tracking-wider"
+                style={{ gridTemplateColumns: '80px 1fr 120px 90px 90px 28px' }}>
+                <span>SKU</span>
+                <span>Producto</span>
+                <span className="text-center">Cantidad</span>
+                <span className="text-right">Precio</span>
+                <span className="text-right">Total</span>
+                <span />
+              </div>
 
-                    {/* Cantidad */}
-                    <div className="flex items-center border border-border rounded-lg bg-white overflow-hidden flex-shrink-0">
-                      <button
-                        onClick={() => actualizarCantidad(item.producto_id, item.cantidad - 1)}
-                        className="px-2.5 py-1.5 text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors"
-                      >
-                        <Minus size={12} />
-                      </button>
-                      <span className="px-3 py-1.5 text-sm font-bold text-ink border-x border-border min-w-[2.5rem] text-center">
-                        {item.cantidad}
+              {/* Filas */}
+              <div className="flex-1 overflow-y-auto divide-y divide-border">
+                {carrito.map(item => {
+                  const itemTotal = item.precio_unitario * item.cantidad * (1 - item.descuento / 100)
+                  return (
+                    <div key={item.producto_id}
+                      className="grid items-center px-4 py-2.5 hover:bg-white transition-colors"
+                      style={{ gridTemplateColumns: '80px 1fr 120px 90px 90px 28px' }}>
+
+                      {/* SKU */}
+                      <span className="font-mono text-xs text-accent font-semibold truncate pr-2">
+                        {item.codigo || '—'}
                       </span>
+
+                      {/* Producto */}
+                      <div className="min-w-0 pr-2">
+                        <p className="text-sm font-semibold text-ink leading-tight truncate">{item.nombre}</p>
+                        {item.descuento > 0 && (
+                          <span className="text-xs text-accent font-medium">-{item.descuento}%</span>
+                        )}
+                      </div>
+
+                      {/* Cantidad +/- */}
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => actualizarCantidad(item.producto_id, item.cantidad - 1)}
+                          className="w-6 h-6 flex items-center justify-center rounded border border-border text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors flex-shrink-0"
+                        >
+                          <Minus size={10} />
+                        </button>
+                        <span className="text-sm font-bold text-ink w-7 text-center">{item.cantidad}</span>
+                        <button
+                          onClick={() => actualizarCantidad(item.producto_id, item.cantidad + 1)}
+                          disabled={item.cantidad >= item.stock_actual}
+                          className="w-6 h-6 flex items-center justify-center rounded border border-border text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors flex-shrink-0 disabled:opacity-30"
+                        >
+                          <Plus size={10} />
+                        </button>
+                      </div>
+
+                      {/* Precio unit */}
+                      <span className="text-xs text-ink-2 text-right">{COP(item.precio_unitario)}</span>
+
+                      {/* Total */}
+                      <span className="text-sm font-bold text-ink text-right">{COP(itemTotal)}</span>
+
+                      {/* Eliminar */}
                       <button
-                        onClick={() => actualizarCantidad(item.producto_id, item.cantidad + 1)}
-                        disabled={item.cantidad >= item.stock_actual}
-                        className="px-2.5 py-1.5 text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors disabled:opacity-30"
+                        onClick={() => removerItem(item.producto_id)}
+                        className="flex items-center justify-center text-ink-2 hover:text-danger transition-colors p-0.5 ml-1"
                       >
-                        <Plus size={12} />
+                        <X size={13} />
                       </button>
                     </div>
-
-                    {/* Total ítem */}
-                    <p className="text-sm font-bold text-ink w-20 text-right flex-shrink-0">{COP(itemTotal)}</p>
-
-                    {/* Eliminar */}
-                    <button
-                      onClick={() => removerItem(item.producto_id)}
-                      className="text-ink-2 hover:text-danger transition-colors flex-shrink-0 p-1"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>
