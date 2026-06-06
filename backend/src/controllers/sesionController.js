@@ -173,15 +173,26 @@ async function getAll(req, res, next) {
       return res.status(403).json({ error: 'Sin permiso para listar sesiones' })
     }
 
-    const { fecha, caja_id, cajero_id, estado, limit = 50, offset = 0 } = req.query
+    const { fecha, fecha_desde, fecha_hasta, caja_id, cajero_id, estado, limit = 50, offset = 0 } = req.query
     const conditions = ['s.tenant_id = $1']
     const params = [req.tenant.id]
     let idx = 2
 
-    if (fecha)     { conditions.push(`DATE(s.fecha_apertura) = $${idx++}`); params.push(fecha) }
-    if (caja_id)   { conditions.push(`s.caja_id = $${idx++}`);             params.push(caja_id) }
+    if (fecha)        { conditions.push(`DATE(s.fecha_apertura) = $${idx++}`);        params.push(fecha) }
+    if (fecha_desde)  { conditions.push(`DATE(s.fecha_cierre) >= $${idx++}`);         params.push(fecha_desde) }
+    if (fecha_hasta)  { conditions.push(`DATE(s.fecha_cierre) <= $${idx++}`);         params.push(fecha_hasta) }
+    if (caja_id)      { conditions.push(`s.caja_id = $${idx++}`);                     params.push(caja_id) }
     if (cajero_id) { conditions.push(`s.cajero_id = $${idx++}`);           params.push(cajero_id) }
-    if (estado)    { conditions.push(`s.estado = $${idx++}`);              params.push(estado) }
+    if (estado) {
+      const estados = estado.split(',').map(e => e.trim()).filter(Boolean)
+      if (estados.length === 1) {
+        conditions.push(`s.estado = $${idx++}`)
+        params.push(estados[0])
+      } else {
+        conditions.push(`s.estado = ANY($${idx++})`)
+        params.push(estados)
+      }
+    }
 
     const { rows } = await db.query(
       `SELECT s.*,
