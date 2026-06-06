@@ -64,7 +64,7 @@ async function getAll(req, res, next) {
          FROM compras c
          LEFT JOIN proveedores p ON p.id = c.proveedor_id
          WHERE ${where}
-         ORDER BY c.created_at DESC
+         ORDER BY c.fecha_creacion DESC
          LIMIT $${idx} OFFSET $${idx + 1}`,
         [...params, parseInt(limit), offset]
       ),
