@@ -582,7 +582,7 @@ export default function POS() {
           flex flex-col transform transition-transform
           ${showOrderPanel ? 'translate-y-0' : 'translate-y-full'}
           md:relative md:inset-auto md:translate-y-0 md:max-h-none
-          md:shadow-none md:rounded-none md:w-72 md:flex-shrink-0 md:border-l md:border-border
+          md:shadow-none md:rounded-none md:w-96 md:flex-shrink-0 md:border-l md:border-border
         `}>
 
           {/* Handle móvil */}
@@ -591,30 +591,30 @@ export default function POS() {
           </div>
 
           {/* Fecha y hora */}
-          <div className="px-4 py-3 border-b border-border flex-shrink-0 flex items-center justify-between">
-            <span className="text-xs text-ink-2 font-medium capitalize">
+          <div className="px-5 py-3.5 border-b border-border flex-shrink-0 flex items-center justify-between">
+            <span className="text-sm text-ink-2 font-medium capitalize">
               {ahora.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })}
             </span>
-            <span className="text-sm font-bold text-ink font-mono tabular-nums">
+            <span className="text-base font-bold text-ink font-mono tabular-nums">
               {ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
             </span>
           </div>
 
           {/* Cliente */}
-          <div className="px-4 py-3 border-b border-border flex-shrink-0">
+          <div className="px-5 py-4 border-b border-border flex-shrink-0">
             <button
               onClick={() => setShowClienteModal(true)}
-              className="w-full flex items-center gap-2 text-sm text-ink-2 hover:text-ink transition-colors"
+              className="w-full flex items-center gap-2.5 text-base text-ink-2 hover:text-ink transition-colors"
             >
-              <User size={14} className="flex-shrink-0" />
+              <User size={16} className="flex-shrink-0" />
               {clienteSeleccionado
-                ? <span className="font-medium text-ink truncate flex-1">{clienteSeleccionado.nombre}</span>
+                ? <span className="font-semibold text-ink truncate flex-1">{clienteSeleccionado.nombre}</span>
                 : <span className="flex-1 truncate">Consumidor final</span>
               }
               <span className="text-xs opacity-40 font-mono">F2</span>
               {clienteSeleccionado && (
                 <span onMouseDown={e => { e.stopPropagation(); setCliente(null) }} className="text-ink-2 hover:text-danger ml-1">
-                  <X size={12} />
+                  <X size={14} />
                 </span>
               )}
             </button>
@@ -629,25 +629,25 @@ export default function POS() {
           <div className="flex-1 min-h-0" />
 
           {/* Totales + cobrar — pegados al fondo */}
-          <div className="px-4 pt-4 pb-3 border-t border-border flex-shrink-0 flex flex-col gap-3">
+          <div className="px-5 pt-5 pb-4 border-t border-border flex-shrink-0 flex flex-col gap-4">
             {/* Total grande en azul */}
-            <div className="bg-accent rounded-xl px-4 py-3 text-white">
-              <p className="text-xs font-medium opacity-70 mb-0.5 uppercase tracking-wider">Total a cobrar</p>
-              <p className="text-3xl font-bold tracking-tight">{COP(total)}</p>
-              <div className="mt-2 pt-2 border-t border-white/20 flex justify-between text-xs opacity-80">
-                <span>Subtotal {COP(subtotal)}</span>
-                <span>IVA {COP(iva)}</span>
+            <div className="bg-accent rounded-2xl px-5 py-4 text-white">
+              <p className="text-sm font-medium opacity-70 mb-1 uppercase tracking-wider">Total a cobrar</p>
+              <p className="text-4xl font-bold tracking-tight">{COP(total)}</p>
+              <div className="mt-3 pt-3 border-t border-white/20 flex justify-between text-sm opacity-90">
+                <span>Subtotal &nbsp;<strong>{COP(subtotal)}</strong></span>
+                <span>IVA &nbsp;<strong>{COP(iva)}</strong></span>
               </div>
             </div>
 
             <button
               onClick={() => carrito.length > 0 && setShowCobroModal(true)}
               disabled={carrito.length === 0}
-              className="w-full py-3.5 rounded-xl font-bold text-sm transition-colors disabled:opacity-30 text-accent bg-accent-soft border-2 border-accent hover:bg-accent hover:text-white flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-xl font-bold text-base transition-colors disabled:opacity-30 text-accent bg-accent-soft border-2 border-accent hover:bg-accent hover:text-white flex items-center justify-center gap-2"
             >
               {carrito.length === 0
                 ? 'Carrito vacío'
-                : <>Cobrar &nbsp;<span className="text-xs bg-accent/20 px-1.5 py-0.5 rounded font-mono">F3</span></>
+                : <>Cobrar &nbsp;<span className="text-sm bg-accent/20 px-2 py-0.5 rounded font-mono">F3</span></>
               }
             </button>
 
@@ -657,18 +657,18 @@ export default function POS() {
                 onClick={() => qzTray.abrirGaveta()}
                 disabled={!qzTray.conectado || !qzTray.impTermica}
                 title={!qzTray.conectado ? 'Servidor de impresión no conectado' : ''}
-                className="flex flex-col items-center gap-1.5 px-2 py-2.5 rounded-xl border border-border text-xs font-medium text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex flex-col items-center gap-2 px-2 py-3 rounded-xl border border-border text-sm font-medium text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <Unlock size={15} />
+                <Unlock size={18} />
                 Gaveta
               </button>
 
               <button
                 onClick={limpiarCarrito}
                 disabled={carrito.length === 0}
-                className="flex flex-col items-center gap-1.5 px-2 py-2.5 rounded-xl border border-border text-xs font-medium text-ink-2 hover:bg-red-50 hover:text-danger hover:border-red-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex flex-col items-center gap-2 px-2 py-3 rounded-xl border border-border text-sm font-medium text-ink-2 hover:bg-red-50 hover:text-danger hover:border-red-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <Trash2 size={15} />
+                <Trash2 size={18} />
                 Limpiar
               </button>
 
@@ -678,9 +678,9 @@ export default function POS() {
                   if (id) navigate(`/caja/cerrar/${id}`)
                   else navigate('/caja/abrir')
                 }}
-                className="flex flex-col items-center gap-1.5 px-2 py-2.5 rounded-xl border border-border text-xs font-medium text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors"
+                className="flex flex-col items-center gap-2 px-2 py-3 rounded-xl border border-border text-sm font-medium text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors"
               >
-                <Calculator size={15} />
+                <Calculator size={18} />
                 Cerrar caja
               </button>
             </div>
