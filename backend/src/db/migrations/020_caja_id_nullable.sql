@@ -1,0 +1,1 @@
+ALTER TABLE sesiones_caja ALTER COLUMN caja_id DROP NOT NULL;
