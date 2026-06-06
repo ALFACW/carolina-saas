@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../services/api'
+import { useAuthStore } from '../store/authStore'
 
 const K = {
   impTermica:    'carolina_printer_termica',
@@ -101,7 +102,7 @@ export function useLocalPrint() {
 
     let bytes = escPosABytes(datosEscPos)
 
-    const logoSrc = localStorage.getItem('carolina_logo')
+    const logoSrc = useAuthStore.getState().tenant?.logo || localStorage.getItem('carolina_logo')
     if (logoSrc) {
       try {
         const { logoAEscPos } = await import('../lib/logoEscPos')

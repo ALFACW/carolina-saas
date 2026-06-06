@@ -44,8 +44,14 @@ export default function Configuracion() {
 
   const usoPct = (uso, max) => max === 999 ? 0 : Math.min(100, Math.round((uso / max) * 100))
 
-  const [logo,      setLogo]      = useState(() => localStorage.getItem('carolina_logo') || null)
+  const [logo,      setLogo]      = useState(() => tenant?.logo || localStorage.getItem('carolina_logo') || null)
   const [logoError, setLogoError] = useState('')
+  const [logoGuardando, setLogoGuardando] = useState(false)
+
+  // Sincronizar logo desde DB cuando cargue el tenant
+  React.useEffect(() => {
+    if (tenant?.logo) { setLogo(tenant.logo); localStorage.setItem('carolina_logo', tenant.logo) }
+  }, [tenant?.logo])
 
   const MIME_VALIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']
   const MAX_SIZE = 2 * 1024 * 1024
@@ -57,11 +63,30 @@ export default function Configuracion() {
     if (!MIME_VALIDOS.includes(file.type)) { setLogoError('Formato no válido. Usa JPG, PNG, WebP o SVG.'); return }
     if (file.size > MAX_SIZE)              { setLogoError('La imagen es demasiado grande. Máximo 2MB.'); return }
     const reader = new FileReader()
-    reader.onload = (ev) => { localStorage.setItem('carolina_logo', ev.target.result); setLogo(ev.target.result) }
+    reader.onload = async (ev) => {
+      const base64 = ev.target.result
+      setLogo(base64)
+      localStorage.setItem('carolina_logo', base64)
+      setLogoGuardando(true)
+      try {
+        await update({ logo: base64 })
+        updateTenant({ ...authTenant, logo: base64 })
+        toast.success('Logo guardado')
+      } catch { toast.error('Error al guardar el logo') }
+      finally { setLogoGuardando(false) }
+    }
     reader.readAsDataURL(file)
   }
 
-  const eliminarLogo = () => { localStorage.removeItem('carolina_logo'); setLogo(null); setLogoError('') }
+  const eliminarLogo = async () => {
+    setLogo(null)
+    setLogoError('')
+    localStorage.removeItem('carolina_logo')
+    try {
+      await update({ logo: null })
+      updateTenant({ ...authTenant, logo: null })
+    } catch { toast.error('Error al eliminar el logo') }
+  }
 
   return (
     <div className="space-y-6">
@@ -133,7 +158,12 @@ export default function Configuracion() {
                         Eliminar
                       </button>
                     </div>
-                    <p className="text-xs text-success flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Logo cargado correctamente</p>
+                    <p className="text-xs text-success flex items-center gap-1">
+                      {logoGuardando
+                        ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Guardando...</>
+                        : <><CheckCircle2 className="w-3.5 h-3.5" />Logo guardado en la nube</>
+                      }
+                    </p>
                   </div>
                 ) : (
                   <label className="cursor-pointer flex flex-col items-center justify-center gap-3 border-2 border-dashed border-border rounded-xl p-8 hover:border-accent hover:bg-white transition-colors" style={{ minHeight: '160px' }}>
