@@ -27,6 +27,7 @@ export default function POS() {
   const qzTray = useLocalPrint()
   const { setSidebar } = useUIStore()
   const [vistaTicket, setVistaTicket] = useState('ticket')
+  const logoEmpresa = localStorage.getItem('carolina_logo') || null
 
   const qzTrayRef = useRef(qzTray)
   useEffect(() => { qzTrayRef.current = qzTray }, [qzTray])
@@ -317,10 +318,16 @@ export default function POS() {
 
         {/* Brand */}
         <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-          <span className="w-7 h-7 rounded-full bg-accent flex items-center justify-center font-bold text-sm text-white">C</span>
-          <span className="font-semibold text-sm text-ink flex items-center">
-            Carolina<span className="bg-accent text-white font-bold text-xs px-1.5 py-0.5 rounded ml-1">POS</span>
-          </span>
+          {logoEmpresa ? (
+            <img src={logoEmpresa} alt="Logo empresa" className="h-8 max-w-[160px] object-contain" />
+          ) : (
+            <>
+              <span className="w-7 h-7 rounded-full bg-accent flex items-center justify-center font-bold text-sm text-white">C</span>
+              <span className="font-semibold text-sm text-ink flex items-center">
+                Carolina<span className="bg-accent text-white font-bold text-xs px-1.5 py-0.5 rounded ml-1">POS</span>
+              </span>
+            </>
+          )}
         </div>
 
         {/* Buscador con dropdown */}
