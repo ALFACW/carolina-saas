@@ -8,6 +8,9 @@ const errorHandler = require('./src/middleware/errorHandler');
 
 const app = express();
 
+// Railway y otros proxies en producción
+app.set('trust proxy', 1);
+
 // Seguridad
 app.use(helmet());
 const allowedOrigins = [
