@@ -94,7 +94,7 @@ export function Sidebar() {
   const extraItems = EXTRA_NAV.filter(n => navPermitido.includes(n.to))
 
   return (
-    <aside className="w-60 bg-white border-r border-border min-h-screen flex flex-col">
+    <aside className="w-60 bg-white border-r border-border h-screen flex flex-col">
       {/* Logo + tenant */}
       <div className="p-6 border-b border-border">
         {logo ? (
