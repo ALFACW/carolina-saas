@@ -89,56 +89,28 @@ export default function GuiaHardware() {
         </div>
 
         {/* Pasos */}
-        <Step num="1" title="Instala Python (una sola vez)">
-          <div className="space-y-3 mt-3 text-sm text-ink-2">
-            <p>
-              El servidor de impresión de CarolinaPOS funciona con Python, que es un
-              programa gratuito. Si ya lo tienes instalado, pasa al Paso 2.
-            </p>
-            <ol className="space-y-2 list-decimal list-inside">
-              <li>
-                Descarga Python gratis desde:{' '}
-                <a href="https://python.org/downloads" target="_blank" rel="noreferrer"
-                  className="text-accent font-semibold underline hover:no-underline inline-flex items-center gap-1">
-                  <Download className="w-3.5 h-3.5" />
-                  python.org/downloads
-                </a>
-              </li>
-              <li>Ejecuta el instalador</li>
-              <li>
-                <strong className="text-ink">Marca la opción "Add Python to PATH"</strong> antes de instalar
-              </li>
-              <li>Haz clic en "Install Now"</li>
-            </ol>
-            <Ok>Python queda instalado en tu computador para siempre. Solo necesitas hacerlo una vez.</Ok>
-          </div>
-        </Step>
-
-        <Step num="2" title="Descarga e inicia el servidor de impresión">
+        <Step num="1" title="Descarga e inicia el servidor de impresión">
           <div className="space-y-3 mt-3 text-sm text-ink-2">
             <p>
               El servidor viene en un archivo ZIP. Solo necesitas descargarlo, extraerlo y hacer doble clic.
             </p>
             <ol className="space-y-2 list-decimal list-inside">
               <li>
-                Descarga el servidor:{' '}
-                <a href="/carolinapos-print.zip" download="carolinapos-print.zip"
-                  className="text-accent font-semibold underline hover:no-underline inline-flex items-center gap-1">
-                  <Download className="w-3.5 h-3.5" />
-                  carolinapos-print.zip
+                Descarga el servidor desde{' '}
+                <a href="/configuracion" className="text-accent font-semibold underline hover:no-underline">
+                  Configuración → Impresora → Descargar ZIP
                 </a>
+                {' '}(incluye tu configuración lista)
               </li>
               <li>
-                Extrae el ZIP en una carpeta fija, por ejemplo{' '}
+                <strong className="text-ink">Extrae el ZIP</strong> en una carpeta fija (clic derecho → Extraer aquí), por ejemplo{' '}
                 <Code>Documentos\CarolinaPOS\</Code>
-              </li>
-              <li>
-                Dentro encontrarás dos archivos: <Code>servidor.py</Code> y <Code>Iniciar.bat</Code>
               </li>
               <li>
                 Haz <strong className="text-ink">doble clic</strong> en <Code>Iniciar.bat</Code>
               </li>
-              <li>La primera vez instala sus componentes automáticamente (tarda ~1 minuto)</li>
+              <li>Instala Python y sus componentes automáticamente (tarda ~2 minutos)</li>
+              <li>Cuando aparezca <Code>Esperando trabajos de impresión...</Code> ya está listo</li>
               <li>Deja la ventana abierta — es el servidor corriendo en segundo plano</li>
             </ol>
             <Ok>
@@ -151,7 +123,7 @@ export default function GuiaHardware() {
           </div>
         </Step>
 
-        <Step num="3" title="Conecta la impresora y la gaveta">
+        <Step num="2" title="Conecta la impresora y la gaveta">
           <div className="space-y-3 mt-3 text-sm text-ink-2">
             <p>Conecta los dispositivos en este orden:</p>
             <ol className="space-y-2 list-decimal list-inside">
@@ -165,7 +137,7 @@ export default function GuiaHardware() {
           </div>
         </Step>
 
-        <Step num="4" title="Configura CarolinaPOS">
+        <Step num="3" title="Configura CarolinaPOS">
           <div className="space-y-3 mt-3 text-sm text-ink-2">
             <ol className="space-y-2 list-decimal list-inside">
               <li>Abre CarolinaPOS en Chrome o Edge</li>
@@ -182,7 +154,7 @@ export default function GuiaHardware() {
           </div>
         </Step>
 
-        <Step num="5" title="Configura la pistola lectora (escáner)">
+        <Step num="4" title="Configura la pistola lectora (escáner)">
           <div className="space-y-3 mt-3 text-sm text-ink-2">
             <ol className="space-y-2 list-decimal list-inside">
               <li>Conecta la pistola al puerto USB del computador</li>
