@@ -12,6 +12,8 @@ export const useAuthStore = create(
       setAuth: (token, refreshToken, user, tenant) => {
         localStorage.setItem('carolina_token', token)
         localStorage.setItem('carolina_refresh_token', refreshToken)
+        if (tenant?.logo) localStorage.setItem('carolina_logo', tenant.logo)
+        else localStorage.removeItem('carolina_logo')
         set({ user, tenant, token, isAuthenticated: true })
       },
 

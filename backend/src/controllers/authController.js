@@ -70,7 +70,7 @@ async function login(req, res, next) {
     // Acepta email o username
     const isEmail = loginInput.includes('@')
     const { rows } = await db.query(
-      `SELECT u.*, t.nombre as tenant_nombre, t.plan, t.estado as tenant_estado, t.onboarding_completado
+      `SELECT u.*, t.nombre as tenant_nombre, t.plan, t.estado as tenant_estado, t.onboarding_completado, t.logo
        FROM users u JOIN tenants t ON u.tenant_id = t.id
        WHERE ${isEmail ? 'u.email = $1' : 'u.username = $1'} AND u.activo = true`,
       [loginInput]
@@ -97,7 +97,7 @@ async function login(req, res, next) {
       token: accessToken,
       refresh_token: refreshToken,
       user: { id: user.id, email: user.email, nombre: user.nombre, rol: user.rol },
-      tenant: { id: user.tenant_id, nombre: user.tenant_nombre, plan: user.plan, onboarding_completado: user.onboarding_completado },
+      tenant: { id: user.tenant_id, nombre: user.tenant_nombre, plan: user.plan, onboarding_completado: user.onboarding_completado, logo: user.logo || null },
     });
   } catch (err) {
     next(err);
@@ -142,7 +142,7 @@ async function logout(req, res, next) {
 async function me(req, res, next) {
   try {
     const { rows } = await db.query(
-      `SELECT u.id, u.email, u.nombre, u.rol, t.id as tenant_id, t.nombre as tenant_nombre, t.plan, t.onboarding_completado, t.estado as tenant_estado
+      `SELECT u.id, u.email, u.nombre, u.rol, t.id as tenant_id, t.nombre as tenant_nombre, t.plan, t.onboarding_completado, t.estado as tenant_estado, t.logo
        FROM users u JOIN tenants t ON u.tenant_id = t.id WHERE u.id = $1`,
       [req.user.id]
     );
@@ -150,7 +150,7 @@ async function me(req, res, next) {
     const u = rows[0];
     res.json({
       user: { id: u.id, email: u.email, nombre: u.nombre, rol: u.rol },
-      tenant: { id: u.tenant_id, nombre: u.tenant_nombre, plan: u.plan, onboarding_completado: u.onboarding_completado },
+      tenant: { id: u.tenant_id, nombre: u.tenant_nombre, plan: u.plan, onboarding_completado: u.onboarding_completado, logo: u.logo || null },
     });
   } catch (err) {
     next(err);
