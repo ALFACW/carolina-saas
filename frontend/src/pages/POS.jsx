@@ -640,9 +640,9 @@ export default function POS() {
             <MetodoPago />
           </div>
 
-          {/* Total grande en azul — ocupa el espacio flexible */}
-          <div className="flex-1 min-h-0 flex items-center justify-center px-5 py-4 bg-accent">
-            <div className="text-white text-center">
+          {/* Total grande en azul — centrado en el espacio flexible */}
+          <div className="flex-1 min-h-0 flex items-center justify-center px-5">
+            <div className="bg-accent rounded-2xl px-6 py-6 text-white text-center w-full">
               <p className="text-sm font-medium opacity-70 mb-1 uppercase tracking-wider">Total a cobrar</p>
               <p className="text-5xl font-bold tracking-tight">{COP(total)}</p>
             </div>
