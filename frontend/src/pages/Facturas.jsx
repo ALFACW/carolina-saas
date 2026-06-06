@@ -19,7 +19,8 @@ const ESTADO_COLORS = {
 export default function Facturas() {
   const qc = useQueryClient()
   const navigate = useNavigate()
-  const [filtros, setFiltros] = useState({ estado: '', fecha_desde: '', fecha_hasta: '', totalMin: '', totalMax: '' })
+  const hoy = new Date().toISOString().split('T')[0]
+  const [filtros, setFiltros] = useState({ estado: '', fecha_desde: hoy, fecha_hasta: hoy, totalMin: '', totalMax: '' })
   const [page, setPage] = useState(1)
 
   // Destructure for query (only backend-relevant fields)
@@ -40,10 +41,10 @@ export default function Facturas() {
     return true
   })
 
-  const hayFiltrosActivos = filtros.estado || filtros.fecha_desde || filtros.fecha_hasta || filtros.totalMin || filtros.totalMax
+  const hayFiltrosActivos = filtros.estado || filtros.fecha_desde !== hoy || filtros.fecha_hasta !== hoy || filtros.totalMin || filtros.totalMax
 
   const limpiarFiltros = () => {
-    setFiltros({ estado: '', fecha_desde: '', fecha_hasta: '', totalMin: '', totalMax: '' })
+    setFiltros({ estado: '', fecha_desde: hoy, fecha_hasta: hoy, totalMin: '', totalMax: '' })
     setPage(1)
   }
 
