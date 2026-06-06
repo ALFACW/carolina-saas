@@ -15,7 +15,7 @@
 | Base de datos | PostgreSQL multi-tenant (`tenant_id` en todas las tablas) |
 | Backend deploy | Railway |
 | Frontend deploy | Netlify → app.carolinapos.co |
-| Impresión | QZ Tray (ESC/POS) con certificado RSA propio |
+| Impresión | Relay vía Railway + servidor.py local (ESC/POS via win32print) |
 | Facturación DIAN | Factus API (actualmente en sandbox) |
 | Auth | JWT + refresh tokens + Zustand persist |
 
@@ -27,7 +27,7 @@
 - **POS**: Carrito, búsqueda productos, descuentos por ítem, métodos de pago, procesamiento venta → Factus DIAN
 - **Facturación DIAN**: Factus API, PDF, envío email, nota crédito, rangos numeración
 - **Ticket ESC/POS**: Layout 4 columnas, QR validación DIAN, densidad configurable, 58/80mm
-- **QZ Tray**: Certificado RSA propio elimina popup seguridad. Clave en Railway `QZ_PRIVATE_KEY`
+- **Impresión Relay**: Frontend → Railway `/api/print/job` → servidor.py local (win32print). Elimina CORS/Chrome PNA para siempre. Token por tenant en `tenants.printer_token`.
 - **Inventario**: Productos, stock, movimientos, alertas stock bajo, importar
 - **Clientes**: CRUD con tipo doc CC/NIT/CE, búsqueda desde POS
 - **Proveedores + Compras**: CRUD, actualiza stock automáticamente
@@ -37,7 +37,7 @@
 - **Configuración**: Empresa, impresora, DIAN (resolución, prefijo, Factus keys)
 - **Super Admin**: `/super-admin` — gestión de todos los tenants
 - **Usuarios**: CRUD con roles, username opcional
-- **Guía Hardware**: `/guia-hardware` — instrucciones QZ Tray + impresora
+- **Guía Hardware**: `/guia-hardware` — instrucciones servidor.py + impresora
 
 ---
 
@@ -46,15 +46,13 @@
 1. **IVA Colombia**: `precio_venta` SIEMPRE incluye IVA. Nunca sumar IVA encima.  
    `base = total / (1 + iva/100)` | `impuesto = total - base`
 
-2. **QZ Tray binario**: Ticket ESC/POS debe convertirse a **base64** antes de enviar (evita corrupción bytes QR)
+2. **Print relay**: Bytes ESC/POS viajan como array de números JSON por Railway → servidor.py los convierte a `bytes()` y los envía con win32print. NO base64 necesario.
 
-3. **Gaveta (cash drawer)**: Solo `abrirGaveta: true` en venta real. Siempre `false` en reimpresiones.
+3. **Gaveta (cash drawer)**: Abrir con `abrirGaveta()` de `useLocalPrint` solo en venta real. Nunca en reimpresiones.
 
 4. **Multi-tenant**: Todo query PostgreSQL lleva `WHERE tenant_id = $n`. Sin excepción.
 
-5. **RSA key**: `QZ_PRIVATE_KEY` NUNCA en repositorio Git. Solo en Railway env vars.
-
-6. **Factus sandbox vs prod**: `FACTUS_BASE_URL` distingue ambientes. No mezclar nunca.
+5. **Factus sandbox vs prod**: `FACTUS_BASE_URL` distingue ambientes. No mezclar nunca.
 
 ---
 
@@ -63,16 +61,20 @@
 ```
 frontend/src/
 ├── lib/escpos.js            ← Generador ESC/POS (CRÍTICO - no tocar sin cuidado)
-├── hooks/useQZTray.js       ← QZ Tray con cert RSA (CRÍTICO)
+├── hooks/useLocalPrint.js   ← Hook impresión relay (reemplazó useQZTray)
 ├── store/posStore.js        ← Carrito + cálculo IVA colombiano
 ├── pages/POS.jsx            ← Punto de venta
 └── pages/Configuracion.jsx  ← Config empresa + impresora + DIAN
 
 backend/src/
 ├── lib/factus.js            ← Cliente Factus API (CRÍTICO)
-├── routes/qz.js             ← Endpoint firma RSA para QZ Tray
+├── routes/printRelay.js     ← Cola de trabajos de impresión relay
 ├── controllers/posController.js    ← Procesar venta + Factus
 └── controllers/authController.js   ← Login con email o username
+
+carolinapos-print/
+├── servidor.py              ← Servidor local polling Railway (win32print, sin Flask)
+└── Iniciar.bat              ← Instala pywin32 + autostart Startup + corre servidor
 ```
 
 ---
@@ -83,7 +85,6 @@ backend/src/
 DATABASE_URL, JWT_SECRET, REFRESH_TOKEN_SECRET
 FACTUS_BASE_URL=https://api-sandbox.factus.com.co  ← cambiar a prod cuando toque
 FACTUS_CLIENT_ID, FACTUS_CLIENT_SECRET, FACTUS_USERNAME, FACTUS_PASSWORD
-QZ_PRIVATE_KEY=...    ← clave RSA privada QZ Tray (NO en código)
 FRONTEND_URL=https://app.carolinapos.co
 ```
 
