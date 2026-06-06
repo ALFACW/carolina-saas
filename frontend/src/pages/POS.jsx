@@ -4,7 +4,9 @@ import { useNavigate } from 'react-router-dom'
 import {
   Search, User, AlertCircle, Loader2, CheckCircle2, X, Trash2,
   ArrowLeft, ShoppingCart, Barcode, Plus, Minus, Unlock, LogOut, Calculator,
+  DollarSign, Clock, AlertTriangle,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { usePOSStore } from '../store/posStore'
 import { useUIStore } from '../store/uiStore'
 import { posService } from '../services/pos'
@@ -30,11 +32,60 @@ export default function POS() {
   const [vistaTicket, setVistaTicket] = useState('ticket')
   const logoEmpresa = localStorage.getItem('carolina_logo') || null
 
-  const { data: sesionActiva } = useQuery({
+  const { data: sesionActiva, isLoading: loadingSesion } = useQuery({
     queryKey: ['sesion-activa'],
     queryFn: cajasService.getSesionActiva,
-    staleTime: Infinity,
+    staleTime: 30000,
   })
+
+  // ── Modal caja: abrir al inicio del día ──────────────────────────
+  const [modalCaja,       setModalCaja]       = useState(null) // null | 'cerrar_anterior' | 'abrir'
+  const [fondoModal,      setFondoModal]       = useState('')
+  const [cajaIdModal,     setCajaIdModal]      = useState('')
+  const [contadoAnterior, setContadoAnterior]  = useState('')
+  const [errorModal,      setErrorModal]       = useState('')
+
+  const { data: cajasActivas = [] } = useQuery({
+    queryKey: ['cajas'],
+    queryFn: cajasService.getCajas,
+    select: d => d.filter(c => c.activa),
+    enabled: modalCaja === 'abrir',
+  })
+
+  const abrirCajaMutation = useMutation({
+    mutationFn: (datos) => cajasService.abrirSesion(datos),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sesion-activa'] })
+      setModalCaja(null)
+      setFondoModal('')
+      setCajaIdModal('')
+      setTimeout(() => searchRef.current?.focus(), 100)
+    },
+    onError: (err) => setErrorModal(err?.response?.data?.error || 'Error al abrir la caja'),
+  })
+
+  const cerrarAnteriorMutation = useMutation({
+    mutationFn: ({ id, datos }) => cajasService.cerrarSesion(id, datos),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sesion-activa'] })
+      setModalCaja('abrir')
+      setContadoAnterior('')
+      setErrorModal('')
+    },
+    onError: (err) => setErrorModal(err?.response?.data?.error || 'Error al cerrar la sesión anterior'),
+  })
+
+  useEffect(() => {
+    if (loadingSesion) return
+    if (sesionActiva === undefined) return
+    if (sesionActiva === null) { setModalCaja('abrir'); return }
+    const apertura = new Date(sesionActiva.fecha_apertura)
+    const hoy = new Date()
+    const esHoy = apertura.getFullYear() === hoy.getFullYear() &&
+                  apertura.getMonth()    === hoy.getMonth()    &&
+                  apertura.getDate()     === hoy.getDate()
+    if (!esHoy) setModalCaja('cerrar_anterior')
+  }, [sesionActiva, loadingSesion])
 
   const qzTrayRef = useRef(qzTray)
   useEffect(() => { qzTrayRef.current = qzTray }, [qzTray])
@@ -134,7 +185,7 @@ export default function POS() {
 
   useEffect(() => {
     const onKey = async (e) => {
-      if (showCobroModal || showClienteModal || showTicketModal) return
+      if (showCobroModal || showClienteModal || showTicketModal || modalCaja) return
 
       const enInput    = (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'textarea')
       const enBuscador = e.target === searchRef.current
@@ -237,7 +288,7 @@ export default function POS() {
 
     window.addEventListener('keydown', onKey, true)
     return () => { window.removeEventListener('keydown', onKey, true); clearTimeout(scanTimer.current) }
-  }, [showCobroModal, showClienteModal, showTicketModal, searchResults, procesarEscaneo, agregarDesdeResultado, actualizarCantidad, scan])
+  }, [showCobroModal, showClienteModal, showTicketModal, modalCaja, searchResults, procesarEscaneo, agregarDesdeResultado, actualizarCantidad, scan])
 
   const { data: clientesData } = useQuery({
     queryKey: ['clientes-pos', clienteSearch],
@@ -801,6 +852,173 @@ export default function POS() {
           </div>
         )}
       </Modal>
+
+      {/* ── Modal: abrir / cerrar caja al inicio del día ── */}
+      {modalCaja && (
+        <div className="fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+
+            {/* ── Paso 1: cerrar sesión sin cerrar del día anterior ── */}
+            {modalCaja === 'cerrar_anterior' && sesionActiva && (
+              <>
+                <div className="bg-amber-50 border-b border-amber-200 px-6 py-4 flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800">Caja sin cerrar</p>
+                    <p className="text-xs text-amber-600 mt-0.5">
+                      El turno del {new Date(sesionActiva.fecha_apertura).toLocaleDateString('es-CO', {
+                        weekday: 'long', day: 'numeric', month: 'long'
+                      })} nunca fue cerrado. Debes cerrarlo antes de comenzar hoy.
+                    </p>
+                  </div>
+                </div>
+                <div className="px-6 py-5 space-y-4">
+                  <div className="bg-surface-soft rounded-xl p-4 text-xs text-ink-2 space-y-1.5">
+                    <div className="flex justify-between">
+                      <span>Apertura</span>
+                      <span className="font-medium text-ink">
+                        {new Date(sesionActiva.fecha_apertura).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Fondo inicial</span>
+                      <span className="font-medium text-ink">{COP(sesionActiva.fondo_inicial || 0)}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-medium text-ink">
+                      ¿Cuánto efectivo había en caja?
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-2" />
+                      <input
+                        type="number" min="0" step="1000" autoFocus
+                        value={contadoAnterior}
+                        onChange={e => { setContadoAnterior(e.target.value); setErrorModal('') }}
+                        placeholder="0"
+                        className="w-full pl-9 pr-3 py-2.5 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                      />
+                    </div>
+                    {contadoAnterior && !isNaN(Number(contadoAnterior)) && (
+                      <p className="text-xs text-ink-2">{COP(Number(contadoAnterior))}</p>
+                    )}
+                  </div>
+
+                  {errorModal && <p className="text-xs text-danger">{errorModal}</p>}
+
+                  <button
+                    disabled={contadoAnterior === '' || cerrarAnteriorMutation.isPending}
+                    onClick={() => {
+                      if (contadoAnterior === '') return
+                      cerrarAnteriorMutation.mutate({
+                        id: sesionActiva.id,
+                        datos: { efectivo_contado: Number(contadoAnterior), tipo_cierre: 'cierre_final' },
+                      })
+                    }}
+                    className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 rounded-xl text-sm transition-colors disabled:opacity-50"
+                  >
+                    {cerrarAnteriorMutation.isPending
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Cerrando...</>
+                      : 'Cerrar turno anterior y continuar'
+                    }
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* ── Paso 2: abrir caja de hoy ── */}
+            {modalCaja === 'abrir' && (
+              <>
+                <div className="px-6 pt-6 pb-2 text-center">
+                  <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span className="text-white text-lg font-bold">
+                      {user?.nombre?.charAt(0)?.toUpperCase() || 'U'}
+                    </span>
+                  </div>
+                  <h2 className="text-base font-semibold text-ink">
+                    Hola, {user?.nombre?.split(' ')[0] || 'usuario'}
+                  </h2>
+                  <p className="text-xs text-ink-2 mt-1 flex items-center justify-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </p>
+                </div>
+
+                <div className="px-6 pb-6 pt-4 space-y-4">
+                  {cajasActivas.length > 1 && (
+                    <div className="space-y-1.5">
+                      <label className="block text-sm font-medium text-ink">Caja</label>
+                      <select
+                        value={cajaIdModal}
+                        onChange={e => { setCajaIdModal(e.target.value); setErrorModal('') }}
+                        className="w-full px-3 py-2.5 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                      >
+                        <option value="">Seleccionar caja...</option>
+                        {cajasActivas.map(c => (
+                          <option key={c.id} value={c.id}>{c.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-medium text-ink">¿Con cuánto abre la caja hoy?</label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-2" />
+                      <input
+                        type="number" min="0" step="1000"
+                        autoFocus={cajasActivas.length <= 1}
+                        value={fondoModal}
+                        onChange={e => { setFondoModal(e.target.value); setErrorModal('') }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            const multijaja = cajasActivas.length > 1
+                            if (multijaja && !cajaIdModal) { setErrorModal('Selecciona una caja'); return }
+                            if (fondoModal === '') { setErrorModal('Ingresa el fondo (puede ser 0)'); return }
+                            abrirCajaMutation.mutate({
+                              fondo_inicial: Number(fondoModal),
+                              ...(cajaIdModal ? { caja_id: cajaIdModal } : {}),
+                            })
+                          }
+                        }}
+                        placeholder="0"
+                        className="w-full pl-9 pr-3 py-2.5 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                      />
+                    </div>
+                    {fondoModal && !isNaN(Number(fondoModal)) && (
+                      <p className="text-xs text-ink-2">{COP(Number(fondoModal))}</p>
+                    )}
+                  </div>
+
+                  {errorModal && <p className="text-xs text-danger">{errorModal}</p>}
+
+                  <button
+                    disabled={abrirCajaMutation.isPending}
+                    onClick={() => {
+                      const multiCaja = cajasActivas.length > 1
+                      if (multiCaja && !cajaIdModal) { setErrorModal('Selecciona una caja'); return }
+                      if (fondoModal === '') { setErrorModal('Ingresa el fondo (puede ser 0)'); return }
+                      abrirCajaMutation.mutate({
+                        fondo_inicial: Number(fondoModal),
+                        ...(cajaIdModal ? { caja_id: cajaIdModal } : {}),
+                      })
+                    }}
+                    className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-semibold py-3 rounded-xl text-sm transition-colors disabled:opacity-50"
+                  >
+                    {abrirCajaMutation.isPending
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Abriendo...</>
+                      : <><ShoppingCart className="w-4 h-4" /> Iniciar caja</>
+                    }
+                  </button>
+                </div>
+              </>
+            )}
+
+          </div>
+        </div>
+      )}
     </div>
   )
 }
