@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import {
-  Building2, CreditCard, Loader2, Printer, Zap,
+  CheckCircle2, Building2, CreditCard, Loader2, Printer, Zap,
   RefreshCw, Volume2, VolumeX, Download, ScanLine, Settings2,
 } from 'lucide-react'
 import { toast } from 'sonner'
