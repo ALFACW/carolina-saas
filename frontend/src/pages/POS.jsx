@@ -31,6 +31,11 @@ export default function POS() {
   const { setSidebar } = useUIStore()
   const [vistaTicket, setVistaTicket] = useState('ticket')
   const logoEmpresa = localStorage.getItem('carolina_logo') || null
+  const [ahora, setAhora] = useState(new Date())
+  useEffect(() => {
+    const t = setInterval(() => setAhora(new Date()), 1000)
+    return () => clearInterval(t)
+  }, [])
 
   const { data: sesionActiva, isLoading: loadingSesion } = useQuery({
     queryKey: ['sesion-activa'],
@@ -568,7 +573,6 @@ export default function POS() {
         </div>
 
         {/* ════ PANEL DERECHO: orden ════ */}
-        {/* Overlay móvil */}
         {showOrderPanel && (
           <div className="fixed inset-0 bg-black/40 z-40 md:hidden" onClick={() => setShowOrderPanel(false)} />
         )}
@@ -586,11 +590,21 @@ export default function POS() {
             <div className="w-10 h-1 bg-border rounded-full" />
           </div>
 
+          {/* Fecha y hora */}
+          <div className="px-4 py-3 border-b border-border flex-shrink-0 flex items-center justify-between">
+            <span className="text-xs text-ink-2 font-medium capitalize">
+              {ahora.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </span>
+            <span className="text-sm font-bold text-ink font-mono tabular-nums">
+              {ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+            </span>
+          </div>
+
           {/* Cliente */}
           <div className="px-4 py-3 border-b border-border flex-shrink-0">
             <button
               onClick={() => setShowClienteModal(true)}
-              className="w-full flex items-center gap-2 text-sm text-ink-2 hover:text-ink transition-colors group"
+              className="w-full flex items-center gap-2 text-sm text-ink-2 hover:text-ink transition-colors"
             >
               <User size={14} className="flex-shrink-0" />
               {clienteSeleccionado
@@ -599,10 +613,7 @@ export default function POS() {
               }
               <span className="text-xs opacity-40 font-mono">F2</span>
               {clienteSeleccionado && (
-                <span
-                  onMouseDown={e => { e.stopPropagation(); setCliente(null) }}
-                  className="text-ink-2 hover:text-danger ml-1"
-                >
+                <span onMouseDown={e => { e.stopPropagation(); setCliente(null) }} className="text-ink-2 hover:text-danger ml-1">
                   <X size={12} />
                 </span>
               )}
@@ -630,58 +641,52 @@ export default function POS() {
             <MetodoPago />
           </div>
 
-          {/* Botón cobrar */}
-          <div className="px-4 py-3 flex-shrink-0">
+          {/* Botón cobrar — crece para llenar espacio disponible */}
+          <div className="px-4 py-3 flex-1 flex flex-col justify-end gap-3">
             <button
               onClick={() => carrito.length > 0 && setShowCobroModal(true)}
               disabled={carrito.length === 0}
-              className="w-full py-3.5 rounded-xl font-bold text-sm transition-colors disabled:opacity-30 text-white bg-accent hover:bg-accent/90 flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-xl font-bold text-base transition-colors disabled:opacity-30 text-white bg-accent hover:bg-accent/90 flex items-center justify-center gap-2"
             >
               {carrito.length === 0
                 ? 'Carrito vacío'
                 : <>{COP(total)} &nbsp;<span className="text-xs bg-white/20 px-1.5 py-0.5 rounded font-mono">F3</span></>
               }
             </button>
-          </div>
 
-          {/* Espacio flexible */}
-          <div className="flex-1 min-h-0" />
-
-          {/* Acciones de caja */}
-          <div className="px-4 pb-4 pt-3 border-t border-border flex-shrink-0 space-y-1.5">
-            <p className="text-xs font-bold text-ink-2 uppercase tracking-widest mb-2">Caja</p>
-
-            {qzTray.conectado && qzTray.impTermica && (
+            {/* Acciones de caja — siempre visibles */}
+            <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => qzTray.abrirGaveta()}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors"
+                disabled={!qzTray.conectado || !qzTray.impTermica}
+                title={!qzTray.conectado ? 'Servidor de impresión no conectado' : ''}
+                className="flex flex-col items-center gap-1.5 px-2 py-2.5 rounded-xl border border-border text-xs font-medium text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <Unlock size={14} className="flex-shrink-0" />
-                Abrir gaveta
+                <Unlock size={15} />
+                Gaveta
               </button>
-            )}
 
-            {carrito.length > 0 && (
               <button
                 onClick={limpiarCarrito}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-ink-2 hover:bg-red-50 hover:text-danger transition-colors"
+                disabled={carrito.length === 0}
+                className="flex flex-col items-center gap-1.5 px-2 py-2.5 rounded-xl border border-border text-xs font-medium text-ink-2 hover:bg-red-50 hover:text-danger hover:border-red-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <Trash2 size={14} className="flex-shrink-0" />
-                Limpiar carrito
+                <Trash2 size={15} />
+                Limpiar
               </button>
-            )}
 
-            <button
-              onClick={() => {
-                const id = sesionActiva?.id
-                if (id) navigate(`/caja/cerrar/${id}`)
-                else navigate('/caja/abrir')
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors"
-            >
-              <Calculator size={14} className="flex-shrink-0" />
-              Cerrar caja
-            </button>
+              <button
+                onClick={() => {
+                  const id = sesionActiva?.id
+                  if (id) navigate(`/caja/cerrar/${id}`)
+                  else navigate('/caja/abrir')
+                }}
+                className="flex flex-col items-center gap-1.5 px-2 py-2.5 rounded-xl border border-border text-xs font-medium text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors"
+              >
+                <Calculator size={15} />
+                Cerrar caja
+              </button>
+            </div>
           </div>
         </div>
 
