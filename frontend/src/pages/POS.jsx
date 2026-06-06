@@ -502,7 +502,7 @@ export default function POS() {
             <div className="flex flex-col h-full overflow-hidden">
               {/* Cabecera tabla */}
               <div className="flex-shrink-0 bg-surface-soft border-b border-border px-5 py-3 grid items-center text-xs font-bold text-ink-2 uppercase tracking-wider"
-                style={{ gridTemplateColumns: '90px 1fr 140px 110px 110px 32px' }}>
+                style={{ gridTemplateColumns: '110px 1fr 140px 110px 110px 32px' }}>
                 <span>SKU</span>
                 <span>Producto</span>
                 <span className="text-center">Cantidad</span>
@@ -518,10 +518,10 @@ export default function POS() {
                   return (
                     <div key={item.producto_id}
                       className="grid items-center px-5 py-3.5 hover:bg-white transition-colors"
-                      style={{ gridTemplateColumns: '90px 1fr 140px 110px 110px 32px' }}>
+                      style={{ gridTemplateColumns: '110px 1fr 140px 110px 110px 32px' }}>
 
                       {/* SKU */}
-                      <span className="font-mono text-xs text-accent font-semibold truncate pr-2">
+                      <span className="font-mono text-xs text-accent font-semibold pr-2 overflow-hidden text-ellipsis whitespace-nowrap" title={item.codigo || ''}>
                         {item.codigo || '—'}
                       </span>
 
