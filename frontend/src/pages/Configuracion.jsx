@@ -118,7 +118,7 @@ export default function Configuracion() {
               {/* Columna derecha: logo */}
               <div className="bg-surface-soft rounded-xl p-5 space-y-4">
                 <p className="text-xs font-bold text-ink-2 uppercase tracking-widest">Logo de la empresa</p>
-                <p className="text-sm text-ink-2">Aparece en la parte superior de cada ticket impreso.</p>
+                <p className="text-sm text-ink-2">Se usa en la emisión de facturas electrónicas y tickets impresos. No aparece en el menú lateral.</p>
                 {logo ? (
                   <div className="flex flex-col gap-4">
                     <div className="bg-white border border-border rounded-xl p-4 flex items-center justify-center" style={{ minHeight: '120px' }}>

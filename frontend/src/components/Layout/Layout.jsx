@@ -19,14 +19,17 @@ export function Layout() {
         />
       )}
 
-      {/* Sidebar: fixed en móvil, relativo en desktop */}
+      {/* Sidebar: fixed en móvil, relativo en desktop.
+          En desktop: w-60 expandido | w-14 colapsado (nunca desaparece del todo) */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 transition-transform duration-200
+        fixed inset-y-0 left-0 z-50 transition-all duration-200
         md:relative md:translate-x-0 md:z-auto md:flex-shrink-0
-        ${sidebarAbierto ? 'translate-x-0' : '-translate-x-full md:w-0 md:overflow-hidden'}
-        ${sidebarAbierto ? 'md:w-60' : 'md:w-0 md:overflow-hidden'}
+        ${sidebarAbierto
+          ? 'translate-x-0 md:w-60'
+          : '-translate-x-full md:translate-x-0 md:w-14'
+        }
       `}>
-        <Sidebar onClose={toggleSidebar} />
+        <Sidebar colapsado={!sidebarAbierto} />
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">

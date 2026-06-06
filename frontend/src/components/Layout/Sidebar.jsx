@@ -35,9 +35,9 @@ const MENU_GROUPS = [
   {
     group: 'Finanzas',
     items: [
-      { icon: Wallet,   label: 'Cartera',         path: '/cartera' },
-      { icon: Clock,    label: 'Caja y Sesiones', path: '/cajas' },
-      { icon: BarChart3,label: 'Reportes',        path: '/reportes' },
+      { icon: Wallet,    label: 'Cartera',         path: '/cartera' },
+      { icon: Clock,     label: 'Caja y Sesiones', path: '/cajas' },
+      { icon: BarChart3, label: 'Reportes',        path: '/reportes' },
     ]
   },
   {
@@ -49,14 +49,12 @@ const MENU_GROUPS = [
   },
 ]
 
-// Keep the extra items that are role-accessible but not in the grouped menu
 const EXTRA_NAV = [
-  { to: '/caja/abrir', label: 'Mi Caja' },
+  { to: '/caja/abrir', label: 'Mi Caja', icon: Clock },
 ]
 
-export function Sidebar() {
+export function Sidebar({ colapsado = false }) {
   const { user, tenant, logout } = useAuth()
-  const logo = localStorage.getItem('carolina_logo') || null
   const navigate = useNavigate()
   const [fotoPerfil, setFotoPerfil] = useState(() => localStorage.getItem('carolina_foto_perfil') || null)
 
@@ -93,23 +91,112 @@ export function Sidebar() {
 
   const extraItems = EXTRA_NAV.filter(n => navPermitido.includes(n.to))
 
+  const AvatarCircle = () => (
+    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border">
+      {fotoPerfil ? (
+        <img src={fotoPerfil} alt="Foto de perfil" className="w-full h-full object-cover" />
+      ) : (
+        <div className="w-full h-full bg-accent flex items-center justify-center">
+          <span className="text-white text-xs font-bold">{iniciales}</span>
+        </div>
+      )}
+    </div>
+  )
+
+  /* ── SIDEBAR COLAPSADO (solo iconos) ── */
+  if (colapsado) {
+    return (
+      <aside className="w-14 bg-white border-r border-border h-screen flex flex-col">
+
+        {/* Logo compacto — solo la C */}
+        <div className="flex items-center justify-center border-b border-border h-[72px]">
+          <span className="w-9 h-9 rounded-full bg-accent flex items-center justify-center font-brand font-bold text-lg text-white select-none">
+            C
+          </span>
+        </div>
+
+        {/* Nav — solo iconos con tooltip nativo */}
+        <nav className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] py-3 px-2 space-y-1">
+          {extraItems.length > 0 && (
+            <>
+              {extraItems.map(({ to, label, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  title={label}
+                  className={({ isActive }) =>
+                    `flex items-center justify-center p-2.5 rounded-lg transition-colors ${
+                      isActive ? 'bg-accent-soft text-accent' : 'text-ink-2 hover:bg-surface-soft hover:text-ink'
+                    }`
+                  }
+                >
+                  <Icon size={18} />
+                </NavLink>
+              ))}
+              <div className="h-px bg-border mx-1 my-1" />
+            </>
+          )}
+
+          {filteredGroups.map((group, gi) => (
+            <React.Fragment key={group.group}>
+              {gi > 0 && <div className="h-px bg-border mx-1 my-1" />}
+              {group.items.map((item) => {
+                const Icon = item.icon
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    title={item.label}
+                    className={({ isActive }) =>
+                      `flex items-center justify-center p-2.5 rounded-lg transition-colors ${
+                        isActive ? 'bg-accent-soft text-accent' : 'text-ink-2 hover:bg-surface-soft hover:text-ink'
+                      }`
+                    }
+                  >
+                    <Icon size={18} />
+                  </NavLink>
+                )
+              })}
+            </React.Fragment>
+          ))}
+        </nav>
+
+        {/* Footer compacto */}
+        <div className="p-2 border-t border-border flex flex-col items-center gap-1">
+          <Link
+            to="/mi-perfil"
+            title="Mi perfil"
+            className="p-1.5 rounded-lg hover:bg-surface-soft transition-colors"
+          >
+            <AvatarCircle />
+          </Link>
+          <button
+            onClick={handleLogout}
+            title="Cerrar sesión"
+            className="flex items-center justify-center p-2 w-full rounded-lg text-danger hover:bg-red-50 transition-colors"
+          >
+            <LogOut size={18} />
+          </button>
+        </div>
+      </aside>
+    )
+  }
+
+  /* ── SIDEBAR EXPANDIDO (completo) ── */
   return (
     <aside className="w-60 bg-white border-r border-border h-screen flex flex-col">
-      {/* Logo + tenant */}
+
+      {/* Logo CarolinaPOS + tenant */}
       <div className="p-6 border-b border-border">
-        {logo ? (
-          <img src={logo} alt="Logo" className="h-10 w-auto object-contain" />
-        ) : (
-          <div className="flex items-center gap-2">
-            <span className="w-9 h-9 rounded-full bg-accent flex items-center justify-center font-brand font-bold text-lg text-white flex-shrink-0">
-              C
-            </span>
-            <span className="font-brand font-semibold text-base text-ink flex items-center">
-              Carolina
-              <span className="bg-accent text-white font-bold text-xs px-2 py-0.5 rounded-md ml-1.5">POS</span>
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="w-9 h-9 rounded-full bg-accent flex items-center justify-center font-brand font-bold text-lg text-white flex-shrink-0">
+            C
+          </span>
+          <span className="font-brand font-semibold text-base text-ink flex items-center">
+            Carolina
+            <span className="bg-accent text-white font-bold text-xs px-2 py-0.5 rounded-md ml-1.5">POS</span>
+          </span>
+        </div>
         {tenant && (
           <div className="mt-3">
             <p className="text-xs font-semibold text-ink truncate">{tenant.nombre}</p>
@@ -121,8 +208,7 @@ export function Sidebar() {
       </div>
 
       {/* Navegación por grupos */}
-      <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
-        {/* Extra items (caja/abrir para cajero/vendedor) */}
+      <nav className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-4 py-6 space-y-6">
         {extraItems.length > 0 && (
           <ul className="space-y-1">
             {extraItems.map(({ to, label }) => (
@@ -131,9 +217,7 @@ export function Sidebar() {
                   to={to}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-accent-soft text-accent'
-                        : 'text-ink-2 hover:bg-surface-soft hover:text-ink'
+                      isActive ? 'bg-accent-soft text-accent' : 'text-ink-2 hover:bg-surface-soft hover:text-ink'
                     }`
                   }
                 >
@@ -158,9 +242,7 @@ export function Sidebar() {
                       to={item.path}
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                          isActive
-                            ? 'bg-accent-soft text-accent'
-                            : 'text-ink-2 hover:bg-surface-soft hover:text-ink'
+                          isActive ? 'bg-accent-soft text-accent' : 'text-ink-2 hover:bg-surface-soft hover:text-ink'
                         }`
                       }
                     >
@@ -177,16 +259,8 @@ export function Sidebar() {
 
       {/* Usuario + logout */}
       <div className="p-4 border-t border-border space-y-1">
-        <Link to="/mi-perfil" className="flex items-center gap-2.5 group px-2 py-1.5 rounded-lg hover:bg-surface-soft transition-colors">
-          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border">
-            {fotoPerfil ? (
-              <img src={fotoPerfil} alt="Foto de perfil" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-accent flex items-center justify-center">
-                <span className="text-white text-xs font-bold">{iniciales}</span>
-              </div>
-            )}
-          </div>
+        <Link to="/mi-perfil" className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-surface-soft transition-colors">
+          <AvatarCircle />
           <div className="min-w-0">
             <p className="text-xs font-semibold text-ink truncate">{user?.nombre}</p>
             <p className="text-xs text-ink-2 capitalize mt-0.5">
