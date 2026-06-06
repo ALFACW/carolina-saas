@@ -37,4 +37,9 @@ export const cajasService = {
     const { data } = await api.post(`/api/sesiones/${id}/aprobar`)
     return data
   },
+  async getUltimaSesion(cajaId) {
+    const params = cajaId ? { caja_id: cajaId } : {}
+    const { data } = await api.get('/api/sesiones/ultima', { params })
+    return data
+  },
 }

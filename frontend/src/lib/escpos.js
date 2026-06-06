@@ -196,3 +196,124 @@ export function buildTicket({ empresa, venta, cliente, cajero, modoDemo = false,
 
   return [{ type: 'raw', format: 'plain', data: t }]
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Ticket de cierre de caja / cambio de turno
+// ─────────────────────────────────────────────────────────────────
+export function buildTicketCierre({ empresa, sesion, W = 48, densidad = 6, avancePapel = 3, modoCortePapel = 'completo' }) {
+  let t = CMD.init
+
+  const [n1, n2, n3] = DENSITY_TABLE[Math.min(8, Math.max(0, densidad))]
+  t += ESC + '\x37' + String.fromCharCode(n1) + String.fromCharCode(n2) + String.fromCharCode(n3)
+
+  // ══ ENCABEZADO ═══════════════════════════════════════
+  t += CMD.center
+  t += 'NIT ' + txt(empresa.nit || '000.000.000-0') + LF
+  t += CMD.boldOn + CMD.sizeDoble
+  t += txt(empresa.nombre || 'Mi Empresa') + LF
+  t += CMD.sizeNormal + CMD.boldOff
+  if (empresa.direccion) t += txt(empresa.direccion) + LF
+  if (empresa.telefono)  t += 'Tel. ' + txt(empresa.telefono) + LF
+
+  const esCambioTurno = sesion.tipo_cierre === 'cambio_turno'
+  t += LF + CMD.boldOn + CMD.sizeAncho
+  t += (esCambioTurno ? 'CAMBIO DE TURNO' : 'CORTE DE CAJA') + LF
+  t += CMD.sizeNormal + CMD.boldOff
+
+  // ══ DATOS DEL TURNO ══════════════════════════════════
+  t += sep('-', W) + CMD.left
+
+  const fila = (label, valor) => {
+    const l = txt(label)
+    const v = txt(String(valor ?? ''))
+    return l + ' '.repeat(Math.max(1, W - l.length - v.length)) + v + LF
+  }
+
+  const fmtFecha = (iso) => {
+    if (!iso) return '-'
+    return new Date(iso).toLocaleString('es-CO', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: true,
+    })
+  }
+
+  t += fila('Cajero:', sesion.cajero_nombre || '-')
+  if (sesion.caja_nombre) t += fila('Caja:', sesion.caja_nombre)
+  t += fila('Apertura:', fmtFecha(sesion.fecha_apertura))
+  t += fila('Cierre:', fmtFecha(sesion.fecha_cierre))
+
+  if (sesion.fecha_apertura && sesion.fecha_cierre) {
+    const mins = Math.floor((new Date(sesion.fecha_cierre) - new Date(sesion.fecha_apertura)) / 60000)
+    const h = Math.floor(mins / 60)
+    const m = mins % 60
+    t += fila('Duracion:', h > 0 ? `${h}h ${m}min` : `${m}min`)
+  }
+
+  // ══ VENTAS POR MÉTODO ════════════════════════════════
+  t += sep('-', W) + CMD.center + CMD.boldOn
+  t += 'VENTAS POR METODO' + LF
+  t += CMD.boldOff + CMD.left + sep('-', W)
+
+  const metodos = [
+    { key: 'total_efectivo',      label: 'Efectivo' },
+    { key: 'total_tarjeta',       label: 'Tarjeta' },
+    { key: 'total_transferencia', label: 'Transferencia' },
+    { key: 'total_credito',       label: 'Credito' },
+  ]
+  metodos.forEach(({ key, label }) => {
+    const val = parseFloat(sesion[key] || 0)
+    if (val > 0) t += fila(label + ':', money(val))
+  })
+  t += sep('-', W)
+  t += CMD.boldOn + fila('TOTAL VENTAS:', money(parseFloat(sesion.total_ventas || 0))) + CMD.boldOff
+  if (sesion.num_facturas) t += fila('Transacciones:', sesion.num_facturas)
+
+  // ══ CUADRATURA ═══════════════════════════════════════
+  t += sep('-', W) + CMD.center + CMD.boldOn
+  t += 'CUADRATURA DE EFECTIVO' + LF
+  t += CMD.boldOff + CMD.left + sep('-', W)
+
+  const fondoInicial     = parseFloat(sesion.fondo_inicial    || 0)
+  const ventasEfectivo   = parseFloat(sesion.total_efectivo   || 0)
+  const efectivoEsperado = fondoInicial + ventasEfectivo
+  const efectivoContado  = parseFloat(sesion.efectivo_contado || 0)
+  const diferencia       = parseFloat(sesion.diferencia       || 0)
+
+  t += fila('Fondo inicial:', money(fondoInicial))
+  t += fila('+ Ventas efectivo:', money(ventasEfectivo))
+  t += sep('-', W)
+  t += CMD.boldOn + fila('= Esperado:', money(efectivoEsperado)) + CMD.boldOff
+  t += fila('Contado:', money(efectivoContado))
+
+  t += sep('=', W) + CMD.center + CMD.boldOn + CMD.sizeAncho
+  if (diferencia > 0)      t += 'SOBRANTE +' + money(diferencia) + LF
+  else if (diferencia < 0) t += 'FALTANTE ' + money(diferencia) + LF
+  else                     t += 'CAJA CUADRADA' + LF
+  t += CMD.sizeNormal + CMD.boldOff + CMD.left
+
+  // Fondo para siguiente cajero (cambio de turno)
+  if (esCambioTurno && parseFloat(sesion.fondo_siguiente || 0) > 0) {
+    t += sep('-', W) + CMD.boldOn
+    t += fila('Fondo siguiente cajero:', money(parseFloat(sesion.fondo_siguiente))) + CMD.boldOff
+  }
+
+  // Notas
+  if (sesion.notas_cierre) {
+    t += sep('-', W)
+    t += 'Obs: ' + txt(sesion.notas_cierre) + LF
+  }
+
+  // ══ PIE ══════════════════════════════════════════════
+  t += sep('-', W) + LF + CMD.center
+  t += 'Firma cajero: ____________________' + LF + LF
+  if (!esCambioTurno) t += 'Recibido por: ____________________' + LF + LF
+  t += CMD.left + sep('=', W) + CMD.center
+  t += 'Impreso: ' + fechaHora() + LF
+  t += 'CarolinaPOS' + LF
+
+  t += ESC + '\x64' + String.fromCharCode(avancePapel)
+  if (!modoCortePapel || modoCortePapel === 'completo') t += CMD.cut
+  if (modoCortePapel === 'parcial') t += CMD.cutParcial
+
+  return [{ type: 'raw', format: 'plain', data: t }]
+}

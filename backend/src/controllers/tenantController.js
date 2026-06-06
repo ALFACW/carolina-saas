@@ -5,7 +5,7 @@ const logger = require('../lib/logger');
 async function getMe(req, res, next) {
   try {
     const { rows } = await db.query(
-      'SELECT id, nombre, nit, email, telefono, direccion, ciudad, plan, estado, onboarding_completado, fecha_creacion FROM tenants WHERE id = $1',
+      'SELECT id, nombre, nit, email, telefono, direccion, ciudad, plan, estado, onboarding_completado, fecha_creacion, modo_turnos FROM tenants WHERE id = $1',
       [req.tenant.id]
     );
     res.json(rows[0]);
@@ -13,10 +13,11 @@ async function getMe(req, res, next) {
 }
 
 const updateSchema = z.object({
-  nombre:    z.string().min(2).optional(),
-  telefono:  z.string().nullable().optional(),
-  direccion: z.string().nullable().optional(),
-  ciudad:    z.string().nullable().optional(),
+  nombre:      z.string().min(2).optional(),
+  telefono:    z.string().nullable().optional(),
+  direccion:   z.string().nullable().optional(),
+  ciudad:      z.string().nullable().optional(),
+  modo_turnos: z.boolean().optional(),
 });
 
 async function updateMe(req, res, next) {
@@ -27,7 +28,7 @@ async function updateMe(req, res, next) {
     const set = fields.map(([k], i) => `${k} = $${i + 2}`).join(', ');
     const values = fields.map(([, v]) => v);
     const { rows } = await db.query(
-      `UPDATE tenants SET ${set}, fecha_actualizacion = NOW() WHERE id = $1 RETURNING id, nombre, nit, email, telefono, direccion, ciudad, plan`,
+      `UPDATE tenants SET ${set}, fecha_actualizacion = NOW() WHERE id = $1 RETURNING id, nombre, nit, email, telefono, direccion, ciudad, plan, modo_turnos`,
       [req.tenant.id, ...values]
     );
     res.json(rows[0]);

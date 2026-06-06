@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Edit, CheckCircle, XCircle, Eye, Check, Layers, History } from 'lucide-react'
+import { Plus, Edit, CheckCircle, XCircle, Eye, Check, Layers, History, Users, User } from 'lucide-react'
 import { cajasService } from '../services/cajas'
+import { useTenant } from '../hooks/useTenant'
 import { Table } from '../components/Common/Table'
 import { Modal } from '../components/Common/Modal'
 import { Button } from '../components/Common/Button'
@@ -33,6 +34,7 @@ const CAJA_VACÍA = { nombre: '', descripcion: '', activa: true }
 export default function Cajas() {
   const qc = useQueryClient()
   const navigate = useNavigate()
+  const { tenant, update: updateTenant } = useTenant()
 
   const [tab, setTab] = useState('cajas')
 
@@ -246,14 +248,78 @@ export default function Cajas() {
 
           {/* ═══════════ TAB: CAJAS ═══════════ */}
           {tab === 'cajas' && (
-            <div className="space-y-4">
-              <p className="text-sm text-ink-2">Administra las cajas registradoras del negocio</p>
-              <Table
-                columns={columnasCajas}
-                data={cajas}
-                loading={loadingCajas}
-                emptyMessage="No hay cajas registradas"
-              />
+            <div className="space-y-6">
+
+              {/* Card: Modo de operación */}
+              <div className="bg-surface-soft border border-border rounded-xl p-5">
+                <div className="mb-4">
+                  <h3 className="text-sm font-semibold text-ink">Modo de operación</h3>
+                  <p className="text-xs text-ink-2 mt-0.5">Define cómo se gestionan los turnos de caja en tu negocio</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                  {/* Opción: Caja simple */}
+                  <button
+                    type="button"
+                    onClick={() => tenant?.modo_turnos && updateTenant({ modo_turnos: false })}
+                    className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
+                      !tenant?.modo_turnos
+                        ? 'border-accent bg-accent-soft/40'
+                        : 'border-border hover:border-border-strong bg-white'
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${!tenant?.modo_turnos ? 'bg-accent' : 'bg-surface-soft'}`}>
+                      <User className={`w-4 h-4 ${!tenant?.modo_turnos ? 'text-white' : 'text-ink-2'}`} />
+                    </div>
+                    <div>
+                      <p className={`text-sm font-semibold ${!tenant?.modo_turnos ? 'text-accent' : 'text-ink'}`}>
+                        Caja simple
+                        {!tenant?.modo_turnos && <span className="ml-2 text-xs font-normal bg-accent text-white px-1.5 py-0.5 rounded-md">Activo</span>}
+                      </p>
+                      <p className="text-xs text-ink-2 mt-0.5 leading-relaxed">
+                        Abres la caja una vez al día y la cierras al final. Ideal para negocios atendidos por una o dos personas de confianza.
+                      </p>
+                      <p className="text-xs text-accent/80 font-medium mt-1.5">Recomendado para la mayoría</p>
+                    </div>
+                  </button>
+
+                  {/* Opción: Múltiples turnos */}
+                  <button
+                    type="button"
+                    onClick={() => !tenant?.modo_turnos && updateTenant({ modo_turnos: true })}
+                    className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
+                      tenant?.modo_turnos
+                        ? 'border-accent bg-accent-soft/40'
+                        : 'border-border hover:border-border-strong bg-white'
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${tenant?.modo_turnos ? 'bg-accent' : 'bg-surface-soft'}`}>
+                      <Users className={`w-4 h-4 ${tenant?.modo_turnos ? 'text-white' : 'text-ink-2'}`} />
+                    </div>
+                    <div>
+                      <p className={`text-sm font-semibold ${tenant?.modo_turnos ? 'text-accent' : 'text-ink'}`}>
+                        Múltiples turnos
+                        {tenant?.modo_turnos && <span className="ml-2 text-xs font-normal bg-accent text-white px-1.5 py-0.5 rounded-md">Activo</span>}
+                      </p>
+                      <p className="text-xs text-ink-2 mt-0.5 leading-relaxed">
+                        Cajeros con turnos definidos: al cerrar puedes indicar si hay un cajero entrante y dejar un fondo para el siguiente turno.
+                      </p>
+                      <p className="text-xs text-ink-2 font-medium mt-1.5">Para negocios con relevo de cajeros</p>
+                    </div>
+                  </button>
+
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm text-ink-2 mb-3">Cajas registradoras</p>
+                <Table
+                  columns={columnasCajas}
+                  data={cajas}
+                  loading={loadingCajas}
+                  emptyMessage="No hay cajas registradas"
+                />
+              </div>
             </div>
           )}
 

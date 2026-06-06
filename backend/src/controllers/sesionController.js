@@ -19,7 +19,6 @@ async function abrir(req, res, next) {
       return res.status(400).json({ error: 'Ya tienes una sesión abierta. Ciérrala antes de abrir una nueva.' })
     }
 
-    // Si se especifica caja_id, verificar que pertenece al tenant y está activa
     if (caja_id) {
       const { rows: cajaRows } = await db.query(
         'SELECT id FROM cajas WHERE id = $1 AND tenant_id = $2 AND activo = true',
@@ -30,7 +29,6 @@ async function abrir(req, res, next) {
       }
     }
 
-    // En modo simple: caja_id puede ser null
     const { rows } = await db.query(
       `INSERT INTO sesiones_caja (tenant_id, caja_id, cajero_id, fondo_inicial)
        VALUES ($1, $2, $3, $4)
@@ -39,8 +37,6 @@ async function abrir(req, res, next) {
     )
 
     const sesion = rows[0]
-
-    // Obtener nombre de caja si aplica
     let caja_nombre = null
     if (sesion.caja_id) {
       const { rows: cajaInfo } = await db.query('SELECT nombre FROM cajas WHERE id = $1', [sesion.caja_id])
@@ -74,16 +70,17 @@ async function getSesionActiva(req, res, next) {
 // POST /api/sesiones/:id/cerrar — cajero cierra su turno con cuadratura
 async function cerrar(req, res, next) {
   try {
-    const { efectivo_contado, notas_cierre, denominaciones } = z.object({
+    const { efectivo_contado, notas_cierre, denominaciones, tipo_cierre, fondo_siguiente } = z.object({
       efectivo_contado: z.coerce.number().min(0),
       notas_cierre:     z.string().optional(),
+      tipo_cierre:      z.enum(['cierre_final', 'cambio_turno']).default('cierre_final'),
+      fondo_siguiente:  z.coerce.number().min(0).default(0),
       denominaciones:   z.array(z.object({
         denominacion: z.number(),
         cantidad:     z.number().int().min(0),
       })).optional(),
     }).parse(req.body)
 
-    // Obtener sesión — el cajero solo puede cerrar su propia sesión
     const { rows: sesRows } = await db.query(
       "SELECT * FROM sesiones_caja WHERE id = $1 AND tenant_id = $2 AND cajero_id = $3 AND estado = 'abierta'",
       [req.params.id, req.tenant.id, req.user.id]
@@ -93,18 +90,19 @@ async function cerrar(req, res, next) {
     }
     const sesion = sesRows[0]
 
-    // Calcular totales de ventas de esta sesión por método de pago
+    // Calcular totales + conteo de facturas
     const { rows: totales } = await db.query(
       `SELECT
+         COUNT(*)                                                          AS num_facturas,
          COALESCE(SUM(CASE WHEN metodo_pago = 'efectivo'
-                          THEN total ELSE 0 END), 0) AS ventas_efectivo,
+                          THEN total ELSE 0 END), 0)                      AS ventas_efectivo,
          COALESCE(SUM(CASE WHEN metodo_pago IN ('tarjeta_credito','tarjeta_debito','tarjeta')
-                          THEN total ELSE 0 END), 0) AS ventas_tarjeta,
+                          THEN total ELSE 0 END), 0)                      AS ventas_tarjeta,
          COALESCE(SUM(CASE WHEN metodo_pago = 'transferencia'
-                          THEN total ELSE 0 END), 0) AS ventas_transferencia,
+                          THEN total ELSE 0 END), 0)                      AS ventas_transferencia,
          COALESCE(SUM(CASE WHEN metodo_pago = 'credito'
-                          THEN total ELSE 0 END), 0) AS ventas_credito,
-         COALESCE(SUM(total), 0) AS total_ventas
+                          THEN total ELSE 0 END), 0)                      AS ventas_credito,
+         COALESCE(SUM(total), 0)                                          AS total_ventas
        FROM facturas
        WHERE sesion_id = $1 AND estado != 'anulada'`,
       [sesion.id]
@@ -113,35 +111,29 @@ async function cerrar(req, res, next) {
     const efectivoEsperado = parseFloat(sesion.fondo_inicial) + parseFloat(t.ventas_efectivo)
     const diferencia = parseFloat(efectivo_contado) - efectivoEsperado
 
-    // Cerrar la sesión
     const { rows: closed } = await db.query(
       `UPDATE sesiones_caja SET
-         estado                    = 'cerrada',
-         fecha_cierre              = NOW(),
-         total_efectivo            = $1,
-         total_tarjeta             = $2,
-         total_transferencia       = $3,
-         total_credito             = $4,
-         total_ventas              = $5,
-         efectivo_contado          = $6,
-         diferencia                = $7,
-         notas_cierre              = $8
-       WHERE id = $9
+         estado            = 'cerrada',
+         fecha_cierre      = NOW(),
+         total_efectivo    = $1,
+         total_tarjeta     = $2,
+         total_transferencia = $3,
+         total_credito     = $4,
+         total_ventas      = $5,
+         efectivo_contado  = $6,
+         diferencia        = $7,
+         notas_cierre      = $8,
+         tipo_cierre       = $9,
+         fondo_siguiente   = $10
+       WHERE id = $11
        RETURNING *`,
       [
-        t.ventas_efectivo,
-        t.ventas_tarjeta,
-        t.ventas_transferencia,
-        t.ventas_credito,
-        t.total_ventas,
-        efectivo_contado,
-        diferencia,
-        notas_cierre || null,
-        sesion.id,
+        t.ventas_efectivo, t.ventas_tarjeta, t.ventas_transferencia, t.ventas_credito,
+        t.total_ventas, efectivo_contado, diferencia, notas_cierre || null,
+        tipo_cierre, fondo_siguiente, sesion.id,
       ]
     )
 
-    // Guardar denominaciones si se enviaron
     if (denominaciones?.length) {
       for (const d of denominaciones) {
         if (d.cantidad > 0) {
@@ -153,19 +145,22 @@ async function cerrar(req, res, next) {
       }
     }
 
-    logger.info('Sesión de caja cerrada', { sesion_id: sesion.id, cajero_id: req.user.id, diferencia })
+    logger.info('Sesión de caja cerrada', { sesion_id: sesion.id, cajero_id: req.user.id, diferencia, tipo_cierre })
     res.json({
       sesion: closed[0],
       resumen: {
-        fondo_inicial:        parseFloat(sesion.fondo_inicial),
-        ventas_efectivo:      parseFloat(t.ventas_efectivo),
-        efectivo_esperado:    efectivoEsperado,
-        efectivo_contado:     parseFloat(efectivo_contado),
+        fondo_inicial:       parseFloat(sesion.fondo_inicial),
+        ventas_efectivo:     parseFloat(t.ventas_efectivo),
+        efectivo_esperado:   efectivoEsperado,
+        efectivo_contado:    parseFloat(efectivo_contado),
         diferencia,
-        total_tarjeta:        parseFloat(t.ventas_tarjeta),
-        total_transferencia:  parseFloat(t.ventas_transferencia),
-        total_credito:        parseFloat(t.ventas_credito),
-        total_ventas:         parseFloat(t.total_ventas),
+        total_tarjeta:       parseFloat(t.ventas_tarjeta),
+        total_transferencia: parseFloat(t.ventas_transferencia),
+        total_credito:       parseFloat(t.ventas_credito),
+        total_ventas:        parseFloat(t.total_ventas),
+        num_facturas:        parseInt(t.num_facturas),
+        tipo_cierre,
+        fondo_siguiente:     parseFloat(fondo_siguiente),
       },
     })
   } catch (err) { next(err) }
@@ -174,7 +169,6 @@ async function cerrar(req, res, next) {
 // GET /api/sesiones — admin/supervisor: lista todas las sesiones del tenant
 async function getAll(req, res, next) {
   try {
-    // Solo admin y supervisor pueden ver todas las sesiones
     if (!['admin', 'supervisor'].includes(req.user.rol)) {
       return res.status(403).json({ error: 'Sin permiso para listar sesiones' })
     }
@@ -242,7 +236,7 @@ async function getById(req, res, next) {
 
     res.json({
       ...sesRows.rows[0],
-      facturas:      factRows.rows,
+      facturas:       factRows.rows,
       denominaciones: denomRows.rows,
     })
   } catch (err) { next(err) }
@@ -278,4 +272,31 @@ async function aprobar(req, res, next) {
   } catch (err) { next(err) }
 }
 
-module.exports = { abrir, getSesionActiva, cerrar, getAll, getById, aprobar }
+// GET /api/sesiones/ultima — última sesión cerrada (para pre-llenar fondo)
+// Query param opcional: caja_id
+async function getUltimaSesion(req, res, next) {
+  try {
+    const { caja_id } = req.query
+    const conditions = ["s.tenant_id = $1", "s.estado IN ('cerrada','aprobada')", 's.fondo_siguiente > 0']
+    const params = [req.tenant.id]
+
+    if (caja_id) {
+      conditions.push(`s.caja_id = $2`)
+      params.push(caja_id)
+    }
+
+    const { rows } = await db.query(
+      `SELECT s.id, s.fondo_siguiente, s.tipo_cierre, s.efectivo_contado,
+              s.fecha_cierre, u.nombre AS cajero_nombre
+         FROM sesiones_caja s
+         JOIN users u ON s.cajero_id = u.id
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY s.fecha_cierre DESC
+        LIMIT 1`,
+      params
+    )
+    res.json(rows[0] || null)
+  } catch (err) { next(err) }
+}
+
+module.exports = { abrir, getSesionActiva, cerrar, getAll, getById, aprobar, getUltimaSesion }

@@ -1,16 +1,18 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { ShoppingCart, LogOut, Clock, DollarSign, CheckCircle } from 'lucide-react'
+import { ShoppingCart, LogOut, Clock, DollarSign, CheckCircle, Info } from 'lucide-react'
 import { cajasService } from '../services/cajas'
 import { useAuth } from '../context/AuthContext'
+import { useTenant } from '../hooks/useTenant'
 import { Button } from '../components/Common/Button'
 import { Input } from '../components/Common/Input'
 import { COP } from '../lib/format'
 
 export default function AbrirCaja() {
   const navigate = useNavigate()
-  const { user, tenant, logout } = useAuth()
+  const { user, tenant: authTenant, logout } = useAuth()
+  const { tenant } = useTenant()
 
   const [cajaId, setCajaId] = useState('')
   const [fondo, setFondo] = useState('')
@@ -34,6 +36,22 @@ export default function AbrirCaja() {
     select: (data) => data.filter(c => c.activa),
   })
 
+  const modTurnos = tenant?.modo_turnos === true
+
+  // Última sesión cerrada con fondo_siguiente para pre-llenar
+  const { data: ultimaSesion } = useQuery({
+    queryKey: ['ultima-sesion', cajaId],
+    queryFn: () => cajasService.getUltimaSesion(cajaId || undefined),
+    enabled: modTurnos,
+  })
+
+  // Pre-llenar fondo cuando llega la última sesión (solo si el campo está vacío)
+  useEffect(() => {
+    if (modTurnos && ultimaSesion?.fondo_siguiente > 0 && fondo === '') {
+      setFondo(String(ultimaSesion.fondo_siguiente))
+    }
+  }, [ultimaSesion, modTurnos])
+
   const abrirMutation = useMutation({
     mutationFn: (datos) => cajasService.abrirSesion(datos),
     onSuccess: () => navigate('/pos'),
@@ -55,7 +73,7 @@ export default function AbrirCaja() {
       setErrorFondo('')
     }
 
-    const usaMultiCaja = tenant?.modo_caja === 'multicaja' || cajas.length > 1
+    const usaMultiCaja = authTenant?.modo_caja === 'multicaja' || cajas.length > 1
     if (usaMultiCaja && !cajaId) {
       setErrorCaja('Selecciona una caja')
       valido = false
@@ -80,7 +98,7 @@ export default function AbrirCaja() {
     )
   }
 
-  const usaMultiCaja = tenant?.modo_caja === 'multicaja' || cajas.length > 1
+  const usaMultiCaja = authTenant?.modo_caja === 'multicaja' || cajas.length > 1
 
   return (
     <div className="min-h-screen bg-surface-soft flex flex-col">
@@ -197,6 +215,12 @@ export default function AbrirCaja() {
                   {errorFondo && <p className="text-xs text-danger">{errorFondo}</p>}
                   {fondo && !isNaN(Number(fondo)) && (
                     <p className="text-xs text-ink-2">{COP(Number(fondo))}</p>
+                  )}
+                  {modTurnos && ultimaSesion?.fondo_siguiente > 0 && (
+                    <p className="text-xs text-accent flex items-center gap-1 mt-1">
+                      <Info className="w-3 h-3" />
+                      El turno anterior dejó: {COP(ultimaSesion.fondo_siguiente)}
+                    </p>
                   )}
                 </div>
 

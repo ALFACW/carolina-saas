@@ -610,7 +610,7 @@ export default function POS() {
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors"
             >
               <Calculator size={14} className="flex-shrink-0" />
-              Cuadrar / Cerrar turno
+              Cerrar caja
             </button>
           </div>
         </div>
