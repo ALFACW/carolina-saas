@@ -129,7 +129,7 @@ export default function POS() {
     debounceRef.current = setTimeout(() => {
       setSearchDebounced(searchText)
       setResultIndex(-1)
-    }, 250)
+    }, 120)
     return () => clearTimeout(debounceRef.current)
   }, [searchText])
 
@@ -630,30 +630,24 @@ export default function POS() {
 
           {/* Totales + cobrar — pegados al fondo */}
           <div className="px-4 pt-4 pb-3 border-t border-border flex-shrink-0 flex flex-col gap-3">
-            {/* Totales */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-sm">
-                <span className="text-ink-2">Subtotal</span>
-                <span className="text-ink">{COP(subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-ink-2">IVA</span>
-                <span className="text-ink">{COP(iva)}</span>
-              </div>
-              <div className="flex justify-between text-base font-bold border-t border-border pt-2">
-                <span className="text-ink">Total</span>
-                <span className="text-ink">{COP(total)}</span>
+            {/* Total grande en azul */}
+            <div className="bg-accent rounded-xl px-4 py-3 text-white">
+              <p className="text-xs font-medium opacity-70 mb-0.5 uppercase tracking-wider">Total a cobrar</p>
+              <p className="text-3xl font-bold tracking-tight">{COP(total)}</p>
+              <div className="mt-2 pt-2 border-t border-white/20 flex justify-between text-xs opacity-80">
+                <span>Subtotal {COP(subtotal)}</span>
+                <span>IVA {COP(iva)}</span>
               </div>
             </div>
 
             <button
               onClick={() => carrito.length > 0 && setShowCobroModal(true)}
               disabled={carrito.length === 0}
-              className="w-full py-4 rounded-xl font-bold text-base transition-colors disabled:opacity-30 text-white bg-accent hover:bg-accent/90 flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-xl font-bold text-sm transition-colors disabled:opacity-30 text-accent bg-accent-soft border-2 border-accent hover:bg-accent hover:text-white flex items-center justify-center gap-2"
             >
               {carrito.length === 0
                 ? 'Carrito vacío'
-                : <>{COP(total)} &nbsp;<span className="text-xs bg-white/20 px-1.5 py-0.5 rounded font-mono">F3</span></>
+                : <>Cobrar &nbsp;<span className="text-xs bg-accent/20 px-1.5 py-0.5 rounded font-mono">F3</span></>
               }
             </button>
 
