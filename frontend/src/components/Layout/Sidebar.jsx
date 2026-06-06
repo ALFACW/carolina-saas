@@ -3,12 +3,12 @@ import { NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
   Home, ShoppingCart, FileText, Package, Users, Wallet, Clock,
-  BarChart3, Settings, LogOut, Truck, ShoppingBag,
+  BarChart3, Settings, LogOut, Truck, ShoppingBag, ClipboardList,
 } from 'lucide-react'
 
 const NAV_POR_ROL = {
-  admin:      ['/dashboard', '/pos', '/facturas', '/productos', '/clientes', '/proveedores', '/compras', '/cartera', '/reportes', '/cajas', '/usuarios', '/configuracion'],
-  supervisor: ['/dashboard', '/pos', '/facturas', '/clientes', '/proveedores', '/compras', '/cartera', '/reportes', '/cajas'],
+  admin:      ['/dashboard', '/pos', '/facturas', '/productos', '/clientes', '/proveedores', '/compras', '/cartera', '/reportes', '/cajas', '/cierres', '/usuarios', '/configuracion'],
+  supervisor: ['/dashboard', '/pos', '/facturas', '/clientes', '/proveedores', '/compras', '/cartera', '/reportes', '/cajas', '/cierres'],
   cajero:     ['/caja/abrir', '/pos'],
   vendedor:   ['/caja/abrir', '/pos'],
   inventario: ['/productos', '/clientes'],
@@ -36,8 +36,9 @@ const MENU_GROUPS = [
     group: 'Finanzas',
     items: [
       { icon: Wallet,    label: 'Cartera',         path: '/cartera' },
-      { icon: Clock,     label: 'Caja y Sesiones', path: '/cajas' },
-      { icon: BarChart3, label: 'Reportes',        path: '/reportes' },
+      { icon: Clock,         label: 'Caja y Sesiones', path: '/cajas' },
+      { icon: ClipboardList, label: 'Cierres de caja', path: '/cierres' },
+      { icon: BarChart3,     label: 'Reportes',        path: '/reportes' },
     ]
   },
   {

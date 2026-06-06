@@ -30,6 +30,7 @@ import CompraForm from './pages/CompraForm'
 import CompraDetalle from './pages/CompraDetalle'
 import Cartera from './pages/Cartera'
 import GuiaHardware from './pages/GuiaHardware'
+import CierresCaja from './pages/CierresCaja'
 
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useAuth()
@@ -77,6 +78,7 @@ function AppRoutes() {
         <Route path="mi-perfil" element={<MiPerfil />} />
         <Route path="usuarios" element={<RoleGuard roles={['admin']}><Usuarios /></RoleGuard>} />
         <Route path="cajas" element={<RoleGuard roles={['admin', 'supervisor']}><Cajas /></RoleGuard>} />
+        <Route path="cierres" element={<RoleGuard roles={['admin', 'supervisor']}><CierresCaja /></RoleGuard>} />
         <Route path="sesiones/:id" element={<RoleGuard roles={['admin', 'supervisor']}><SesionDetalle /></RoleGuard>} />
         <Route path="proveedores" element={<RoleGuard roles={['admin', 'supervisor']}><Proveedores /></RoleGuard>} />
         <Route path="compras" element={<RoleGuard roles={['admin', 'supervisor']}><Compras /></RoleGuard>} />
