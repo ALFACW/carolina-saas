@@ -9,7 +9,6 @@ echo.
 
 :: ── 0. Verificar que el ZIP fue extraido ─────────────────────────────────────
 if not exist "%~dp0servidor.py" (
-    echo.
     echo  ERROR: Falta el archivo servidor.py en esta carpeta.
     echo.
     echo  Debes EXTRAER el ZIP antes de ejecutar este archivo.
@@ -20,7 +19,7 @@ if not exist "%~dp0servidor.py" (
     exit /b 1
 )
 
-:: ── 1. Verificar Python ──────────────────────────────────────────────────────
+:: ── 1. Verificar Python ───────────────────────────────────────────────────────
 python --version >nul 2>&1
 if %errorlevel% equ 0 goto instalar_deps
 
@@ -29,38 +28,37 @@ echo  (puede tardar 2-3 minutos, no cierres esta ventana)
 echo.
 
 :: Intento 1: winget (rapido, sin descarga)
-winget install -e --id Python.Python.3 --silent --accept-package-agreements --accept-source-agreements >nul 2>&1
+echo  [1/3] Intentando via winget...
+winget install -e --id Python.Python.3 --silent --accept-package-agreements --accept-source-agreements
 if %errorlevel% equ 0 goto python_listo
 
-:: Intento 2: descargar instalador via PowerShell
-echo  Descargando instalador de Python...
-powershell -NoProfile -Command "Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.12.7/python-3.12.7-amd64.exe' -OutFile '%TEMP%\python_setup.exe' -UseBasicParsing" >nul 2>&1
+:: Intento 2: curl (built-in en Windows 10+, mas confiable)
+echo  [2/3] Descargando instalador de Python...
+curl -L --progress-bar --output "%TEMP%\python_setup.exe" "https://www.python.org/ftp/python/3.12.7/python-3.12.7-amd64.exe"
+if exist "%TEMP%\python_setup.exe" goto instalar_exe
 
-:: Intento 3: si PowerShell fallo, usar certutil
+:: Intento 3: PowerShell como ultimo recurso
+echo  [3/3] Intentando con PowerShell...
+powershell -NoProfile -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('https://www.python.org/ftp/python/3.12.7/python-3.12.7-amd64.exe', '%TEMP%\python_setup.exe')"
 if not exist "%TEMP%\python_setup.exe" (
-    certutil -urlcache -split -f "https://www.python.org/ftp/python/3.12.7/python-3.12.7-amd64.exe" "%TEMP%\python_setup.exe" >nul 2>&1
+    echo.
+    echo  No se pudo descargar Python. Verifica tu conexion a internet.
+    pause
+    exit /b 1
 )
 
-if exist "%TEMP%\python_setup.exe" (
-    echo  Instalando Python, espera...
-    "%TEMP%\python_setup.exe" /quiet InstallAllUsers=0 PrependPath=1 Include_test=0
-    del "%TEMP%\python_setup.exe" >nul 2>&1
-    goto python_listo
-)
-
-echo.
-echo  ERROR: No se pudo instalar Python automaticamente.
-echo  Verifica que tengas conexion a internet y vuelve a intentarlo.
-pause
-exit /b 1
+:instalar_exe
+echo  Instalando Python silenciosamente...
+"%TEMP%\python_setup.exe" /quiet InstallAllUsers=0 PrependPath=1 Include_test=0
+del "%TEMP%\python_setup.exe" >nul 2>&1
 
 :python_listo
-echo  Python instalado. Reiniciando...
+echo  Python listo. Reiniciando...
 echo.
 start "" cmd /c ""%~f0""
 exit /b 0
 
-:: ── 2. Instalar pywin32 ──────────────────────────────────────────────────────
+:: ── 2. Instalar pywin32 ───────────────────────────────────────────────────────
 :instalar_deps
 echo  Verificando componentes...
 python -m pip install pywin32 --quiet --disable-pip-version-check
@@ -70,7 +68,7 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: ── 3. Configurar inicio automatico ─────────────────────────────────────────
+:: ── 3. Configurar inicio automatico ──────────────────────────────────────────
 set "STARTUP=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
 set "LAUNCHER=%STARTUP%\CarolinaPOS-Print.bat"
 if not exist "%LAUNCHER%" (
@@ -83,7 +81,7 @@ if not exist "%LAUNCHER%" (
     echo  Listo. El servidor arrancara automaticamente al encender el PC.
 )
 
-:: ── 4. Iniciar servidor ──────────────────────────────────────────────────────
+:: ── 4. Iniciar servidor ───────────────────────────────────────────────────────
 echo  Iniciando servidor...
 echo  Deja esta ventana abierta mientras usas CarolinaPOS.
 echo.
