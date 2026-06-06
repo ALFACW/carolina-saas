@@ -213,7 +213,24 @@ export default function Configuracion() {
                     <RefreshCw className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <a href="/guia-hardware" target="_blank" className="text-xs text-ink-2 hover:text-ink underline">Ver guía de instalación</a>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={async () => {
+                      try {
+                        const api = (await import('../services/api')).default
+                        const res = await api.get('/api/print/download', { responseType: 'blob' })
+                        const url = URL.createObjectURL(res.data)
+                        const a = document.createElement('a')
+                        a.href = url; a.download = 'carolinapos-print.zip'; a.click()
+                        URL.revokeObjectURL(url)
+                      } catch { alert('Error al descargar. Intenta de nuevo.') }
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent/80 font-medium transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />Descargar ZIP
+                  </button>
+                  <a href="/guia-hardware" target="_blank" className="text-xs text-ink-2 hover:text-ink underline">Ver guía</a>
+                </div>
               </div>
 
               {/* Panel instalación cuando no hay servidor */}
