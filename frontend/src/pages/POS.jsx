@@ -496,8 +496,8 @@ export default function POS() {
           ) : (
             <div className="flex flex-col h-full overflow-hidden">
               {/* Cabecera tabla */}
-              <div className="flex-shrink-0 bg-surface-soft border-b border-border px-4 py-2 grid items-center text-xs font-bold text-ink-2 uppercase tracking-wider"
-                style={{ gridTemplateColumns: '80px 1fr 120px 90px 90px 28px' }}>
+              <div className="flex-shrink-0 bg-surface-soft border-b border-border px-5 py-3 grid items-center text-xs font-bold text-ink-2 uppercase tracking-wider"
+                style={{ gridTemplateColumns: '90px 1fr 140px 110px 110px 32px' }}>
                 <span>SKU</span>
                 <span>Producto</span>
                 <span className="text-center">Cantidad</span>
@@ -512,8 +512,8 @@ export default function POS() {
                   const itemTotal = item.precio_unitario * item.cantidad * (1 - item.descuento / 100)
                   return (
                     <div key={item.producto_id}
-                      className="grid items-center px-4 py-2.5 hover:bg-white transition-colors"
-                      style={{ gridTemplateColumns: '80px 1fr 120px 90px 90px 28px' }}>
+                      className="grid items-center px-5 py-3.5 hover:bg-white transition-colors"
+                      style={{ gridTemplateColumns: '90px 1fr 140px 110px 110px 32px' }}>
 
                       {/* SKU */}
                       <span className="font-mono text-xs text-accent font-semibold truncate pr-2">
@@ -521,8 +521,8 @@ export default function POS() {
                       </span>
 
                       {/* Producto */}
-                      <div className="min-w-0 pr-2">
-                        <p className="text-sm font-semibold text-ink leading-tight truncate">{item.nombre}</p>
+                      <div className="min-w-0 pr-3">
+                        <p className="text-sm font-semibold text-ink leading-snug truncate">{item.nombre}</p>
                         {item.descuento > 0 && (
                           <span className="text-xs text-accent font-medium">-{item.descuento}%</span>
                         )}
@@ -532,22 +532,22 @@ export default function POS() {
                       <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => actualizarCantidad(item.producto_id, item.cantidad - 1)}
-                          className="w-6 h-6 flex items-center justify-center rounded border border-border text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors flex-shrink-0"
+                          className="w-7 h-7 flex items-center justify-center rounded-lg border border-border text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors flex-shrink-0"
                         >
-                          <Minus size={10} />
+                          <Minus size={11} />
                         </button>
-                        <span className="text-sm font-bold text-ink w-7 text-center">{item.cantidad}</span>
+                        <span className="text-sm font-bold text-ink w-8 text-center">{item.cantidad}</span>
                         <button
                           onClick={() => actualizarCantidad(item.producto_id, item.cantidad + 1)}
                           disabled={item.cantidad >= item.stock_actual}
-                          className="w-6 h-6 flex items-center justify-center rounded border border-border text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors flex-shrink-0 disabled:opacity-30"
+                          className="w-7 h-7 flex items-center justify-center rounded-lg border border-border text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors flex-shrink-0 disabled:opacity-30"
                         >
-                          <Plus size={10} />
+                          <Plus size={11} />
                         </button>
                       </div>
 
                       {/* Precio unit */}
-                      <span className="text-xs text-ink-2 text-right">{COP(item.precio_unitario)}</span>
+                      <span className="text-sm text-ink-2 text-right">{COP(item.precio_unitario)}</span>
 
                       {/* Total */}
                       <span className="text-sm font-bold text-ink text-right">{COP(itemTotal)}</span>
