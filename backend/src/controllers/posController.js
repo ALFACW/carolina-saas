@@ -243,6 +243,22 @@ async function procesarVenta(req, res, next) {
 
 async function getProductosRapido(req, res, next) {
   try {
+    const { search = '' } = req.query;
+
+    if (search.trim()) {
+      // Búsqueda por nombre o código — solo los campos que necesita el POS
+      const { rows } = await db.query(
+        `SELECT id, nombre, codigo, precio_venta, stock_actual, impuesto_iva
+         FROM productos
+         WHERE tenant_id = $1 AND activo = true
+           AND (nombre ILIKE $2 OR codigo ILIKE $2)
+         ORDER BY nombre LIMIT 10`,
+        [req.tenant.id, `%${search.trim()}%`]
+      );
+      return res.json(rows);
+    }
+
+    // Sin búsqueda: top 20 más vendidos (pantalla inicial)
     const { rows } = await db.query(
       `SELECT p.id, p.nombre, p.codigo, p.precio_venta, p.stock_actual, p.impuesto_iva,
               COALESCE(SUM(fi.cantidad),0) as total_vendido

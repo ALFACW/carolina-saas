@@ -154,9 +154,9 @@ export default function POS() {
 
   const { data: searchResults, isFetching: buscando } = useQuery({
     queryKey: ['pos-search', searchDebounced],
-    queryFn: () => productosService.getAll({ search: searchDebounced, activo: true, limit: 10 }),
+    queryFn: () => posService.buscarProductos(searchDebounced),
     enabled: searchDebounced.length >= 1,
-    staleTime: 15000,
+    staleTime: 10000,
   })
 
   const { data: proximaFactura, refetch: refetchProxima } = useQuery({
@@ -165,7 +165,7 @@ export default function POS() {
     staleTime: 0,
   })
 
-  const productos = searchResults?.productos || []
+  const productos = Array.isArray(searchResults) ? searchResults : []
 
   const agregarDesdeResultado = useCallback((p) => {
     if (!p) return
@@ -224,7 +224,7 @@ export default function POS() {
 
       if (e.key === 'ArrowDown' && enBuscador) {
         e.preventDefault()
-        setResultIndex(i => Math.min(i + 1, (searchResults?.productos?.length || 1) - 1))
+        setResultIndex(i => Math.min(i + 1, (searchResults?.length || 1) - 1))
         return
       }
       if (e.key === 'ArrowUp' && enBuscador) {
@@ -252,19 +252,19 @@ export default function POS() {
           return
         }
 
-        if (enBuscador && resultIndex >= 0 && searchResults?.productos?.[resultIndex]) {
+        if (enBuscador && resultIndex >= 0 && searchResults?.[resultIndex]) {
           e.preventDefault()
           agregarDesdeResultado(searchResults.productos[resultIndex])
           return
         }
 
-        if (enBuscador && searchResults?.productos?.length === 1) {
+        if (enBuscador && searchResults?.length === 1) {
           e.preventDefault()
           agregarDesdeResultado(searchResults.productos[0])
           return
         }
 
-        if (enBuscador && searchResults?.productos?.length > 1 && resultIndex === -1) {
+        if (enBuscador && searchResults?.length > 1 && resultIndex === -1) {
           e.preventDefault()
           agregarDesdeResultado(searchResults.productos[0])
           return
