@@ -198,7 +198,7 @@ export default function CerrarCaja() {
                 {imprimiendo ? 'Imprimiendo...' : 'Reimprimir corte'}
               </button>
               <button
-                onClick={() => navigate('/caja/abrir')}
+                onClick={() => navigate(esCambioTurno ? '/caja/abrir' : '/dashboard')}
                 className="flex-1 bg-accent hover:bg-accent/90 text-white font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors"
               >
                 {esCambioTurno ? 'Siguiente cajero' : 'Finalizar'}
