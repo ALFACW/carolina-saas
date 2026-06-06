@@ -47,7 +47,7 @@ export function exportarClientes(clientes) {
     'Email': c.email || '',
     'Teléfono': c.telefono || '',
     'Ciudad': c.ciudad || '',
-    'Sincronizado DIAN': c.alegra_id ? 'Sí' : 'No',
+    'En DIAN': c.alegra_id ? 'Sí' : 'No',
   }))
   exportarExcel(datos, `Clientes_${new Date().toISOString().split('T')[0]}`, 'Clientes')
 }

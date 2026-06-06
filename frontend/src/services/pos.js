@@ -13,4 +13,8 @@ export const posService = {
     const { data } = await api.get('/api/pos/productos-rapido')
     return data
   },
+  async getProximaFactura() {
+    const { data } = await api.get('/api/pos/proxima-factura')
+    return data
+  },
 }

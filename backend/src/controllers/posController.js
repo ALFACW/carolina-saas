@@ -256,4 +256,27 @@ async function getProductosRapido(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { getDashboard, procesarVenta, getProductosRapido };
+async function getProximaFactura(req, res, next) {
+  try {
+    const { rows } = await db.query(
+      `SELECT numero_factura FROM facturas
+       WHERE tenant_id = $1 AND numero_factura IS NOT NULL AND numero_factura != ''
+       ORDER BY fecha_emision DESC LIMIT 1`,
+      [req.tenant.id]
+    );
+    if (!rows.length) return res.json({ numero: null, texto: null });
+
+    const ultimo = rows[0].numero_factura;
+    // Separar prefijo de parte numérica: "SETP990005437" → prefijo="SETP", num=990005437
+    const match = ultimo.match(/^([A-Za-z]*)(\d+)$/);
+    if (!match) return res.json({ numero: null, texto: ultimo });
+
+    const prefijo = match[1];
+    const siguiente = parseInt(match[2]) + 1;
+    const texto = prefijo + String(siguiente).padStart(match[2].length, '0');
+
+    res.json({ numero: siguiente, prefijo, texto, ultimo });
+  } catch (err) { next(err); }
+}
+
+module.exports = { getDashboard, procesarVenta, getProductosRapido, getProximaFactura };

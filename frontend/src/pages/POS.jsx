@@ -159,6 +159,12 @@ export default function POS() {
     staleTime: 15000,
   })
 
+  const { data: proximaFactura, refetch: refetchProxima } = useQuery({
+    queryKey: ['proxima-factura'],
+    queryFn: () => posService.getProximaFactura(),
+    staleTime: 0,
+  })
+
   const productos = searchResults?.productos || []
 
   const agregarDesdeResultado = useCallback((p) => {
@@ -345,6 +351,7 @@ export default function POS() {
       setShowTicketModal(true)
       setEfectivoRecibido('')
       qc.invalidateQueries({ queryKey: ['pos-dashboard'] })
+      refetchProxima()
     },
     onError: (err) => { soundError(); setErrorVenta(err.response?.data?.error || 'Error al procesar la venta') },
   })
@@ -600,6 +607,14 @@ export default function POS() {
             </span>
           </div>
 
+          {/* Próxima factura */}
+          {proximaFactura?.texto && (
+            <div className="px-5 py-2 border-b border-border flex-shrink-0 flex items-center justify-between bg-surface">
+              <span className="text-xs text-ink-2 uppercase tracking-wide">Próxima factura</span>
+              <span className="text-sm font-bold text-accent font-mono">{proximaFactura.texto}</span>
+            </div>
+          )}
+
           {/* Cliente */}
           <div className="px-5 py-4 border-b border-border flex-shrink-0">
             <button
@@ -625,19 +640,20 @@ export default function POS() {
             <MetodoPago />
           </div>
 
-          {/* Espacio flexible */}
-          <div className="flex-1 min-h-0" />
+          {/* Total grande en azul — ocupa el espacio flexible */}
+          <div className="flex-1 min-h-0 flex items-center justify-center px-5 py-4 bg-accent">
+            <div className="text-white text-center">
+              <p className="text-sm font-medium opacity-70 mb-1 uppercase tracking-wider">Total a cobrar</p>
+              <p className="text-5xl font-bold tracking-tight">{COP(total)}</p>
+            </div>
+          </div>
 
           {/* Totales + cobrar — pegados al fondo */}
-          <div className="px-5 pt-5 pb-4 border-t border-border flex-shrink-0 flex flex-col gap-4">
-            {/* Total grande en azul */}
-            <div className="bg-accent rounded-2xl px-5 py-4 text-white">
-              <p className="text-sm font-medium opacity-70 mb-1 uppercase tracking-wider">Total a cobrar</p>
-              <p className="text-4xl font-bold tracking-tight">{COP(total)}</p>
-              <div className="mt-3 pt-3 border-t border-white/20 flex justify-between text-sm opacity-90">
-                <span>Subtotal &nbsp;<strong>{COP(subtotal)}</strong></span>
-                <span>IVA &nbsp;<strong>{COP(iva)}</strong></span>
-              </div>
+          <div className="px-5 pt-4 pb-4 border-t border-border flex-shrink-0 flex flex-col gap-3">
+            {/* Subtotal + IVA */}
+            <div className="flex justify-between text-sm px-1">
+              <span className="text-ink-2">Subtotal <span className="font-semibold text-ink">{COP(subtotal)}</span></span>
+              <span className="text-ink-2">IVA <span className="font-semibold text-ink">{COP(iva)}</span></span>
             </div>
 
             <button
