@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, Eye, CheckCircle, XCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import { comprasService } from '../services/compras'
 import { proveedoresService } from '../services/proveedores'
 import { Table } from '../components/Common/Table'
@@ -51,12 +52,14 @@ export default function Compras() {
 
   const recibirMutation = useMutation({
     mutationFn: comprasService.recibir,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['compras'] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['compras'] }); toast.success('Compra recibida — stock actualizado') },
+    onError: (err) => toast.error(err?.response?.data?.error || 'Error al recibir la compra'),
   })
 
   const cancelarMutation = useMutation({
     mutationFn: comprasService.cancelar,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['compras'] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['compras'] }); toast.success('Compra cancelada') },
+    onError: (err) => toast.error(err?.response?.data?.error || 'Error al cancelar la compra'),
   })
 
   const handleRecibir = (compra) => {

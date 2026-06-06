@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { ArrowLeft, ScanBarcode, Info } from 'lucide-react'
+import { toast } from 'sonner'
 import { productosService } from '../services/productos'
 import { Button } from '../components/Common/Button'
 import { Input } from '../components/Common/Input'
@@ -88,8 +89,10 @@ export default function ProductoForm() {
     mutationFn: (data) => isEdit ? productosService.update(id, data) : productosService.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['productos'] })
+      toast.success(isEdit ? 'Producto actualizado' : 'Producto creado')
       navigate('/productos')
     },
+    onError: (err) => toast.error(err?.response?.data?.error || 'Error al guardar el producto'),
   })
 
   const onSubmit = (data) => {

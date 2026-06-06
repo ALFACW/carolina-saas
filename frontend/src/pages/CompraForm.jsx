@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { Plus, Trash2, Search, ChevronDown, ArrowLeft, Save, PackageCheck } from 'lucide-react'
+import { toast } from 'sonner'
 import { comprasService } from '../services/compras'
 import { proveedoresService } from '../services/proveedores'
 import api from '../services/api'
@@ -263,8 +264,10 @@ export default function CompraForm() {
       } else {
         await createMutation.mutateAsync(buildPayload())
       }
+      toast.success(isEdit ? 'Compra actualizada' : 'Compra guardada como borrador')
       navigate('/compras')
     } catch (err) {
+      toast.error(err?.response?.data?.message || 'Error al guardar la compra')
       setErrors({ global: err?.response?.data?.message || 'Error al guardar la compra' })
     }
   }
@@ -284,8 +287,10 @@ export default function CompraForm() {
         if (!compraId) throw new Error('No se pudo obtener el ID de la compra creada')
       }
       await recibirMutation.mutateAsync(compraId)
+      toast.success('Compra recibida — stock actualizado')
       navigate('/compras')
     } catch (err) {
+      toast.error(err?.response?.data?.message || 'Error al guardar y recibir la compra')
       setErrors({ global: err?.response?.data?.message || 'Error al guardar y recibir la compra' })
     }
   }

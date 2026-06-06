@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Download, XCircle, Printer, Send, CheckCircle2, X, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { facturasService } from '../services/facturas'
 import { Loading } from '../components/Common/Loading'
 import { Button } from '../components/Common/Button'
@@ -33,7 +34,8 @@ export default function FacturaDetalle() {
 
   const anularMutation = useMutation({
     mutationFn: () => facturasService.anular(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['factura', id] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['factura', id] }); toast.success('Factura anulada') },
+    onError: (err) => toast.error(err?.response?.data?.error || 'Error al anular la factura'),
   })
 
   const pdfMutation = useMutation({

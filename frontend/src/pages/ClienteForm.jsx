@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { ArrowLeft } from 'lucide-react'
+import { toast } from 'sonner'
 import { clientesService } from '../services/clientes'
 import { Button } from '../components/Common/Button'
 import { Input } from '../components/Common/Input'
@@ -27,7 +28,12 @@ export default function ClienteForm() {
 
   const mutation = useMutation({
     mutationFn: (data) => isEdit ? clientesService.update(id, data) : clientesService.create(data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['clientes'] }); navigate('/clientes') },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['clientes'] })
+      toast.success(isEdit ? 'Cliente actualizado' : 'Cliente creado')
+      navigate('/clientes')
+    },
+    onError: (err) => toast.error(err?.response?.data?.error || 'Error al guardar el cliente'),
   })
 
   return (
