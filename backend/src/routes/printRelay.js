@@ -3,6 +3,9 @@ const router = express.Router()
 const db = require('../db')
 const authMiddleware = require('../middleware/auth')
 const { randomUUID } = require('crypto')
+const AdmZip = require('adm-zip')
+const path = require('path')
+const fs = require('fs')
 
 // ── Stores en memoria (efímero, se limpia con el proceso) ─────────────────────
 const jobs  = new Map()  // token → [{id, bytes, impresora, ts}]
@@ -75,6 +78,42 @@ router.delete('/job/:token/:id', (req, res) => {
 router.post('/heartbeat/:token', (req, res) => {
   beats.set(req.params.token, { ts: Date.now(), printers: req.body?.printers || [] })
   res.json({ ok: true })
+})
+
+// GET /api/print/download — ZIP con servidor.py + Iniciar.bat + config.json del tenant
+router.get('/download', authMiddleware, async (req, res, next) => {
+  try {
+    let { rows } = await db.query(
+      'SELECT printer_token FROM tenants WHERE id = $1',
+      [req.user.tenant_id]
+    )
+    let token = rows[0]?.printer_token
+    if (!token) {
+      token = randomUUID()
+      await db.query(
+        'UPDATE tenants SET printer_token = $1 WHERE id = $2',
+        [token, req.user.tenant_id]
+      )
+    }
+
+    const apiUrl = process.env.BACKEND_URL || 'https://carolina-saas-production-a4c9.up.railway.app'
+    const config = { token, api: apiUrl }
+
+    const assetsDir = path.join(__dirname, '../assets')
+    const servidorPy = fs.readFileSync(path.join(assetsDir, 'servidor.py'))
+    const iniciarBat = fs.readFileSync(path.join(assetsDir, 'Iniciar.bat'))
+
+    const zip = new AdmZip()
+    zip.addFile('carolinapos-print/servidor.py', servidorPy)
+    zip.addFile('carolinapos-print/Iniciar.bat', iniciarBat)
+    zip.addFile('carolinapos-print/config.json', Buffer.from(JSON.stringify(config, null, 2)))
+
+    const zipBuffer = zip.toBuffer()
+    res.setHeader('Content-Type', 'application/zip')
+    res.setHeader('Content-Disposition', 'attachment; filename="carolinapos-print.zip"')
+    res.setHeader('Content-Length', zipBuffer.length)
+    res.send(zipBuffer)
+  } catch (err) { next(err) }
 })
 
 module.exports = router

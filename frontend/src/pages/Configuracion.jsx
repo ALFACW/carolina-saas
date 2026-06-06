@@ -224,66 +224,43 @@ export default function Configuracion() {
 
               {/* Panel instalación cuando no hay servidor */}
               {(qz.estado === 'desconectado' || qz.estado === 'error') && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-                  {/* Paso 1 */}
-                  <div className="bg-surface-soft rounded-xl p-5 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
-                      <p className="font-semibold text-ink text-sm">Instala Python</p>
-                    </div>
-                    <p className="text-xs text-ink-2">Gratuito. Al instalar marca <strong>"Add Python to PATH"</strong>.</p>
-                    <a href="https://python.org/downloads" target="_blank" rel="noreferrer"
-                      className="inline-flex items-center gap-2 bg-white border border-border text-ink text-xs px-4 py-2 rounded-lg hover:border-border-strong font-medium transition-colors">
-                      <Download className="w-3.5 h-3.5" />Descargar Python
-                    </a>
-                    <p className="text-xs text-ink-2 opacity-60">Ya lo tienes? Salta al paso 2.</p>
+                <div className="bg-surface-soft rounded-xl p-6 space-y-4">
+                  <div>
+                    <p className="font-semibold text-ink text-sm mb-1">Instala el servidor de impresión</p>
+                    <p className="text-xs text-ink-2">Un solo archivo que configura todo automáticamente en tu PC.</p>
                   </div>
 
-                  {/* Paso 2 */}
-                  <div className="bg-surface-soft rounded-xl p-5 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
-                      <p className="font-semibold text-ink text-sm">Descarga el servidor</p>
-                    </div>
-                    <p className="text-xs text-ink-2">Descarga el ZIP, extráelo en <code className="bg-white px-1 rounded">Documentos\CarolinaPOS\</code>.</p>
-                    <a href="/carolinapos-print.zip" download="carolinapos-print.zip"
-                      className="inline-flex items-center gap-2 bg-accent text-white text-xs px-4 py-2 rounded-lg hover:bg-accent/90 font-medium">
-                      <Download className="w-3.5 h-3.5" />Descargar carolinapos-print.zip
-                    </a>
-                  </div>
+                  {/* Botón descarga única */}
+                  <button
+                    onClick={async () => {
+                      try {
+                        const api = (await import('../services/api')).default
+                        const res = await api.get('/api/print/download', { responseType: 'blob' })
+                        const url = URL.createObjectURL(res.data)
+                        const a   = document.createElement('a')
+                        a.href = url; a.download = 'carolinapos-print.zip'; a.click()
+                        URL.revokeObjectURL(url)
+                      } catch { alert('Error al descargar. Intenta de nuevo.') }
+                    }}
+                    className="inline-flex items-center gap-2 bg-accent text-white text-sm px-5 py-2.5 rounded-lg hover:bg-accent/90 font-medium transition-colors">
+                    <Download className="w-4 h-4" />Descargar carolinapos-print.zip
+                  </button>
 
-                  {/* Paso 3 */}
-                  <div className="bg-surface-soft rounded-xl p-5 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center flex-shrink-0">3</span>
-                      <p className="font-semibold text-ink text-sm">Descarga tu configuración</p>
-                    </div>
-                    <p className="text-xs text-ink-2">Descarga <code className="bg-white px-1 rounded">config.json</code> y ponlo en la misma carpeta que <strong>Iniciar.bat</strong>. Luego haz doble clic en <strong>Iniciar.bat</strong>.</p>
-                    {qz.errorMsg && <p className="text-red-600 text-xs">{qz.errorMsg}</p>}
-                    <div className="flex gap-2 flex-wrap">
-                      <button
-                        onClick={async () => {
-                          try {
-                            const { data } = await (await import('../services/api')).default.get('/api/print/status')
-                            const config = { token: data.token, api: import.meta.env.VITE_API_URL || 'http://localhost:3000' }
-                            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' })
-                            const url  = URL.createObjectURL(blob)
-                            const a    = document.createElement('a')
-                            a.href = url; a.download = 'config.json'; a.click()
-                            URL.revokeObjectURL(url)
-                          } catch {}
-                        }}
-                        className="inline-flex items-center gap-2 bg-accent text-white text-xs px-4 py-2 rounded-lg hover:bg-accent/90 font-medium">
-                        <Download className="w-3.5 h-3.5" />Descargar config.json
-                      </button>
-                      <button onClick={qz.conectar}
-                        className="inline-flex items-center gap-2 bg-white border border-border text-ink-2 text-xs px-4 py-2 rounded-lg hover:bg-surface-soft font-medium">
-                        <RefreshCw className="w-3.5 h-3.5" />Verificar
-                      </button>
-                    </div>
-                  </div>
+                  {/* Instrucciones */}
+                  <ol className="text-xs text-ink-2 space-y-1 list-none">
+                    <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-accent/10 text-accent font-bold flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">1</span>Extrae el ZIP en cualquier carpeta (ej. <code className="bg-white px-1 rounded">Documentos\CarolinaPOS\</code>)</li>
+                    <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-accent/10 text-accent font-bold flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">2</span>Abre la carpeta y haz doble clic en <strong>Iniciar.bat</strong></li>
+                    <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-accent/10 text-accent font-bold flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">3</span>Si no tienes Python, se instala solo. Espera y vuelve a abrir el .bat cuando termine.</li>
+                    <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-accent/10 text-accent font-bold flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">4</span>Cuando veas <em>"Esperando trabajos de impresión..."</em> ya está listo. Deja esa ventana abierta.</li>
+                  </ol>
 
+                  <p className="text-xs text-ink-2 opacity-70">Tras el primer arranque, el servidor se inicia solo cada vez que enciendas el PC.</p>
+
+                  {qz.errorMsg && <p className="text-red-600 text-xs">{qz.errorMsg}</p>}
+                  <button onClick={qz.conectar}
+                    className="inline-flex items-center gap-2 text-xs text-ink-2 hover:text-ink transition-colors">
+                    <RefreshCw className="w-3.5 h-3.5" />Verificar conexión
+                  </button>
                 </div>
               )}
 
