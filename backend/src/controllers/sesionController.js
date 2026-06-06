@@ -216,7 +216,7 @@ async function getById(req, res, next) {
         [req.params.id, req.tenant.id]
       ),
       db.query(
-        `SELECT f.id, f.numero, f.total, f.metodo_pago, f.estado, f.fecha_emision,
+        `SELECT f.id, f.numero_factura, f.total, f.metodo_pago, f.estado, f.fecha_emision,
            cl.nombre AS cliente_nombre
          FROM facturas f
          LEFT JOIN clientes cl ON f.cliente_id = cl.id
