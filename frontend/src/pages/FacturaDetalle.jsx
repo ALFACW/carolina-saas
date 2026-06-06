@@ -24,7 +24,6 @@ export default function FacturaDetalle() {
   // Modal email
   const [showEmail, setShowEmail] = useState(false)
   const [emailInput, setEmailInput] = useState('')
-  const [emailMsg, setEmailMsg] = useState('')
   const [emailErr, setEmailErr] = useState('')
 
   const { data: factura, isLoading } = useQuery({
@@ -60,12 +59,9 @@ export default function FacturaDetalle() {
   const emailMutation = useMutation({
     mutationFn: (email) => api.post(`/api/facturas/${id}/enviar-email`, { email }),
     onSuccess: () => {
-      setEmailMsg('Factura enviada correctamente al correo.')
       setEmailErr('')
-      setTimeout(() => {
-        setShowEmail(false)
-        setEmailMsg('')
-      }, 2500)
+      setShowEmail(false)
+      toast.success('Factura enviada correctamente al correo')
     },
     onError: (err) => {
       setEmailErr(err.response?.data?.error || 'Error al enviar el correo. Intenta nuevamente.')
@@ -74,7 +70,6 @@ export default function FacturaDetalle() {
 
   const handleOpenEmail = () => {
     setEmailInput(factura?.cliente_email || '')
-    setEmailMsg('')
     setEmailErr('')
     setShowEmail(true)
   }
@@ -333,11 +328,6 @@ export default function FacturaDetalle() {
                 </div>
                 {emailErr && (
                   <div className="bg-red-50 text-danger px-3 py-2 rounded-lg text-sm border border-red-200">{emailErr}</div>
-                )}
-                {emailMsg && (
-                  <div className="flex items-center gap-2 bg-green-50 text-success px-3 py-2 rounded-lg text-sm border border-green-200">
-                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />{emailMsg}
-                  </div>
                 )}
                 <div className="flex gap-2 pt-1">
                   <button

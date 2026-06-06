@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { CheckCircle2, Eye, EyeOff, User, Lock, Camera, Shield } from 'lucide-react'
+import { Eye, EyeOff, User, Lock, Camera, Shield } from 'lucide-react'
+import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { Button } from '../components/Common/Button'
 import { Input } from '../components/Common/Input'
@@ -10,8 +11,6 @@ import api from '../services/api'
 export default function MiPerfil() {
   const { user, updateTenant, updateUser } = useAuth()
   const qc = useQueryClient()
-  const [msgPerfil, setMsgPerfil] = useState('')
-  const [msgPass, setMsgPass] = useState('')
   const [errPass, setErrPass] = useState('')
   const [showActual, setShowActual] = useState(false)
   const [showNueva, setShowNueva] = useState(false)
@@ -30,11 +29,11 @@ export default function MiPerfil() {
       return res
     },
     onSuccess: (data, variables) => {
-      setMsgPerfil('Perfil actualizado correctamente')
       updateUser({ nombre: variables.nombre, email: variables.email })
       qc.invalidateQueries({ queryKey: ['tenant-me'] })
-      setTimeout(() => setMsgPerfil(''), 3000)
+      toast.success('Perfil actualizado correctamente')
     },
+    onError: (err) => toast.error(err?.response?.data?.error || 'Error al actualizar el perfil'),
   })
 
   const passwordMutation = useMutation({
@@ -46,13 +45,14 @@ export default function MiPerfil() {
       return res
     },
     onSuccess: () => {
-      setMsgPass('Contraseña actualizada correctamente')
       setErrPass('')
       resetPass()
-      setTimeout(() => setMsgPass(''), 3000)
+      toast.success('Contraseña actualizada correctamente')
     },
     onError: (err) => {
-      setErrPass(err.response?.data?.error || 'Error al cambiar la contraseña')
+      const msg = err.response?.data?.error || 'Error al cambiar la contraseña'
+      setErrPass(msg)
+      toast.error(msg)
     },
   })
 
@@ -175,12 +175,6 @@ export default function MiPerfil() {
             </div>
           )}
 
-          {msgPerfil && (
-            <div className="flex items-center gap-2 bg-green-50 text-success px-4 py-3 rounded-lg mb-4 text-sm border border-green-200">
-              <CheckCircle2 className="w-4 h-4" />{msgPerfil}
-            </div>
-          )}
-
           <form onSubmit={handlePerfil(d => perfilMutation.mutate(d))} className="space-y-4">
             <Input
               label="Nombre completo"
@@ -213,11 +207,6 @@ export default function MiPerfil() {
             <h2 className="font-semibold text-ink">Cambiar contraseña</h2>
           </div>
 
-          {msgPass && (
-            <div className="flex items-center gap-2 bg-green-50 text-success px-4 py-3 rounded-lg mb-4 text-sm border border-green-200">
-              <CheckCircle2 className="w-4 h-4" />{msgPass}
-            </div>
-          )}
           {errPass && (
             <div className="bg-red-50 text-danger px-4 py-3 rounded-lg mb-4 text-sm border border-red-200">{errPass}</div>
           )}

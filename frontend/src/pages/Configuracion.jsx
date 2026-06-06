@@ -2,9 +2,10 @@ import React, { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import {
-  CheckCircle2, Building2, CreditCard, Loader2, Printer, Zap,
+  Building2, CreditCard, Loader2, Printer, Zap,
   RefreshCw, Volume2, VolumeX, Download, ScanLine, Settings2,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { useTenant } from '../hooks/useTenant'
 import { useLocalPrint } from '../hooks/useLocalPrint'
 import { useSounds, TONOS_SCANNER } from '../hooks/useSounds'
@@ -30,17 +31,15 @@ export default function Configuracion() {
   const [sonidoActivo, setSonidoActivo] = useState(() => sounds.isEnabled())
   const [volumen,      setVolumen]      = useState(() => sounds.getVolumen())
   const [tonoId,       setTonoId]       = useState(() => sounds.getTonoId())
-  const [msg,          setMsg]          = useState('')
-
   const { register, handleSubmit } = useForm({ values: tenant })
 
   const updateMutation = useMutation({
     mutationFn: update,
     onSuccess: (data) => {
-      setMsg('Datos actualizados correctamente')
       updateTenant({ ...authTenant, ...data })
-      setTimeout(() => setMsg(''), 3000)
+      toast.success('Datos actualizados correctamente')
     },
+    onError: (err) => toast.error(err?.response?.data?.error || 'Error al guardar'),
   })
 
   const usoPct = (uso, max) => max === 999 ? 0 : Math.min(100, Math.round((uso / max) * 100))
@@ -101,11 +100,6 @@ export default function Configuracion() {
               {/* Columna izquierda: datos */}
               <div className="bg-surface-soft rounded-xl p-5 space-y-4">
                 <p className="text-xs font-bold text-ink-2 uppercase tracking-widest">Datos de la empresa</p>
-                {msg && (
-                  <div className="flex items-center gap-2 bg-green-50 text-success px-4 py-3 rounded-xl text-sm">
-                    <CheckCircle2 className="w-4 h-4" />{msg}
-                  </div>
-                )}
                 <form onSubmit={handleSubmit(d => updateMutation.mutate(d))} className="space-y-3">
                   <Input label="Nombre de la empresa" {...register('nombre')} />
                   <div>
