@@ -8,6 +8,7 @@ import {
 import { usePOSStore } from '../store/posStore'
 import { useUIStore } from '../store/uiStore'
 import { posService } from '../services/pos'
+import { cajasService } from '../services/cajas'
 import { clientesService } from '../services/clientes'
 import { productosService } from '../services/productos'
 import { FacturaA4 } from '../components/POS/FacturaA4'
@@ -28,6 +29,12 @@ export default function POS() {
   const { setSidebar } = useUIStore()
   const [vistaTicket, setVistaTicket] = useState('ticket')
   const logoEmpresa = localStorage.getItem('carolina_logo') || null
+
+  const { data: sesionActiva } = useQuery({
+    queryKey: ['sesion-activa'],
+    queryFn: cajasService.getSesionActiva,
+    staleTime: Infinity,
+  })
 
   const qzTrayRef = useRef(qzTray)
   useEffect(() => { qzTrayRef.current = qzTray }, [qzTray])
@@ -595,19 +602,15 @@ export default function POS() {
             )}
 
             <button
-              onClick={() => navigate('/caja/abrir')}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors"
-            >
-              <LogOut size={14} className="flex-shrink-0" />
-              Cerrar turno
-            </button>
-
-            <button
-              onClick={() => navigate('/cajas')}
+              onClick={() => {
+                const id = sesionActiva?.id
+                if (id) navigate(`/caja/cerrar/${id}`)
+                else navigate('/caja/abrir')
+              }}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-ink-2 hover:bg-surface-soft hover:text-ink transition-colors"
             >
               <Calculator size={14} className="flex-shrink-0" />
-              Cuadrar caja
+              Cuadrar / Cerrar turno
             </button>
           </div>
         </div>
