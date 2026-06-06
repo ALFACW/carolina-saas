@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
-  Home, ShoppingCart, FileText, Package, Users, Wallet, Clock,
-  BarChart3, Settings, LogOut, Truck, ShoppingBag, ClipboardList,
+  Home, ShoppingCart, FileText, Package, Users, Wallet,
+  BarChart3, Settings, LogOut, Truck, ShoppingBag, ClipboardList, Monitor,
 } from 'lucide-react'
 
 const NAV_POR_ROL = {
-  admin:      ['/dashboard', '/pos', '/facturas', '/productos', '/clientes', '/proveedores', '/compras', '/cartera', '/reportes', '/cajas', '/cierres', '/usuarios', '/configuracion'],
-  supervisor: ['/dashboard', '/pos', '/facturas', '/clientes', '/proveedores', '/compras', '/cartera', '/reportes', '/cajas', '/cierres'],
+  admin:      ['/dashboard', '/pos', '/facturas', '/productos', '/clientes', '/proveedores', '/compras', '/cartera', '/reportes', '/cierres', '/cajas', '/usuarios', '/configuracion'],
+  supervisor: ['/dashboard', '/pos', '/facturas', '/clientes', '/proveedores', '/compras', '/cartera', '/reportes', '/cierres'],
   cajero:     ['/caja/abrir', '/pos'],
   vendedor:   ['/caja/abrir', '/pos'],
   inventario: ['/productos', '/clientes'],
@@ -18,32 +18,37 @@ const MENU_GROUPS = [
   {
     group: 'Ventas',
     items: [
-      { icon: Home,         label: 'Dashboard',       path: '/dashboard' },
-      { icon: ShoppingCart, label: 'Punto de Venta',  path: '/pos' },
-      { icon: FileText,     label: 'Facturación',     path: '/facturas' },
+      { icon: Home,         label: 'Dashboard',      path: '/dashboard' },
+      { icon: ShoppingCart, label: 'Punto de Venta', path: '/pos' },
+      { icon: FileText,     label: 'Facturación',    path: '/facturas' },
     ]
   },
   {
     group: 'Gestión',
     items: [
-      { icon: Package,      label: 'Inventario',   path: '/productos' },
-      { icon: Users,        label: 'Clientes',     path: '/clientes' },
-      { icon: Truck,        label: 'Proveedores',  path: '/proveedores' },
-      { icon: ShoppingBag,  label: 'Compras',      path: '/compras' },
+      { icon: Package,     label: 'Inventario',  path: '/productos' },
+      { icon: Users,       label: 'Clientes',    path: '/clientes' },
+      { icon: Truck,       label: 'Proveedores', path: '/proveedores' },
+      { icon: ShoppingBag, label: 'Compras',     path: '/compras' },
     ]
   },
   {
     group: 'Finanzas',
     items: [
-      { icon: Wallet,    label: 'Cartera',         path: '/cartera' },
-      { icon: Clock,         label: 'Caja y Sesiones', path: '/cajas' },
+      { icon: Wallet,   label: 'Cartera',   path: '/cartera' },
+      { icon: BarChart3, label: 'Reportes', path: '/reportes' },
+    ]
+  },
+  {
+    group: 'Histórico',
+    items: [
       { icon: ClipboardList, label: 'Cierres de caja', path: '/cierres' },
-      { icon: BarChart3,     label: 'Reportes',        path: '/reportes' },
     ]
   },
   {
     group: 'Admin',
     items: [
+      { icon: Monitor,  label: 'Cajas',         path: '/cajas' },
       { icon: Settings, label: 'Configuración', path: '/configuracion' },
       { icon: Users,    label: 'Usuarios',      path: '/usuarios' },
     ]
