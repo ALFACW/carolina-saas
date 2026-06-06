@@ -7,6 +7,19 @@ echo  ^|  CarolinaPOS Print Server v2.0            ^|
 echo  +------------------------------------------+
 echo.
 
+:: ── 0. Verificar que el ZIP fue extraido ─────────────────────────────────────
+if not exist "%~dp0servidor.py" (
+    echo.
+    echo  ERROR: Falta el archivo servidor.py en esta carpeta.
+    echo.
+    echo  Debes EXTRAER el ZIP antes de ejecutar este archivo.
+    echo  Haz clic derecho en el ZIP y elige "Extraer aqui",
+    echo  luego abre la carpeta y ejecuta Iniciar.bat desde ahi.
+    echo.
+    pause
+    exit /b 1
+)
+
 :: ── 1. Verificar Python ──────────────────────────────────────────────────────
 python --version >nul 2>&1
 if %errorlevel% equ 0 goto instalar_deps
