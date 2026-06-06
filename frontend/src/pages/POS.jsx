@@ -620,29 +620,32 @@ export default function POS() {
             </button>
           </div>
 
-          {/* Totales */}
-          <div className="px-4 py-4 border-b border-border flex-shrink-0 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-ink-2">Subtotal</span>
-              <span className="text-ink">{COP(subtotal)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-ink-2">IVA</span>
-              <span className="text-ink">{COP(iva)}</span>
-            </div>
-            <div className="flex justify-between text-base font-bold border-t border-border pt-2">
-              <span className="text-ink">Total</span>
-              <span className="text-ink">{COP(total)}</span>
-            </div>
-          </div>
-
           {/* Método de pago */}
           <div className="border-b border-border flex-shrink-0">
             <MetodoPago />
           </div>
 
-          {/* Botón cobrar — crece para llenar espacio disponible */}
-          <div className="px-4 py-3 flex-1 flex flex-col justify-end gap-3">
+          {/* Espacio flexible */}
+          <div className="flex-1 min-h-0" />
+
+          {/* Totales + cobrar — pegados al fondo */}
+          <div className="px-4 pt-4 pb-3 border-t border-border flex-shrink-0 flex flex-col gap-3">
+            {/* Totales */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-sm">
+                <span className="text-ink-2">Subtotal</span>
+                <span className="text-ink">{COP(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-ink-2">IVA</span>
+                <span className="text-ink">{COP(iva)}</span>
+              </div>
+              <div className="flex justify-between text-base font-bold border-t border-border pt-2">
+                <span className="text-ink">Total</span>
+                <span className="text-ink">{COP(total)}</span>
+              </div>
+            </div>
+
             <button
               onClick={() => carrito.length > 0 && setShowCobroModal(true)}
               disabled={carrito.length === 0}
