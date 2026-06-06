@@ -46,10 +46,10 @@ export default function Clientes() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-ink mb-2">Clientes</h1>
-          <p className="text-ink-2">Gestiona tu cartera de clientes ({data?.total || 0})</p>
+          <h1 className="text-2xl font-bold text-ink">Clientes</h1>
+          <p className="text-sm text-ink-2 mt-0.5">Gestiona tu cartera de clientes ({data?.total || 0})</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => exportarClientes(data?.clientes || [])}>

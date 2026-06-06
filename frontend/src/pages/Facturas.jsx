@@ -13,7 +13,7 @@ const ESTADO_COLORS = {
   aceptada: 'bg-blue-100 text-blue-700',
   pendiente: 'bg-yellow-100 text-yellow-700',
   rechazada: 'bg-red-100 text-red-700',
-  anulada: 'bg-gray-100 text-gray-500',
+  anulada: 'bg-surface-soft text-ink-2',
 }
 
 export default function Facturas() {
@@ -60,7 +60,7 @@ export default function Facturas() {
     { key: 'metodo_pago', label: 'Pago', render: v => v?.replace('_', ' ') },
     { key: 'estado', label: 'Estado', render: (v, row) => (
       <div className="flex flex-wrap items-center gap-1">
-        <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${ESTADO_COLORS[v] || 'bg-gray-100 text-gray-600'}`}>{v}</span>
+        <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${ESTADO_COLORS[v] || 'bg-surface-soft text-ink-2'}`}>{v}</span>
         {row.es_credito && parseFloat(row.saldo_pendiente || 0) > 0 && (
           <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">Crédito pendiente</span>
         )}
@@ -87,10 +87,10 @@ export default function Facturas() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-ink mb-2">Facturación DIAN</h1>
-          <p className="text-ink-2">Gestiona tus facturas electrónicas ({data?.total || 0})</p>
+          <h1 className="text-2xl font-bold text-ink">Facturación DIAN</h1>
+          <p className="text-sm text-ink-2 mt-0.5">Gestiona tus facturas electrónicas ({data?.total || 0})</p>
         </div>
         <Button variant="secondary" onClick={() => exportarFacturas(data?.facturas || [])}>
           <Download className="w-3.5 h-3.5" />Excel

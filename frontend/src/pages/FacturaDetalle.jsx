@@ -118,28 +118,26 @@ export default function FacturaDetalle() {
       : 'bg-yellow-50 text-warning border border-yellow-200'
 
   return (
-    <div className="min-h-screen bg-surface-soft p-6 md:p-8">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="space-y-6">
 
-        {/* Back link */}
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm text-ink-2 hover:text-ink mb-2 w-fit transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Volver a facturas
-        </button>
-
-        {/* Header */}
+        {/* Header con Volver integrado */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-ink">{factura?.numero_factura || 'Sin número'}</h1>
-            <p className="text-sm text-ink-2 mt-1">
-              {factura && new Date(factura.fecha_emision).toLocaleString('es-CO')}
-            </p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-surface-soft rounded-lg transition-colors text-ink-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-ink">{factura?.numero_factura || 'Sin número'}</h1>
+              <p className="text-sm text-ink-2 mt-0.5">
+                {factura && new Date(factura.fecha_emision).toLocaleString('es-CO')}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${estadoColor}`}>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${estadoColor}`}>
               {factura?.estado}
             </span>
           </div>
@@ -350,7 +348,6 @@ export default function FacturaDetalle() {
             </div>
           </div>
         )}
-      </div>
     </div>
   )
 }

@@ -42,7 +42,7 @@ export default function SesionDetalle() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface-soft flex items-center justify-center">
+      <div className="flex items-center justify-center py-16">
         <div className="text-sm text-ink-2">Cargando...</div>
       </div>
     )
@@ -50,8 +50,8 @@ export default function SesionDetalle() {
 
   if (isError || !sesion) {
     return (
-      <div className="min-h-screen bg-surface-soft p-6 md:p-8">
-        <button onClick={() => navigate('/cajas')} className="flex items-center gap-2 text-sm text-ink-2 hover:text-ink mb-6 w-fit transition-colors">
+      <div className="space-y-6">
+        <button onClick={() => navigate('/cajas')} className="flex items-center gap-2 text-sm text-ink-2 hover:text-ink w-fit transition-colors">
           <ArrowLeft className="w-4 h-4" />Volver a cajas
         </button>
         <p className="text-sm text-ink-2">No se pudo cargar la sesión</p>
@@ -105,32 +105,30 @@ export default function SesionDetalle() {
   ]
 
   return (
-    <div className="min-h-screen bg-surface-soft p-6 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="space-y-6">
 
-        {/* Back link */}
-        <button
-          onClick={() => navigate('/cajas')}
-          className="flex items-center gap-2 text-sm text-ink-2 hover:text-ink w-fit transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Volver a cajas
-        </button>
-
-        {/* Header */}
+        {/* Header con Volver integrado */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl font-bold text-ink">Detalle del turno</h1>
-              {sesion.estado && (
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${ESTADO_BADGE[sesion.estado] || 'bg-surface-soft text-ink-2 border border-border'}`}>
-                  {sesion.estado}
-                </span>
-              )}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/cajas')}
+              className="p-2 hover:bg-surface-soft rounded-lg transition-colors text-ink-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-2xl font-bold text-ink">Detalle del turno</h1>
+                {sesion.estado && (
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${ESTADO_BADGE[sesion.estado] || 'bg-surface-soft text-ink-2'}`}>
+                    {sesion.estado}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-ink-2 mt-0.5">
+                {sesion.usuario?.nombre || sesion.cajero?.nombre || '—'} · {sesion.caja?.nombre || 'Caja principal'}
+              </p>
             </div>
-            <p className="text-sm text-ink-2 mt-1">
-              {sesion.usuario?.nombre || sesion.cajero?.nombre || '—'} · {sesion.caja?.nombre || 'Caja principal'}
-            </p>
           </div>
           {sesion.estado === 'cerrada' && (
             <button
@@ -253,7 +251,6 @@ export default function SesionDetalle() {
         {aprobarMutation.isSuccess && (
           <p className="text-xs text-success">Cuadratura aprobada correctamente</p>
         )}
-      </div>
     </div>
   )
 }

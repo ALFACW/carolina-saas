@@ -156,10 +156,10 @@ export default function Proveedores() {
   return (
     <div className="space-y-6">
       {/* Encabezado */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-ink mb-2">Proveedores</h1>
-          <p className="text-ink-2">Gestiona tus proveedores ({data?.total || 0})</p>
+          <h1 className="text-2xl font-bold text-ink">Proveedores</h1>
+          <p className="text-sm text-ink-2 mt-0.5">Gestiona tus proveedores ({data?.total || 0})</p>
         </div>
         <Button onClick={openNew}>
           <Plus className="w-4 h-4" />
@@ -281,7 +281,7 @@ export default function Proveedores() {
                 value={form.notas}
                 onChange={e => setField('notas', e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent hover:border-border-strong resize-none"
+                className="w-full px-3 py-2 border border-border text-sm rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent hover:border-border-strong resize-none"
                 placeholder="Observaciones adicionales..."
               />
             </div>

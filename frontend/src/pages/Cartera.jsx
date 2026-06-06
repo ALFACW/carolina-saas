@@ -70,7 +70,7 @@ function ModalPago({ factura, onClose, onPagoExitoso }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h3 className="text-base font-semibold text-ink">Registrar pago</h3>
@@ -187,7 +187,7 @@ function ModalHistorial({ factura, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div>
@@ -286,10 +286,10 @@ export default function Cartera() {
   return (
     <div className="space-y-6">
       {/* Título */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-ink mb-2">Cartera</h1>
-          <p className="text-ink-2">Gestiona tus créditos pendientes</p>
+          <h1 className="text-2xl font-bold text-ink">Cartera</h1>
+          <p className="text-sm text-ink-2 mt-0.5">Gestiona tus créditos pendientes</p>
         </div>
         <button
           onClick={() => exportarCartera(facturasFiltradas)}
@@ -385,16 +385,16 @@ export default function Cartera() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border">
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wide">Cliente</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wide">N° Factura</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wide">Fecha</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wide">Vencimiento</th>
-                  <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-ink-2 uppercase tracking-wide">Total</th>
-                  <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-ink-2 uppercase tracking-wide">Pagado</th>
-                  <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-ink-2 uppercase tracking-wide">Saldo</th>
-                  <th scope="col" className="px-4 py-3 text-center text-xs font-semibold text-ink-2 uppercase tracking-wide">Estado</th>
-                  <th scope="col" className="px-4 py-3 text-center text-xs font-semibold text-ink-2 uppercase tracking-wide">Acciones</th>
+                <tr className="border-b border-border bg-surface-soft">
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wider">Cliente</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wider">N° Factura</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wider">Fecha</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wider">Vencimiento</th>
+                  <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-ink-2 uppercase tracking-wider">Total</th>
+                  <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-ink-2 uppercase tracking-wider">Pagado</th>
+                  <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-ink-2 uppercase tracking-wider">Saldo</th>
+                  <th scope="col" className="px-4 py-3 text-center text-xs font-semibold text-ink-2 uppercase tracking-wider">Estado</th>
+                  <th scope="col" className="px-4 py-3 text-center text-xs font-semibold text-ink-2 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">

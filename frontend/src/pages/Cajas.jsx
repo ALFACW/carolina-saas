@@ -17,7 +17,7 @@ const ESTADO_BADGE = {
 
 function EstadoBadge({ estado }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${ESTADO_BADGE[estado] || 'bg-surface-soft text-ink-2'}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${ESTADO_BADGE[estado] || 'bg-surface-soft text-ink-2'}`}>
       {estado}
     </span>
   )
@@ -132,7 +132,7 @@ export default function Cajas() {
       render: (_, row) => (
         <button
           onClick={() => abrirEditarCaja(row)}
-          className="p-1.5 text-ink-2 hover:text-ink hover:bg-surface-soft rounded transition-colors"
+          className="p-1.5 text-ink-2 hover:text-ink hover:bg-surface-soft rounded-lg transition-colors"
           title="Editar"
         >
           <Edit className="w-4 h-4" />
@@ -178,7 +178,7 @@ export default function Cajas() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate(`/sesiones/${id}`)}
-              className="p-1.5 text-ink-2 hover:text-ink hover:bg-surface-soft rounded transition-colors"
+              className="p-1.5 text-ink-2 hover:text-ink hover:bg-surface-soft rounded-lg transition-colors"
               title="Ver detalle"
             >
               <Eye className="w-4 h-4" />
@@ -187,7 +187,7 @@ export default function Cajas() {
               <button
                 onClick={() => aprobarMutation.mutate(id)}
                 disabled={aprobarMutation.isPending}
-                className="p-1.5 text-ink-2 hover:text-accent hover:bg-accent-soft rounded transition-colors"
+                className="p-1.5 text-ink-2 hover:text-accent hover:bg-accent-soft rounded-lg transition-colors"
                 title="Aprobar cuadratura"
               >
                 <Check className="w-4 h-4" />
@@ -200,12 +200,12 @@ export default function Cajas() {
   ]
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Encabezado */}
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-ink mb-2">Caja y Sesiones</h1>
-          <p className="text-ink-2">Gestiona tus sesiones de caja</p>
+          <h1 className="text-2xl font-bold text-ink">Caja y Sesiones</h1>
+          <p className="text-sm text-ink-2 mt-0.5">Gestiona tus sesiones de caja</p>
         </div>
       </div>
 
@@ -237,13 +237,13 @@ export default function Cajas() {
         </div>
 
         {/* Filtros */}
-        <div className="flex flex-wrap gap-3 p-4 bg-white rounded-lg border border-border">
+        <div className="flex flex-wrap gap-3 p-4 bg-white rounded-xl border border-border">
           <div className="flex-1 min-w-36">
             <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide mb-1">Caja</label>
             <select
               value={filtros.caja_id}
               onChange={(e) => setFiltros(prev => ({ ...prev, caja_id: e.target.value }))}
-              className="w-full px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
+              className="w-full px-3 py-2 border border-border text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
             >
               <option value="">Todas las cajas</option>
               {cajas.map(c => (
@@ -257,7 +257,7 @@ export default function Cajas() {
               type="date"
               value={filtros.fecha_desde}
               onChange={(e) => setFiltros(prev => ({ ...prev, fecha_desde: e.target.value }))}
-              className="px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
+              className="px-3 py-2 border border-border text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
             />
           </div>
           <div>
@@ -266,7 +266,7 @@ export default function Cajas() {
               type="date"
               value={filtros.fecha_hasta}
               onChange={(e) => setFiltros(prev => ({ ...prev, fecha_hasta: e.target.value }))}
-              className="px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
+              className="px-3 py-2 border border-border text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
             />
           </div>
           <div className="flex items-end">

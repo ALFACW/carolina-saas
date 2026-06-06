@@ -56,7 +56,7 @@ export default function CompraDetalle() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface-soft flex items-center justify-center">
+      <div className="flex items-center justify-center py-16">
         <div className="text-sm text-ink-2">Cargando compra...</div>
       </div>
     )
@@ -64,11 +64,11 @@ export default function CompraDetalle() {
 
   if (isError || !compra) {
     return (
-      <div className="min-h-screen bg-surface-soft p-6 md:p-8">
-        <button onClick={() => navigate('/compras')} className="flex items-center gap-2 text-sm text-ink-2 hover:text-ink mb-6 w-fit transition-colors">
+      <div className="space-y-6">
+        <button onClick={() => navigate('/compras')} className="flex items-center gap-2 text-sm text-ink-2 hover:text-ink w-fit transition-colors">
           <ArrowLeft className="w-4 h-4" />Volver a compras
         </button>
-        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-danger">
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-danger">
           No se pudo cargar la compra.
         </div>
       </div>
@@ -89,28 +89,26 @@ export default function CompraDetalle() {
   const totalCompra = Number(compra.total) || totales.total
 
   return (
-    <div className="min-h-screen bg-surface-soft p-6 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
 
-        {/* Back link */}
-        <button
-          onClick={() => navigate('/compras')}
-          className="flex items-center gap-2 text-sm text-ink-2 hover:text-ink w-fit transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Volver a compras
-        </button>
-
-        {/* Header */}
+        {/* Header con Volver integrado */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-ink">
-              {compra.numero_factura ? `Compra — ${compra.numero_factura}` : `Compra #${compra.id}`}
-            </h1>
-            <p className="text-sm text-ink-2 mt-1">ID interno: #{compra.id}</p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/compras')}
+              className="p-2 hover:bg-surface-soft rounded-lg transition-colors text-ink-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-ink">
+                {compra.numero_factura ? `Compra — ${compra.numero_factura}` : `Compra #${compra.id}`}
+              </h1>
+              <p className="text-sm text-ink-2 mt-0.5">ID interno: #{compra.id}</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${ESTADO_BADGE[compra.estado] || 'bg-surface-soft text-ink-2 border border-border'}`}>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${ESTADO_BADGE[compra.estado] || 'bg-surface-soft text-ink-2'}`}>
               {ESTADO_LABEL[compra.estado] || compra.estado || '—'}
             </span>
             {compra.estado === 'borrador' && (
@@ -256,7 +254,6 @@ export default function CompraDetalle() {
           </div>
         )}
 
-      </div>
     </div>
   )
 }

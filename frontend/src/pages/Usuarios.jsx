@@ -19,7 +19,7 @@ const ROL_BADGE = {
 
 function RolBadge({ rol }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${ROL_BADGE[rol] || 'bg-surface-soft text-ink-2'}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${ROL_BADGE[rol] || 'bg-surface-soft text-ink-2'}`}>
       {rol}
     </span>
   )
@@ -178,21 +178,21 @@ export default function Usuarios() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => abrirEditar(row)}
-            className="p-1.5 text-ink-2 hover:text-ink hover:bg-surface-soft rounded transition-colors"
+            className="p-1.5 text-ink-2 hover:text-ink hover:bg-surface-soft rounded-lg transition-colors"
             title="Editar"
           >
             <Edit className="w-4 h-4" />
           </button>
           <button
             onClick={() => abrirResetPassword(row)}
-            className="p-1.5 text-ink-2 hover:text-accent hover:bg-accent-soft rounded transition-colors"
+            className="p-1.5 text-ink-2 hover:text-accent hover:bg-accent-soft rounded-lg transition-colors"
             title="Resetear contraseña"
           >
             <Key className="w-4 h-4" />
           </button>
           <button
             onClick={() => confirmarEliminar(row)}
-            className="p-1.5 text-ink-2 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+            className="p-1.5 text-ink-2 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             title="Eliminar"
           >
             <Trash2 className="w-4 h-4" />
@@ -207,10 +207,10 @@ export default function Usuarios() {
   return (
     <div className="space-y-6">
       {/* Encabezado */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-ink mb-2">Usuarios</h1>
-          <p className="text-ink-2">Gestiona los usuarios y sus roles</p>
+          <h1 className="text-2xl font-bold text-ink">Usuarios</h1>
+          <p className="text-sm text-ink-2 mt-0.5">Gestiona los usuarios y sus roles</p>
         </div>
         <Button onClick={abrirCrear}>
           <Plus className="w-4 h-4" />
@@ -269,7 +269,7 @@ export default function Usuarios() {
               name="rol"
               value={form.rol}
               onChange={cambiar}
-              className="w-full px-3 py-2 border border-border text-sm rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent"
+              className="w-full px-3 py-2 border border-border text-sm rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent"
             >
               {ROLES.map(r => (
                 <option key={r} value={r} className="capitalize">{r}</option>

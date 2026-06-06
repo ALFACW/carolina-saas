@@ -10,7 +10,7 @@ import { Button } from '../components/Common/Button'
 import { COP } from '../lib/format'
 
 const ESTADO_BADGE = {
-  borrador:  'bg-gray-100 text-gray-600',
+  borrador:  'bg-yellow-100 text-yellow-700',
   recibida:  'bg-green-100 text-green-700',
   cancelada: 'bg-red-100 text-red-600',
 }
@@ -92,8 +92,8 @@ export default function Compras() {
       label: 'Factura / ID',
       render: (v, row) => (
         <div>
-          <p className="font-medium text-gray-900">{v || `OC-${row.id}`}</p>
-          <p className="text-xs text-gray-400">#{row.id}</p>
+          <p className="font-medium text-ink">{v || `OC-${row.id}`}</p>
+          <p className="text-xs text-ink-2">#{row.id}</p>
         </div>
       ),
     },
@@ -101,7 +101,7 @@ export default function Compras() {
       key: 'proveedor',
       label: 'Proveedor',
       render: (v, row) => (
-        <span className="text-gray-700">{row.proveedor_nombre || v || '—'}</span>
+        <span className="text-ink">{row.proveedor_nombre || v || '—'}</span>
       ),
     },
     {
@@ -112,13 +112,13 @@ export default function Compras() {
     {
       key: 'total',
       label: 'Total',
-      render: v => <span className="font-medium text-gray-900">{COP(v)}</span>,
+      render: v => <span className="font-medium text-ink">{COP(v)}</span>,
     },
     {
       key: 'estado',
       label: 'Estado',
       render: v => (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ESTADO_BADGE[v] || 'bg-gray-100 text-gray-500'}`}>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ESTADO_BADGE[v] || 'bg-surface-soft text-ink-2'}`}>
           {ESTADO_LABEL[v] || v || '—'}
         </span>
       ),
@@ -163,10 +163,10 @@ export default function Compras() {
   return (
     <div className="space-y-6">
       {/* Encabezado */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-ink mb-2">Compras</h1>
-          <p className="text-ink-2">Gestiona tus órdenes de compra ({data?.total || 0})</p>
+          <h1 className="text-2xl font-bold text-ink">Compras</h1>
+          <p className="text-sm text-ink-2 mt-0.5">Gestiona tus órdenes de compra ({data?.total || 0})</p>
         </div>
         <Button onClick={() => navigate('/compras/nueva')}>
           <Plus className="w-4 h-4" />
