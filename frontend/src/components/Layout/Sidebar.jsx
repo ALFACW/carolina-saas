@@ -3,7 +3,7 @@ import { NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
   Home, ShoppingCart, FileText, Package, Users, Wallet,
-  BarChart3, Settings, LogOut, Truck, ShoppingBag, ClipboardList, Monitor,
+  BarChart3, Settings, LogOut, Truck, ShoppingBag, ClipboardList, Monitor, Clock,
 } from 'lucide-react'
 
 const NAV_POR_ROL = {
