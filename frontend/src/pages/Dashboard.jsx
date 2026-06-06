@@ -44,16 +44,16 @@ export default function Dashboard() {
   const ultimas = dash?.ultimas_facturas || []
 
   return (
-    <div className="space-y-8 max-w-6xl">
-      <PageHeader
-        title="Dashboard"
-        subtitle="Resumen de tu negocio hoy"
-        action={
-          <Link to="/pos" className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-white font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors">
-            <ShoppingCart size={16} /> Nueva venta
-          </Link>
-        }
-      />
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-ink">Dashboard</h1>
+          <p className="text-sm text-ink-2 mt-0.5">Resumen de tu negocio hoy</p>
+        </div>
+        <Link to="/pos" className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-white font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors">
+          <ShoppingCart size={16} /> Nueva venta
+        </Link>
+      </div>
 
       {/* Alerta stock bajo */}
       {stockBajo?.length > 0 && (
