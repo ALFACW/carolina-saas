@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-
-const SERVER = 'http://127.0.0.1:8765'
+import api from '../services/api'
 
 const K = {
   impTermica:    'carolina_printer_termica',
@@ -18,16 +17,6 @@ const K = {
 const get  = (key, def) => localStorage.getItem(key) ?? def
 const save = (key, val) => localStorage.setItem(key, String(val))
 
-async function api(path, opts = {}) {
-  const res = await fetch(`${SERVER}${path}`, {
-    ...opts,
-    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
-  })
-  if (!res.ok) throw new Error(`Error ${res.status}`)
-  return res.json()
-}
-
-// Convierte array de items ESC/POS a array de bytes planos
 function escPosABytes(datosEscPos) {
   const partes = []
   for (const item of datosEscPos) {
@@ -79,30 +68,30 @@ export function useLocalPrint() {
     setEstado('conectando')
     setErrorMsg('')
     try {
-      await api('/health')
-      setEstado('conectado')
-      // Cargar lista de impresoras
-      const data = await api('/printers')
-      setImpresoras(data.impresoras || [])
+      const { data } = await api.get('/api/print/status')
+      if (data.online) {
+        setEstado('conectado')
+        setImpresoras(data.printers || [])
+      } else {
+        setEstado('error')
+        setErrorMsg('Servidor no está corriendo. Abre Iniciar.bat en tu PC.')
+      }
     } catch {
       setEstado('error')
-      setErrorMsg('Servidor de impresión no disponible. Ejecuta instalar.bat en tu PC.')
+      setErrorMsg('No se pudo verificar el servidor de impresión.')
     }
   }, [])
 
   const buscarImpresoras = useCallback(async () => {
     try {
-      const data = await api('/printers')
-      setImpresoras(data.impresoras || [])
+      const { data } = await api.get('/api/print/status')
+      setImpresoras(data.printers || [])
     } catch {}
   }, [])
 
-  // Reconectar automáticamente cada 10 segundos si está desconectado
   useEffect(() => {
     conectar()
-    const interval = setInterval(() => {
-      if (estado === 'error' || estado === 'desconectado') conectar()
-    }, 10000)
+    const interval = setInterval(conectar, 10000)
     return () => clearInterval(interval)
   }, [])
 
@@ -112,7 +101,6 @@ export function useLocalPrint() {
 
     let bytes = escPosABytes(datosEscPos)
 
-    // Logo si existe
     const logoSrc = localStorage.getItem('carolina_logo')
     if (logoSrc) {
       try {
@@ -129,20 +117,14 @@ export function useLocalPrint() {
       }
     }
 
-    await api('/print', {
-      method: 'POST',
-      body: JSON.stringify({ bytes, impresora: impTermica }),
-    })
+    await api.post('/api/print/job', { bytes, impresora: impTermica })
   }, [estado, impTermica, anchoCars])
 
   const abrirGaveta = useCallback(async () => {
     if (estado !== 'conectado' || !impTermica) return false
     const pin = gavetaPin === '1' ? '\x01' : '\x00'
     const bytes = strABytes(`\x1B\x70${pin}\x19\x19`)
-    await api('/print', {
-      method: 'POST',
-      body: JSON.stringify({ bytes, impresora: impTermica }),
-    })
+    await api.post('/api/print/job', { bytes, impresora: impTermica })
     return true
   }, [estado, impTermica, gavetaPin])
 
@@ -157,7 +139,6 @@ export function useLocalPrint() {
     t += 'TICKET DE PRUEBA' + LF
     t += ESC + '\x45\x00' + ESC + '\x61\x00'
     t += '-'.repeat(W) + LF
-    t += 'Empresa: Mi Empresa S.A.S.' + LF
     t += 'Papel  : ' + anchoPapel + 'mm (' + W + ' chars)' + LF
     t += 'Densidad: ' + densidad + '/8' + LF
     t += 'Gaveta : Pin ' + (gavetaPin === '1' ? '5' : '2') + LF
@@ -170,11 +151,7 @@ export function useLocalPrint() {
     if (modoCortePapel === 'completo') t += GS + '\x56\x00'
     if (modoCortePapel === 'parcial')  t += GS + '\x56\x01'
     if (gavetaAuto) t += ESC + '\x70' + (gavetaPin === '1' ? '\x01' : '\x00') + '\x19\x19'
-    const bytes = strABytes(t)
-    await api('/print', {
-      method: 'POST',
-      body: JSON.stringify({ bytes, impresora: impTermica }),
-    })
+    await api.post('/api/print/job', { bytes: strABytes(t), impresora: impTermica })
   }, [estado, impTermica, densidad, anchoPapel, anchoCars, avancePapel, modoCortePapel, gavetaPin, gavetaAuto])
 
   const imprimirA4 = useCallback(async (htmlContent) => {
@@ -196,21 +173,16 @@ export function useLocalPrint() {
     impresoras,
     errorMsg,
     conectar,
-    // Impresora térmica
     impTermica, guardarImpTermica,
     densidad, guardarDensidad,
     anchoPapel, guardarAnchoPapel, anchoCars,
     avancePapel, guardarAvancePapel,
     modoCortePapel, guardarModoCortePapel,
-    // Gaveta
     gavetaPin, guardarGavetaPin,
     gavetaAuto, guardarGavetaAuto,
-    // Impresora A4
     impA4, guardarImpA4,
-    // Scanner
     scannerMs, guardarScannerMs,
     scannerMin, guardarScannerMin,
-    // Acciones
     imprimirTicket, abrirGaveta, imprimirPrueba, imprimirA4, buscarImpresoras,
   }
 }

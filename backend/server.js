@@ -53,6 +53,7 @@ app.use('/api/super-admin', require('./src/routes/superAdmin'));
 app.use('/api/proveedores', require('./src/routes/proveedores'));
 app.use('/api/compras', require('./src/routes/compras'));
 app.use('/api/cartera', require('./src/routes/cartera'));
+app.use('/api/print',  require('./src/routes/printRelay'));
 // 404
 app.use((req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
 

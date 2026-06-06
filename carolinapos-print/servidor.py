@@ -1,17 +1,14 @@
 """
-CarolinaPOS Print Server v1.3
+CarolinaPOS Print Server v2.0
 Ejecutar con: Iniciar.bat
 """
-import sys, os, logging
+import sys, os, json, time, logging
+import urllib.request, urllib.error
 
-# ── Log a archivo ─────────────────────────────────────────────────────────────
 LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'servidor.log')
-
 logging.basicConfig(
-    filename=LOG_PATH,
-    level=logging.INFO,
-    format='%(asctime)s %(levelname)s %(message)s',
-    encoding='utf-8',
+    filename=LOG_PATH, level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s', encoding='utf-8',
 )
 
 def log(msg):
@@ -20,107 +17,124 @@ def log(msg):
 
 def log_error(msg):
     logging.error(msg)
-    print(msg)
+    print('  ERROR:', msg)
 
-log('=== CarolinaPOS Print Server v1.3 iniciando ===')
-
-# ── Verificar dependencias ────────────────────────────────────────────────────
-try:
-    from flask import Flask, request, jsonify
-    log('Flask OK')
-except ImportError as e:
-    log_error(f'ERROR: Flask no instalado: {e}')
-    log_error('Usa Iniciar.bat para arrancar el servidor, no servidor.py directamente.')
-    input('Presiona Enter para salir...')
-    sys.exit(1)
+log('=== CarolinaPOS Print Server v2.0 iniciando ===')
 
 try:
     import win32print
-    log('pywin32 OK')
+    log('win32print OK')
 except ImportError as e:
-    log_error(f'ERROR: pywin32 no instalado: {e}')
-    log_error('Cierra esta ventana y abre Iniciar.bat de nuevo.')
+    log_error(f'pywin32 no instalado: {e}')
+    log_error('Usa Iniciar.bat para arrancar el servidor.')
     input('Presiona Enter para salir...')
     sys.exit(1)
 
-# ── Servidor ──────────────────────────────────────────────────────────────────
-app = Flask(__name__)
+# ── Cargar configuración ──────────────────────────────────────────────────────
 
-ALLOWED_ORIGINS = [
-    'https://app.carolinapos.co',
-    'http://localhost:5173',
-    'http://localhost:4173',
-    'http://localhost:3000',
-]
+def load_config():
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
+    if not os.path.exists(config_path):
+        log_error('Falta config.json')
+        print()
+        print('  Pasos para obtenerlo:')
+        print('  1. Abre app.carolinapos.co en tu navegador')
+        print('  2. Ve a Configuracion -> Impresora')
+        print('  3. Haz clic en "Descargar config.json"')
+        print('  4. Copia el archivo a esta misma carpeta')
+        print('  5. Vuelve a abrir Iniciar.bat')
+        print()
+        input('Presiona Enter para salir...')
+        sys.exit(1)
+    with open(config_path, encoding='utf-8') as f:
+        return json.load(f)
 
-def cors_headers(response, origin=''):
-    if origin in ALLOWED_ORIGINS or not origin:
-        response.headers['Access-Control-Allow-Origin'] = origin or '*'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-    response.headers['Access-Control-Allow-Private-Network'] = 'true'
-    return response
+# ── Impresión ─────────────────────────────────────────────────────────────────
 
-@app.before_request
-def handle_preflight():
-    if request.method == 'OPTIONS':
-        from flask import make_response
-        res = make_response('', 200)
-        return cors_headers(res, request.headers.get('Origin', ''))
-
-@app.after_request
-def add_cors(response):
-    return cors_headers(response, request.headers.get('Origin', ''))
-
-@app.route('/health')
-def health():
-    default = ''
-    try:
-        default = win32print.GetDefaultPrinter()
-    except Exception as e:
-        logging.warning(f'GetDefaultPrinter: {e}')
-    return jsonify({'ok': True, 'version': '1.3', 'default': default})
-
-@app.route('/printers')
-def listar_printers():
+def get_printers():
     try:
         flags = win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS
-        printers = [p[2] for p in win32print.EnumPrinters(flags)]
-        return jsonify({'impresoras': printers})
+        return [p[2] for p in win32print.EnumPrinters(flags)]
     except Exception as e:
-        logging.error(f'listar_printers: {e}')
-        return jsonify({'impresoras': [], 'error': str(e)})
+        logging.warning(f'get_printers: {e}')
+        return []
 
-@app.route('/print', methods=['POST'])
-def imprimir():
+def print_job(job):
+    raw = bytes(job['bytes'])
+    printer = job.get('impresora') or win32print.GetDefaultPrinter()
+    h = win32print.OpenPrinter(printer)
     try:
-        data = request.get_json()
-        raw_bytes = bytes(data['bytes'])
-        nombre = data.get('impresora') or win32print.GetDefaultPrinter()
-        logging.info(f'Imprimiendo en: {nombre} ({len(raw_bytes)} bytes)')
-
-        h = win32print.OpenPrinter(nombre)
+        win32print.StartDocPrinter(h, 1, ('Ticket CarolinaPOS', None, 'RAW'))
         try:
-            win32print.StartDocPrinter(h, 1, ('Ticket CarolinaPOS', None, 'RAW'))
-            try:
-                win32print.StartPagePrinter(h)
-                win32print.WritePrinter(h, raw_bytes)
-                win32print.EndPagePrinter(h)
-            finally:
-                win32print.EndDocPrinter(h)
+            win32print.StartPagePrinter(h)
+            win32print.WritePrinter(h, raw)
+            win32print.EndPagePrinter(h)
         finally:
-            win32print.ClosePrinter(h)
+            win32print.EndDocPrinter(h)
+    finally:
+        win32print.ClosePrinter(h)
 
-        log(f'Ticket impreso OK en {nombre}')
-        return jsonify({'ok': True})
-    except Exception as e:
-        log_error(f'Error al imprimir: {e}')
-        return jsonify({'ok': False, 'error': str(e)}), 500
+# ── API ───────────────────────────────────────────────────────────────────────
+
+def api(url, method='GET', data=None):
+    body = json.dumps(data).encode() if data is not None else None
+    req  = urllib.request.Request(url, data=body, method=method)
+    req.add_header('Content-Type', 'application/json')
+    with urllib.request.urlopen(req, timeout=8) as r:
+        return json.loads(r.read())
+
+# ── Loop principal ────────────────────────────────────────────────────────────
+
+def run(config):
+    base  = config['api'].rstrip('/')
+    token = config['token']
+    printers = get_printers()
+
+    log(f'Conectado a {base}')
+    log(f'Impresoras: {", ".join(printers) if printers else "(ninguna detectada)"}')
+    log('Esperando trabajos de impresion...')
+
+    beat_tick = 0
+
+    while True:
+        try:
+            beat_tick += 1
+
+            # Heartbeat cada 5 segundos
+            if beat_tick >= 5:
+                beat_tick = 0
+                printers = get_printers()
+                api(f'{base}/api/print/heartbeat/{token}', 'POST', {'printers': printers})
+
+            # Obtener trabajos pendientes
+            result = api(f'{base}/api/print/poll/{token}')
+            for job in result.get('jobs', []):
+                jid = job['id']
+                try:
+                    print_job(job)
+                    log(f'Ticket impreso en "{job.get("impresora", "default")}"')
+                except Exception as e:
+                    log_error(f'Error al imprimir: {e}')
+                finally:
+                    try:
+                        api(f'{base}/api/print/job/{token}/{jid}', 'DELETE')
+                    except Exception:
+                        pass
+
+        except Exception as e:
+            logging.warning(f'Error de conexion: {e}')
+
+        time.sleep(1)
+
+# ── Entrada ───────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
-    log('Servidor escuchando en http://localhost:8765')
-    try:
-        app.run(host='127.0.0.1', port=8765, debug=False, use_reloader=False)
-    except Exception as e:
-        log_error(f'Error al iniciar servidor: {e}')
-        raise
+    config = load_config()
+    print()
+    print('  +------------------------------------------+')
+    print('  |  CarolinaPOS Print Server v2.0            |')
+    print('  |  Conectado via cloud (sin CORS)           |')
+    print('  |  Deja esta ventana abierta                |')
+    print('  +------------------------------------------+')
+    print()
+    run(config)
