@@ -1,13 +1,18 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Edit, CheckCircle, XCircle, Eye, Check } from 'lucide-react'
+import { Plus, Edit, CheckCircle, XCircle, Eye, Check, Layers, History } from 'lucide-react'
 import { cajasService } from '../services/cajas'
 import { Table } from '../components/Common/Table'
 import { Modal } from '../components/Common/Modal'
 import { Button } from '../components/Common/Button'
 import { Input } from '../components/Common/Input'
 import { COP } from '../lib/format'
+
+const TABS = [
+  { id: 'cajas', label: 'Cajas', icon: Layers },
+  { id: 'sesiones', label: 'Sesiones', icon: History },
+]
 
 const ESTADO_BADGE = {
   abierta:  'bg-green-100 text-green-700',
@@ -28,6 +33,8 @@ const CAJA_VACÍA = { nombre: '', descripcion: '', activa: true }
 export default function Cajas() {
   const qc = useQueryClient()
   const navigate = useNavigate()
+
+  const [tab, setTab] = useState('cajas')
 
   // Estado cajas
   const [modalCaja, setModalCaja] = useState(false)
@@ -201,91 +208,114 @@ export default function Cajas() {
 
   return (
     <div className="space-y-6">
+
       {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-ink">Caja y Sesiones</h1>
-          <p className="text-sm text-ink-2 mt-0.5">Gestiona tus sesiones de caja</p>
+          <p className="text-sm text-ink-2 mt-0.5">Gestiona tus cajas registradoras y turnos</p>
         </div>
-      </div>
-
-      {/* Sección 1: Cajas */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-ink">Cajas registradoras</h2>
-            <p className="text-sm text-ink-2 mt-0.5">Administra las cajas del negocio</p>
-          </div>
+        {tab === 'cajas' && (
           <Button onClick={abrirCrearCaja}>
             <Plus className="w-4 h-4" />
             Nueva caja
           </Button>
-        </div>
-        <Table
-          columns={columnasCajas}
-          data={cajas}
-          loading={loadingCajas}
-          emptyMessage="No hay cajas registradas"
-        />
+        )}
       </div>
 
-      {/* Sección 2: Historial de sesiones */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold text-ink">Historial de turnos</h2>
-          <p className="text-sm text-ink-2 mt-0.5">Registro de aperturas y cierres de caja</p>
+      {/* Tabs */}
+      <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+        <div className="flex border-b border-border">
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                tab === id
+                  ? 'border-accent text-accent bg-accent-soft/40'
+                  : 'border-transparent text-ink-2 hover:text-ink hover:bg-surface-soft'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </button>
+          ))}
         </div>
 
-        {/* Filtros */}
-        <div className="flex flex-wrap gap-3 p-4 bg-white rounded-xl border border-border">
-          <div className="flex-1 min-w-36">
-            <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide mb-1">Caja</label>
-            <select
-              value={filtros.caja_id}
-              onChange={(e) => setFiltros(prev => ({ ...prev, caja_id: e.target.value }))}
-              className="w-full px-3 py-2 border border-border text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
-            >
-              <option value="">Todas las cajas</option>
-              {cajas.map(c => (
-                <option key={c.id || c._id} value={c.id || c._id}>{c.nombre}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide mb-1">Desde</label>
-            <input
-              type="date"
-              value={filtros.fecha_desde}
-              onChange={(e) => setFiltros(prev => ({ ...prev, fecha_desde: e.target.value }))}
-              className="px-3 py-2 border border-border text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide mb-1">Hasta</label>
-            <input
-              type="date"
-              value={filtros.fecha_hasta}
-              onChange={(e) => setFiltros(prev => ({ ...prev, fecha_hasta: e.target.value }))}
-              className="px-3 py-2 border border-border text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
-            />
-          </div>
-          <div className="flex items-end">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setFiltros({ caja_id: '', fecha_desde: '', fecha_hasta: '' })}
-            >
-              Limpiar
-            </Button>
-          </div>
-        </div>
+        <div className="p-6">
 
-        <Table
-          columns={columnasSesiones}
-          data={sesiones}
-          loading={loadingSesiones}
-          emptyMessage="No hay turnos en este período"
-        />
+          {/* ═══════════ TAB: CAJAS ═══════════ */}
+          {tab === 'cajas' && (
+            <div className="space-y-4">
+              <p className="text-sm text-ink-2">Administra las cajas registradoras del negocio</p>
+              <Table
+                columns={columnasCajas}
+                data={cajas}
+                loading={loadingCajas}
+                emptyMessage="No hay cajas registradas"
+              />
+            </div>
+          )}
+
+          {/* ═══════════ TAB: SESIONES ═══════════ */}
+          {tab === 'sesiones' && (
+            <div className="space-y-4">
+              <p className="text-sm text-ink-2">Registro de aperturas y cierres de caja</p>
+
+              {/* Filtros */}
+              <div className="flex flex-wrap gap-3 p-4 bg-surface-soft rounded-xl border border-border">
+                <div className="flex-1 min-w-36">
+                  <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide mb-1">Caja</label>
+                  <select
+                    value={filtros.caja_id}
+                    onChange={(e) => setFiltros(prev => ({ ...prev, caja_id: e.target.value }))}
+                    className="w-full px-3 py-2 border border-border text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
+                  >
+                    <option value="">Todas las cajas</option>
+                    {cajas.map(c => (
+                      <option key={c.id || c._id} value={c.id || c._id}>{c.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide mb-1">Desde</label>
+                  <input
+                    type="date"
+                    value={filtros.fecha_desde}
+                    onChange={(e) => setFiltros(prev => ({ ...prev, fecha_desde: e.target.value }))}
+                    className="px-3 py-2 border border-border text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide mb-1">Hasta</label>
+                  <input
+                    type="date"
+                    value={filtros.fecha_hasta}
+                    onChange={(e) => setFiltros(prev => ({ ...prev, fecha_hasta: e.target.value }))}
+                    className="px-3 py-2 border border-border text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setFiltros({ caja_id: '', fecha_desde: '', fecha_hasta: '' })}
+                  >
+                    Limpiar
+                  </Button>
+                </div>
+              </div>
+
+              <Table
+                columns={columnasSesiones}
+                data={sesiones}
+                loading={loadingSesiones}
+                emptyMessage="No hay turnos en este período"
+              />
+            </div>
+          )}
+
+        </div>
       </div>
 
       {/* Modal caja */}
