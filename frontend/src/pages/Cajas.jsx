@@ -1,97 +1,42 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
-import { Plus, Edit, CheckCircle, XCircle, Eye, Check, Layers, History, Users, User } from 'lucide-react'
+import { Plus, Edit, CheckCircle, XCircle, Users, User } from 'lucide-react'
 import { cajasService } from '../services/cajas'
 import { useTenant } from '../hooks/useTenant'
 import { Table } from '../components/Common/Table'
 import { Modal } from '../components/Common/Modal'
 import { Button } from '../components/Common/Button'
 import { Input } from '../components/Common/Input'
-import { COP } from '../lib/format'
-
-const TABS = [
-  { id: 'cajas', label: 'Cajas', icon: Layers },
-  { id: 'sesiones', label: 'Sesiones', icon: History },
-]
-
-const ESTADO_BADGE = {
-  abierta:  'bg-green-100 text-green-700',
-  cerrada:  'bg-yellow-100 text-yellow-700',
-  aprobada: 'bg-blue-100 text-blue-700',
-}
-
-function EstadoBadge({ estado }) {
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${ESTADO_BADGE[estado] || 'bg-surface-soft text-ink-2'}`}>
-      {estado}
-    </span>
-  )
-}
 
 const CAJA_VACÍA = { nombre: '', descripcion: '', activa: true }
 
 export default function Cajas() {
   const qc = useQueryClient()
-  const navigate = useNavigate()
   const { tenant, update: updateTenant } = useTenant()
 
-  const [tab, setTab] = useState('cajas')
-
-  // Estado cajas
-  const [modalCaja, setModalCaja] = useState(false)
+  const [modalCaja,    setModalCaja]    = useState(false)
   const [editandoCaja, setEditandoCaja] = useState(null)
-  const [formCaja, setFormCaja] = useState(CAJA_VACÍA)
-  const [errorsCaja, setErrorsCaja] = useState({})
+  const [formCaja,     setFormCaja]     = useState(CAJA_VACÍA)
+  const [errorsCaja,   setErrorsCaja]   = useState({})
 
-  // Filtros sesiones
-  const [filtros, setFiltros] = useState({ caja_id: '', fecha_desde: '', fecha_hasta: '' })
-
-  const { data: cajas = [], isLoading: loadingCajas } = useQuery({
+  const { data: cajas = [], isLoading } = useQuery({
     queryKey: ['cajas'],
     queryFn: cajasService.getCajas,
   })
 
-  const { data: sesiones = [], isLoading: loadingSesiones } = useQuery({
-    queryKey: ['sesiones', filtros],
-    queryFn: () => cajasService.getSesiones(filtros),
-  })
-
-  const crearCajaMutation = useMutation({
+  const crearMutation = useMutation({
     mutationFn: (c) => cajasService.createCaja(c),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['cajas'] }); cerrarModalCaja() },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['cajas'] }); cerrarModal() },
   })
 
-  const editarCajaMutation = useMutation({
+  const editarMutation = useMutation({
     mutationFn: ({ id, datos }) => cajasService.updateCaja(id, datos),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['cajas'] }); cerrarModalCaja() },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['cajas'] }); cerrarModal() },
   })
 
-  const aprobarMutation = useMutation({
-    mutationFn: (id) => cajasService.aprobarSesion(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['sesiones'] }),
-  })
-
-  const abrirCrearCaja = () => {
-    setEditandoCaja(null)
-    setFormCaja(CAJA_VACÍA)
-    setErrorsCaja({})
-    setModalCaja(true)
-  }
-
-  const abrirEditarCaja = (c) => {
-    setEditandoCaja(c)
-    setFormCaja({ nombre: c.nombre, descripcion: c.descripcion || '', activa: c.activa })
-    setErrorsCaja({})
-    setModalCaja(true)
-  }
-
-  const cerrarModalCaja = () => {
-    setModalCaja(false)
-    setEditandoCaja(null)
-    setFormCaja(CAJA_VACÍA)
-    setErrorsCaja({})
-  }
+  const abrirCrear = () => { setEditandoCaja(null); setFormCaja(CAJA_VACÍA); setErrorsCaja({}); setModalCaja(true) }
+  const abrirEditar = (c) => { setEditandoCaja(c); setFormCaja({ nombre: c.nombre, descripcion: c.descripcion || '', activa: c.activa }); setErrorsCaja({}); setModalCaja(true) }
+  const cerrarModal = () => { setModalCaja(false); setEditandoCaja(null); setFormCaja(CAJA_VACÍA); setErrorsCaja({}) }
 
   const cambiarCaja = (e) => {
     const { name, value, type, checked } = e.target
@@ -99,30 +44,17 @@ export default function Cajas() {
     if (errorsCaja[name]) setErrorsCaja(prev => ({ ...prev, [name]: '' }))
   }
 
-  const validarCaja = () => {
-    const e = {}
-    if (!formCaja.nombre.trim()) e.nombre = 'Requerido'
-    return e
-  }
-
-  const handleSubmitCaja = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
-    const errs = validarCaja()
-    if (Object.keys(errs).length > 0) { setErrorsCaja(errs); return }
-
+    if (!formCaja.nombre.trim()) { setErrorsCaja({ nombre: 'Requerido' }); return }
     if (editandoCaja) {
-      editarCajaMutation.mutate({ id: editandoCaja.id || editandoCaja._id, datos: formCaja })
+      editarMutation.mutate({ id: editandoCaja.id, datos: formCaja })
     } else {
-      crearCajaMutation.mutate(formCaja)
+      crearMutation.mutate(formCaja)
     }
   }
 
-  const formatFecha = (f) => {
-    if (!f) return '—'
-    return new Date(f).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })
-  }
-
-  const columnasCajas = [
+  const columnas = [
     { key: 'nombre', label: 'Nombre' },
     { key: 'descripcion', label: 'Descripción' },
     {
@@ -139,72 +71,11 @@ export default function Cajas() {
       key: 'acciones',
       label: '',
       render: (_, row) => (
-        <button
-          onClick={() => abrirEditarCaja(row)}
-          className="p-1.5 text-ink-2 hover:text-ink hover:bg-surface-soft rounded-lg transition-colors"
-          title="Editar"
-        >
+        <button onClick={() => abrirEditar(row)}
+          className="p-1.5 text-ink-2 hover:text-ink hover:bg-surface-soft rounded-lg transition-colors" title="Editar">
           <Edit className="w-4 h-4" />
         </button>
       ),
-    },
-  ]
-
-  const columnasSesiones = [
-    { key: 'cajero', label: 'Cajero', render: (_, r) => r.usuario?.nombre || r.cajero?.nombre || '—' },
-    { key: 'caja', label: 'Caja', render: (_, r) => r.caja?.nombre || '—' },
-    { key: 'apertura', label: 'Apertura', render: (_, r) => formatFecha(r.fecha_apertura) },
-    { key: 'cierre', label: 'Cierre', render: (_, r) => formatFecha(r.fecha_cierre) },
-    {
-      key: 'total_ventas',
-      label: 'Ventas',
-      render: (val) => <span className="font-medium">{COP(val || 0)}</span>,
-    },
-    {
-      key: 'diferencia',
-      label: 'Diferencia',
-      render: (val) => {
-        if (val === undefined || val === null) return '—'
-        const n = Number(val)
-        return (
-          <span className={`font-medium ${n > 0 ? 'text-green-600' : n < 0 ? 'text-red-600' : 'text-ink-2'}`}>
-            {n > 0 ? '+' : ''}{COP(n)}
-          </span>
-        )
-      },
-    },
-    {
-      key: 'estado',
-      label: 'Estado',
-      render: (val) => <EstadoBadge estado={val} />,
-    },
-    {
-      key: 'acciones',
-      label: '',
-      render: (_, row) => {
-        const id = row.id || row._id
-        return (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate(`/sesiones/${id}`)}
-              className="p-1.5 text-ink-2 hover:text-ink hover:bg-surface-soft rounded-lg transition-colors"
-              title="Ver detalle"
-            >
-              <Eye className="w-4 h-4" />
-            </button>
-            {row.estado === 'cerrada' && (
-              <button
-                onClick={() => aprobarMutation.mutate(id)}
-                disabled={aprobarMutation.isPending}
-                className="p-1.5 text-ink-2 hover:text-accent hover:bg-accent-soft rounded-lg transition-colors"
-                title="Aprobar cuadratura"
-              >
-                <Check className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        )
-      },
     },
   ]
 
@@ -215,216 +86,98 @@ export default function Cajas() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-ink">Caja y Sesiones</h1>
-          <p className="text-sm text-ink-2 mt-0.5">Gestiona tus cajas registradoras y turnos</p>
+          <p className="text-sm text-ink-2 mt-0.5">Gestiona tus cajas registradoras y modo de operación</p>
         </div>
-        {tab === 'cajas' && (
-          <Button onClick={abrirCrearCaja}>
-            <Plus className="w-4 h-4" />
-            Nueva caja
-          </Button>
-        )}
+        <Button onClick={abrirCrear}>
+          <Plus className="w-4 h-4" />
+          Nueva caja
+        </Button>
       </div>
 
-      {/* Tabs */}
+      {/* Modo de operación */}
+      <div className="bg-white border border-border rounded-xl shadow-sm p-5">
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold text-ink">Modo de operación</h3>
+          <p className="text-xs text-ink-2 mt-0.5">Define cómo se gestionan los turnos en tu negocio</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+          <button type="button"
+            onClick={() => tenant?.modo_turnos && updateTenant({ modo_turnos: false })}
+            className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
+              !tenant?.modo_turnos ? 'border-accent bg-accent-soft/40' : 'border-border hover:border-border-strong bg-white'
+            }`}
+          >
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${!tenant?.modo_turnos ? 'bg-accent' : 'bg-surface-soft'}`}>
+              <User className={`w-4 h-4 ${!tenant?.modo_turnos ? 'text-white' : 'text-ink-2'}`} />
+            </div>
+            <div>
+              <p className={`text-sm font-semibold ${!tenant?.modo_turnos ? 'text-accent' : 'text-ink'}`}>
+                Caja simple
+                {!tenant?.modo_turnos && <span className="ml-2 text-xs font-normal bg-accent text-white px-1.5 py-0.5 rounded-md">Activo</span>}
+              </p>
+              <p className="text-xs text-ink-2 mt-0.5 leading-relaxed">
+                Abres la caja una vez al día y la cierras al final. Ideal para negocios atendidos por una o dos personas.
+              </p>
+              <p className="text-xs text-accent/80 font-medium mt-1.5">Recomendado para la mayoría</p>
+            </div>
+          </button>
+
+          <button type="button"
+            onClick={() => !tenant?.modo_turnos && updateTenant({ modo_turnos: true })}
+            className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
+              tenant?.modo_turnos ? 'border-accent bg-accent-soft/40' : 'border-border hover:border-border-strong bg-white'
+            }`}
+          >
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${tenant?.modo_turnos ? 'bg-accent' : 'bg-surface-soft'}`}>
+              <Users className={`w-4 h-4 ${tenant?.modo_turnos ? 'text-white' : 'text-ink-2'}`} />
+            </div>
+            <div>
+              <p className={`text-sm font-semibold ${tenant?.modo_turnos ? 'text-accent' : 'text-ink'}`}>
+                Múltiples turnos
+                {tenant?.modo_turnos && <span className="ml-2 text-xs font-normal bg-accent text-white px-1.5 py-0.5 rounded-md">Activo</span>}
+              </p>
+              <p className="text-xs text-ink-2 mt-0.5 leading-relaxed">
+                Cajeros con turnos definidos: al cerrar puedes indicar si hay cajero entrante y dejar un fondo.
+              </p>
+              <p className="text-xs text-ink-2 font-medium mt-1.5">Para negocios con relevo de cajeros</p>
+            </div>
+          </button>
+
+        </div>
+      </div>
+
+      {/* Tabla cajas */}
       <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
-        <div className="flex border-b border-border">
-          {TABS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                tab === id
-                  ? 'border-accent text-accent bg-accent-soft/40'
-                  : 'border-transparent text-ink-2 hover:text-ink hover:bg-surface-soft'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </button>
-          ))}
+        <div className="px-5 py-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-ink">Cajas registradoras</h3>
+          <p className="text-xs text-ink-2 mt-0.5">Administra las cajas del negocio</p>
         </div>
-
-        <div className="p-6">
-
-          {/* ═══════════ TAB: CAJAS ═══════════ */}
-          {tab === 'cajas' && (
-            <div className="space-y-6">
-
-              {/* Card: Modo de operación */}
-              <div className="bg-surface-soft border border-border rounded-xl p-5">
-                <div className="mb-4">
-                  <h3 className="text-sm font-semibold text-ink">Modo de operación</h3>
-                  <p className="text-xs text-ink-2 mt-0.5">Define cómo se gestionan los turnos de caja en tu negocio</p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-                  {/* Opción: Caja simple */}
-                  <button
-                    type="button"
-                    onClick={() => tenant?.modo_turnos && updateTenant({ modo_turnos: false })}
-                    className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
-                      !tenant?.modo_turnos
-                        ? 'border-accent bg-accent-soft/40'
-                        : 'border-border hover:border-border-strong bg-white'
-                    }`}
-                  >
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${!tenant?.modo_turnos ? 'bg-accent' : 'bg-surface-soft'}`}>
-                      <User className={`w-4 h-4 ${!tenant?.modo_turnos ? 'text-white' : 'text-ink-2'}`} />
-                    </div>
-                    <div>
-                      <p className={`text-sm font-semibold ${!tenant?.modo_turnos ? 'text-accent' : 'text-ink'}`}>
-                        Caja simple
-                        {!tenant?.modo_turnos && <span className="ml-2 text-xs font-normal bg-accent text-white px-1.5 py-0.5 rounded-md">Activo</span>}
-                      </p>
-                      <p className="text-xs text-ink-2 mt-0.5 leading-relaxed">
-                        Abres la caja una vez al día y la cierras al final. Ideal para negocios atendidos por una o dos personas de confianza.
-                      </p>
-                      <p className="text-xs text-accent/80 font-medium mt-1.5">Recomendado para la mayoría</p>
-                    </div>
-                  </button>
-
-                  {/* Opción: Múltiples turnos */}
-                  <button
-                    type="button"
-                    onClick={() => !tenant?.modo_turnos && updateTenant({ modo_turnos: true })}
-                    className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
-                      tenant?.modo_turnos
-                        ? 'border-accent bg-accent-soft/40'
-                        : 'border-border hover:border-border-strong bg-white'
-                    }`}
-                  >
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${tenant?.modo_turnos ? 'bg-accent' : 'bg-surface-soft'}`}>
-                      <Users className={`w-4 h-4 ${tenant?.modo_turnos ? 'text-white' : 'text-ink-2'}`} />
-                    </div>
-                    <div>
-                      <p className={`text-sm font-semibold ${tenant?.modo_turnos ? 'text-accent' : 'text-ink'}`}>
-                        Múltiples turnos
-                        {tenant?.modo_turnos && <span className="ml-2 text-xs font-normal bg-accent text-white px-1.5 py-0.5 rounded-md">Activo</span>}
-                      </p>
-                      <p className="text-xs text-ink-2 mt-0.5 leading-relaxed">
-                        Cajeros con turnos definidos: al cerrar puedes indicar si hay un cajero entrante y dejar un fondo para el siguiente turno.
-                      </p>
-                      <p className="text-xs text-ink-2 font-medium mt-1.5">Para negocios con relevo de cajeros</p>
-                    </div>
-                  </button>
-
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm text-ink-2 mb-3">Cajas registradoras</p>
-                <Table
-                  columns={columnasCajas}
-                  data={cajas}
-                  loading={loadingCajas}
-                  emptyMessage="No hay cajas registradas"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ═══════════ TAB: SESIONES ═══════════ */}
-          {tab === 'sesiones' && (
-            <div className="space-y-4">
-              <p className="text-sm text-ink-2">Registro de aperturas y cierres de caja</p>
-
-              {/* Filtros */}
-              <div className="flex flex-wrap gap-3 p-4 bg-surface-soft rounded-xl border border-border">
-                <div className="flex-1 min-w-36">
-                  <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide mb-1">Caja</label>
-                  <select
-                    value={filtros.caja_id}
-                    onChange={(e) => setFiltros(prev => ({ ...prev, caja_id: e.target.value }))}
-                    className="w-full px-3 py-2 border border-border text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
-                  >
-                    <option value="">Todas las cajas</option>
-                    {cajas.map(c => (
-                      <option key={c.id || c._id} value={c.id || c._id}>{c.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide mb-1">Desde</label>
-                  <input
-                    type="date"
-                    value={filtros.fecha_desde}
-                    onChange={(e) => setFiltros(prev => ({ ...prev, fecha_desde: e.target.value }))}
-                    className="px-3 py-2 border border-border text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-ink-2 uppercase tracking-wide mb-1">Hasta</label>
-                  <input
-                    type="date"
-                    value={filtros.fecha_hasta}
-                    onChange={(e) => setFiltros(prev => ({ ...prev, fecha_hasta: e.target.value }))}
-                    className="px-3 py-2 border border-border text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setFiltros({ caja_id: '', fecha_desde: '', fecha_hasta: '' })}
-                  >
-                    Limpiar
-                  </Button>
-                </div>
-              </div>
-
-              <Table
-                columns={columnasSesiones}
-                data={sesiones}
-                loading={loadingSesiones}
-                emptyMessage="No hay turnos en este período"
-              />
-            </div>
-          )}
-
+        <div className="p-5">
+          <Table columns={columnas} data={cajas} loading={isLoading} emptyMessage="No hay cajas registradas" />
         </div>
       </div>
 
-      {/* Modal caja */}
-      <Modal
-        isOpen={modalCaja}
-        onClose={cerrarModalCaja}
-        title={editandoCaja ? 'Editar caja' : 'Nueva caja'}
-        size="sm"
-      >
-        <form onSubmit={handleSubmitCaja} className="space-y-4">
-          <Input
-            label="Nombre de la caja"
-            name="nombre"
-            value={formCaja.nombre}
-            onChange={cambiarCaja}
-            error={errorsCaja.nombre}
-            placeholder="Ej: Caja principal, Caja 1..."
-          />
-          <Input
-            label="Descripción (opcional)"
-            name="descripcion"
-            value={formCaja.descripcion}
-            onChange={cambiarCaja}
-            placeholder="Ubicación u observaciones"
-          />
+      {/* Modal */}
+      <Modal isOpen={modalCaja} onClose={cerrarModal} title={editandoCaja ? 'Editar caja' : 'Nueva caja'} size="sm">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input label="Nombre de la caja" name="nombre" value={formCaja.nombre} onChange={cambiarCaja}
+            error={errorsCaja.nombre} placeholder="Ej: Caja principal, Caja 1..." />
+          <Input label="Descripción (opcional)" name="descripcion" value={formCaja.descripcion}
+            onChange={cambiarCaja} placeholder="Ubicación u observaciones" />
           <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              name="activa"
-              checked={formCaja.activa}
-              onChange={cambiarCaja}
-              className="w-4 h-4 rounded border-border text-ink focus:ring-accent/30"
-            />
+            <input type="checkbox" name="activa" checked={formCaja.activa} onChange={cambiarCaja}
+              className="w-4 h-4 rounded border-border text-ink focus:ring-accent/30" />
             <span className="text-sm text-ink">Caja activa</span>
           </label>
-          {(crearCajaMutation.isError || editarCajaMutation.isError) && (
+          {(crearMutation.isError || editarMutation.isError) && (
             <p className="text-xs text-red-500">
-              {(crearCajaMutation.error || editarCajaMutation.error)?.response?.data?.message || 'Error al guardar'}
+              {(crearMutation.error || editarMutation.error)?.response?.data?.message || 'Error al guardar'}
             </p>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={cerrarModalCaja}>Cancelar</Button>
-            <Button type="submit" loading={crearCajaMutation.isPending || editarCajaMutation.isPending}>
+            <Button type="button" variant="secondary" onClick={cerrarModal}>Cancelar</Button>
+            <Button type="submit" loading={crearMutation.isPending || editarMutation.isPending}>
               {editandoCaja ? 'Guardar cambios' : 'Crear caja'}
             </Button>
           </div>
