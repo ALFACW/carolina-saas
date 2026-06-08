@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port $PORT",
-    "start": "vite preview --host 0.0.0.0 --port $PORT"
+    "start": "vite preview --host 0.0.0.0 --port $PORT",
+    "capture": "node scripts/capture-screens.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.13.0",
@@ -26,6 +27,7 @@
     "@resvg/resvg-js": "^2.6.2",
     "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.16",
+    "playwright": "^1.60.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6",
     "vite": "^5.0.5"
