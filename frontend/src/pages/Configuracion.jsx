@@ -326,12 +326,12 @@ export default function Configuracion() {
                           {qz.impresoras.map(p => <option key={p} value={p}>{p}</option>)}
                         </select>
                         <button onClick={qz.buscarImpresoras} title="Actualizar lista"
-                          className="px-2.5 border border-border rounded-lg text-ink-2 hover:bg-white">
+                          className="px-2.5 py-2 border border-border rounded-lg text-ink-2 hover:bg-surface-soft active:bg-gray-200 active:scale-95 transition-all">
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>
                         <button onClick={async () => { try { await qz.imprimirPrueba() } catch(e) { alert(e.message) } }}
                           disabled={!qz.impTermica}
-                          className="px-3 py-2 border border-border rounded-lg text-xs font-medium text-ink-2 hover:bg-white disabled:opacity-40">
+                          className="px-3 py-2 border border-border rounded-lg text-xs font-medium text-ink-2 hover:bg-surface-soft active:bg-gray-200 active:scale-95 transition-all disabled:opacity-40">
                           Prueba
                         </button>
                       </div>
@@ -414,7 +414,7 @@ export default function Configuracion() {
 
                     {/* Probar */}
                     <button onClick={() => qz.abrirGaveta()} disabled={!qz.impTermica}
-                      className="w-full py-2.5 border border-border rounded-lg text-sm font-medium text-ink-2 hover:bg-white disabled:opacity-40 bg-transparent transition-colors">
+                      className="w-full py-2.5 border border-border rounded-lg text-sm font-medium text-ink-2 hover:bg-surface-soft active:bg-gray-200 active:scale-95 disabled:opacity-40 bg-transparent transition-all">
                       Probar apertura del cajón
                     </button>
 
