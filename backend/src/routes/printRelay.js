@@ -90,6 +90,9 @@ router.delete('/job/:token/:id', (req, res) => {
 router.post('/heartbeat/:token', async (req, res) => {
   const token    = req.params.token
   const printers = req.body?.printers || []
+  // Validar que el token existe antes de actualizar estado
+  const { rows } = await db.query('SELECT id FROM print_devices WHERE id = $1', [token])
+  if (!rows.length) return res.status(404).json({ ok: false })
   beats.set(token, { ts: Date.now(), printers })
   try {
     await db.query(

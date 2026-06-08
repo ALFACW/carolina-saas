@@ -20,7 +20,7 @@ const updateSchema = z.object({
 })
 
 const resetPasswordSchema = z.object({
-  nueva_password: z.string().min(6),
+  nueva_password: z.string().min(8),
 })
 
 // GET /api/usuarios — lista usuarios del tenant

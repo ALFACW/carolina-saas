@@ -142,8 +142,8 @@ export default function Usuarios() {
 
   const handleResetPassword = (e) => {
     e.preventDefault()
-    if (!nuevaPassword || nuevaPassword.length < 6) {
-      setErrorPassword('Mínimo 6 caracteres')
+    if (!nuevaPassword || nuevaPassword.length < 8) {
+      setErrorPassword('Mínimo 8 caracteres')
       return
     }
     resetPasswordMutation.mutate({ id: usuarioPassword.id || usuarioPassword._id, password: nuevaPassword })
