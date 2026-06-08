@@ -19,21 +19,35 @@ setInterval(() => {
   }
 }, 10000)
 
-// GET /api/print/status — frontend: servidor online? + lista impresoras + token (por usuario)
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+async function getOrCreateDeviceToken(deviceId, tenantId) {
+  const { rows } = await db.query(
+    'SELECT id, printer_names FROM print_devices WHERE id = $1 AND tenant_id = $2',
+    [deviceId, tenantId]
+  )
+  if (rows.length) return { token: rows[0].id, printerNames: rows[0].printer_names || [] }
+  // Nuevo dispositivo
+  await db.query(
+    'INSERT INTO print_devices (id, tenant_id) VALUES ($1, $2)',
+    [deviceId, tenantId]
+  )
+  return { token: deviceId, printerNames: [] }
+}
+
+// GET /api/print/status?device=<token>
+// Frontend envía el device token guardado en localStorage.
+// Si no tiene uno, el backend genera uno nuevo.
 router.get('/status', authMiddleware, async (req, res) => {
   try {
-    let { rows } = await db.query(
-      'SELECT printer_token, printer_names FROM users WHERE id = $1',
-      [req.user.id]
-    )
-    let token = rows[0]?.printer_token
-    if (!token) {
-      token = randomUUID()
-      await db.query('UPDATE users SET printer_token = $1 WHERE id = $2', [token, req.user.id])
+    let deviceId = req.query.device
+    if (!deviceId) {
+      deviceId = randomUUID()
     }
+    const { token, printerNames } = await getOrCreateDeviceToken(deviceId, req.user.tenant_id)
     const beat     = beats.get(token)
     const online   = beat ? (Date.now() - beat.ts) < 15000 : false
-    const printers = beat?.printers?.length ? beat.printers : (rows[0]?.printer_names || [])
+    const printers = beat?.printers?.length ? beat.printers : printerNames
     res.json({ online, token, printers })
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -43,17 +57,17 @@ router.get('/status', authMiddleware, async (req, res) => {
 // POST /api/print/job — frontend: encolar trabajo de impresión
 router.post('/job', authMiddleware, async (req, res) => {
   try {
-    const { bytes, impresora } = req.body
+    const { bytes, impresora, device } = req.body
+    if (!device) return res.status(400).json({ error: 'Sin device token. Ve a Configuración → Impresora.' })
     const { rows } = await db.query(
-      'SELECT printer_token FROM tenants WHERE id = $1',
-      [req.user.tenant_id]
+      'SELECT id FROM print_devices WHERE id = $1 AND tenant_id = $2',
+      [device, req.user.tenant_id]
     )
-    const token = rows[0]?.printer_token
-    if (!token) return res.status(400).json({ error: 'Sin token. Ve a Configuración → Impresora.' })
+    if (!rows.length) return res.status(400).json({ error: 'Device token inválido.' })
 
     const job = { id: randomUUID(), bytes, impresora, ts: Date.now() }
-    if (!jobs.has(token)) jobs.set(token, [])
-    jobs.get(token).push(job)
+    if (!jobs.has(device)) jobs.set(device, [])
+    jobs.get(device).push(job)
     res.json({ ok: true, jobId: job.id })
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -77,28 +91,21 @@ router.post('/heartbeat/:token', async (req, res) => {
   const token    = req.params.token
   const printers = req.body?.printers || []
   beats.set(token, { ts: Date.now(), printers })
-  // Persistir en DB (en users, por usuario)
   try {
     await db.query(
-      'UPDATE users SET printer_names = $1 WHERE printer_token = $2',
+      'UPDATE print_devices SET printer_names = $1 WHERE id = $2',
       [printers, token]
     )
   } catch (_) {}
   res.json({ ok: true })
 })
 
-// GET /api/print/download — ZIP con servidor.py + Iniciar.bat + config.json del tenant
+// GET /api/print/download?device=<token> — ZIP con servidor.py + Iniciar.bat + config.json
 router.get('/download', authMiddleware, async (req, res, next) => {
   try {
-    let { rows } = await db.query(
-      'SELECT printer_token FROM users WHERE id = $1',
-      [req.user.id]
-    )
-    let token = rows[0]?.printer_token
-    if (!token) {
-      token = randomUUID()
-      await db.query('UPDATE users SET printer_token = $1 WHERE id = $2', [token, req.user.id])
-    }
+    let deviceId = req.query.device
+    if (!deviceId) deviceId = randomUUID()
+    const { token } = await getOrCreateDeviceToken(deviceId, req.user.tenant_id)
 
     const apiUrl = process.env.BACKEND_URL || 'https://carolina-saas-production-a4c9.up.railway.app'
     const config = { token, api: apiUrl }

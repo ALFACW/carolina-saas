@@ -3,6 +3,7 @@ import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
 
 const K = {
+  deviceToken:   'carolina_device_token',
   impTermica:    'carolina_printer_termica',
   impA4:         'carolina_printer_a4',
   densidad:      'carolina_printer_densidad',
@@ -65,30 +66,47 @@ export function useLocalPrint() {
   const guardarScannerMs      = useCallback((v) => { save(K.scanner_ms, v);     setScannerMs(Number(v)) }, [])
   const guardarScannerMin     = useCallback((v) => { save(K.scanner_min, v);    setScannerMin(Number(v)) }, [])
 
+  const getDeviceToken = useCallback(() => {
+    let token = localStorage.getItem(K.deviceToken)
+    if (!token) {
+      // Genera un UUID en el frontend — el backend lo registra la primera vez
+      token = crypto.randomUUID()
+      localStorage.setItem(K.deviceToken, token)
+    }
+    return token
+  }, [])
+
   const conectar = useCallback(async () => {
     setEstado('conectando')
     setErrorMsg('')
     try {
-      const { data } = await api.get('/api/print/status')
+      const device = getDeviceToken()
+      const { data } = await api.get('/api/print/status', { params: { device } })
+      // El backend puede devolver un nuevo token si el enviado no existe
+      if (data.token && data.token !== device) {
+        localStorage.setItem(K.deviceToken, data.token)
+      }
       if (data.online) {
         setEstado('conectado')
         setImpresoras(data.printers || [])
       } else {
         setEstado('error')
+        setImpresoras(data.printers || [])
         setErrorMsg('Servidor no está corriendo. Abre Iniciar.bat en tu PC.')
       }
     } catch {
       setEstado('error')
       setErrorMsg('No se pudo verificar el servidor de impresión.')
     }
-  }, [])
+  }, [getDeviceToken])
 
   const buscarImpresoras = useCallback(async () => {
     try {
-      const { data } = await api.get('/api/print/status')
+      const device = getDeviceToken()
+      const { data } = await api.get('/api/print/status', { params: { device } })
       setImpresoras(data.printers || [])
     } catch {}
-  }, [])
+  }, [getDeviceToken])
 
   useEffect(() => {
     conectar()
@@ -118,14 +136,16 @@ export function useLocalPrint() {
       }
     }
 
-    await api.post('/api/print/job', { bytes, impresora: impTermica })
+    const device = localStorage.getItem(K.deviceToken)
+    await api.post('/api/print/job', { bytes, impresora: impTermica, device })
   }, [estado, impTermica, anchoCars])
 
   const abrirGaveta = useCallback(async () => {
     if (estado !== 'conectado' || !impTermica) return false
     const pin = gavetaPin === '1' ? '\x01' : '\x00'
     const bytes = strABytes(`\x1B\x70${pin}\x19\x19`)
-    await api.post('/api/print/job', { bytes, impresora: impTermica })
+    const device = localStorage.getItem(K.deviceToken)
+    await api.post('/api/print/job', { bytes, impresora: impTermica, device })
     return true
   }, [estado, impTermica, gavetaPin])
 
@@ -152,7 +172,8 @@ export function useLocalPrint() {
     if (modoCortePapel === 'completo') t += GS + '\x56\x00'
     if (modoCortePapel === 'parcial')  t += GS + '\x56\x01'
     if (gavetaAuto) t += ESC + '\x70' + (gavetaPin === '1' ? '\x01' : '\x00') + '\x19\x19'
-    await api.post('/api/print/job', { bytes: strABytes(t), impresora: impTermica })
+    const device = localStorage.getItem(K.deviceToken)
+    await api.post('/api/print/job', { bytes: strABytes(t), impresora: impTermica, device })
   }, [estado, impTermica, densidad, anchoPapel, anchoCars, avancePapel, modoCortePapel, gavetaPin, gavetaAuto])
 
   const imprimirA4 = useCallback(async (htmlContent) => {
