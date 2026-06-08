@@ -5,15 +5,14 @@ export default function SplashScreen() {
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-surface">
       <div className="flex flex-col items-center gap-8">
         {/* Logo con animación pop */}
-        <div className="animate-splash-pop">
-          <img
-            src="/brand/logo-lockup.svg"
-            alt="CarolinaPOS"
-            width={220}
-            height={49}
-            draggable={false}
-            style={{ userSelect: 'none' }}
-          />
+        <div className="animate-splash-pop flex items-center gap-3 select-none">
+          <span className="w-12 h-12 rounded-full bg-accent flex items-center justify-center font-brand font-bold text-2xl text-white flex-shrink-0">
+            C
+          </span>
+          <span className="font-brand font-semibold text-2xl text-ink flex items-center">
+            Carolina
+            <span className="bg-accent text-white font-bold text-sm px-2.5 py-1 rounded-lg ml-2">POS</span>
+          </span>
         </div>
 
         {/* Dots de carga */}
