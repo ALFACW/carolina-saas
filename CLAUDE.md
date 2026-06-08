@@ -109,25 +109,19 @@ Ver `backend/.env.example` para documentación completa.
 
 ## Tareas Pendientes
 
-1. **SQL pendiente** en Railway PostgreSQL:
-   ```sql
-   UPDATE users SET username = 'concentradoscalarca' WHERE email = 'concentradoscalarca@gmail.com';
-   ```
-   *(email actualizado por el usuario — era carlos@tiendademo.com)*
+1. **Editar username** desde módulo Usuarios admin
 
-2. **Editar username** desde módulo Usuarios admin
+2. **Reimprimir ticket desde FacturaDetalle**: Agregar botón + llamada `buildTicket` con parámetro `W`
 
-3. **Reimprimir ticket desde FacturaDetalle**: Agregar botón + llamada `buildTicket` con parámetro `W`
+3. **Factus producción**: Cambiar `FACTUS_BASE_URL` cuando cliente tenga resolución DIAN real
 
-4. **Factus producción**: Cambiar `FACTUS_BASE_URL` cuando cliente tenga resolución DIAN real
+4. **Cobro suscripciones Wompi**: Integrar cuando haya 10+ clientes. Antes: activación manual Super Admin.
 
-5. **Cobro suscripciones Wompi**: Integrar cuando haya 10+ clientes. Antes: activación manual Super Admin.
+5. **Municipio dinámico Factus**: Actualmente hardcodeado `11001` (Bogotá). Hacer lookup real.
 
-6. **Municipio dinámico Factus**: Actualmente hardcodeado `11001` (Bogotá). Hacer lookup real.
+6. **Railway región**: Cambiar de `sfo` a `us-east4` para mejor latencia Colombia. Requiere plan pago.
 
-7. **Railway región**: Cambiar de `sfo` a `us-east4` para mejor latencia Colombia. Requiere plan pago.
-
-8. **iOS Bluetooth**: Web Bluetooth bloqueado por Apple. Opciones: relay vía PC (funciona hoy) o app React Native.
+7. **iOS Bluetooth**: Web Bluetooth bloqueado por Apple. Opciones: relay vía PC (funciona hoy) o app React Native.
 
 ---
 
