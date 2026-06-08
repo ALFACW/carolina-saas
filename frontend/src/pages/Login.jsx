@@ -121,7 +121,7 @@ export default function Login() {
         </div>
 
         {/* ── DERECHA: carrusel ── */}
-        <div style={{ background: 'linear-gradient(145deg, #1a4da8 0%, #1c61c0 50%, #1e72d8 100%)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 28px 64px' }}>
+        <div style={{ background: 'linear-gradient(145deg, #1a4da8 0%, #1c61c0 50%, #1e72d8 100%)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px 20px 52px' }}>
 
           {/* Círculos decorativos */}
           <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)', pointerEvents: 'none' }} />
@@ -130,18 +130,18 @@ export default function Login() {
           {/* Slides */}
           {SLIDES.map((s, i) => (
             <div key={i} style={{
-              position: 'absolute', inset: '32px 28px 64px',
+              position: 'absolute', inset: '20px 20px 52px',
               opacity: i === current ? 1 : 0,
               transform: i === current ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.98)',
               transition: 'opacity .5s ease, transform .5s ease',
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               pointerEvents: i === current ? 'auto' : 'none',
-              gap: 20,
+              gap: 14,
             }}>
 
               {/* Marco tipo browser */}
               <div style={{
-                width: '100%', maxWidth: 500,
+                width: '100%', maxWidth: 580,
                 borderRadius: 12,
                 boxShadow: '0 24px 64px rgba(0,0,0,0.40), 0 4px 16px rgba(0,0,0,0.2)',
                 overflow: 'hidden',
@@ -160,7 +160,7 @@ export default function Login() {
                 </div>
 
                 {/* Screenshot de la app */}
-                <div style={{ height: 280, overflow: 'hidden', background: '#f9f9f9' }}>
+                <div style={{ height: 360, overflow: 'hidden', background: '#f9f9f9' }}>
                   <img
                     src={s.img}
                     alt={s.title}
