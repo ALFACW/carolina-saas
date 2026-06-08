@@ -19,24 +19,20 @@ setInterval(() => {
   }
 }, 10000)
 
-// GET /api/print/status — frontend: servidor online? + lista impresoras + token
+// GET /api/print/status — frontend: servidor online? + lista impresoras + token (por usuario)
 router.get('/status', authMiddleware, async (req, res) => {
   try {
     let { rows } = await db.query(
-      'SELECT printer_token, printer_names FROM tenants WHERE id = $1',
-      [req.user.tenant_id]
+      'SELECT printer_token, printer_names FROM users WHERE id = $1',
+      [req.user.id]
     )
     let token = rows[0]?.printer_token
     if (!token) {
       token = randomUUID()
-      await db.query(
-        'UPDATE tenants SET printer_token = $1 WHERE id = $2',
-        [token, req.user.tenant_id]
-      )
+      await db.query('UPDATE users SET printer_token = $1 WHERE id = $2', [token, req.user.id])
     }
-    const beat    = beats.get(token)
-    const online  = beat ? (Date.now() - beat.ts) < 15000 : false
-    // Si hay heartbeat reciente usa esas impresoras, si no usa las guardadas en DB
+    const beat     = beats.get(token)
+    const online   = beat ? (Date.now() - beat.ts) < 15000 : false
     const printers = beat?.printers?.length ? beat.printers : (rows[0]?.printer_names || [])
     res.json({ online, token, printers })
   } catch (err) {
@@ -81,10 +77,10 @@ router.post('/heartbeat/:token', async (req, res) => {
   const token    = req.params.token
   const printers = req.body?.printers || []
   beats.set(token, { ts: Date.now(), printers })
-  // Persistir en DB para sobrevivir reinicios de Railway
+  // Persistir en DB (en users, por usuario)
   try {
     await db.query(
-      'UPDATE tenants SET printer_names = $1 WHERE printer_token = $2',
+      'UPDATE users SET printer_names = $1 WHERE printer_token = $2',
       [printers, token]
     )
   } catch (_) {}
@@ -95,16 +91,13 @@ router.post('/heartbeat/:token', async (req, res) => {
 router.get('/download', authMiddleware, async (req, res, next) => {
   try {
     let { rows } = await db.query(
-      'SELECT printer_token FROM tenants WHERE id = $1',
-      [req.user.tenant_id]
+      'SELECT printer_token FROM users WHERE id = $1',
+      [req.user.id]
     )
     let token = rows[0]?.printer_token
     if (!token) {
       token = randomUUID()
-      await db.query(
-        'UPDATE tenants SET printer_token = $1 WHERE id = $2',
-        [token, req.user.tenant_id]
-      )
+      await db.query('UPDATE users SET printer_token = $1 WHERE id = $2', [token, req.user.id])
     }
 
     const apiUrl = process.env.BACKEND_URL || 'https://carolina-saas-production-a4c9.up.railway.app'
