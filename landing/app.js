@@ -134,6 +134,24 @@
     });
   }
 
+  /* ---- Demo video: hide section if file missing ---- */
+  var videoWrap = document.getElementById("demo-video-wrap");
+  var screensOr = document.querySelector(".screens-or");
+  var demoVid = videoWrap && videoWrap.querySelector("video");
+  if (demoVid) {
+    demoVid.addEventListener("error", function () {
+      if (videoWrap) videoWrap.style.display = "none";
+      if (screensOr) screensOr.style.display = "none";
+    });
+    // If the video hasn't loaded after 3s, assume the file doesn't exist
+    setTimeout(function () {
+      if (demoVid.readyState === 0 && demoVid.error) {
+        if (videoWrap) videoWrap.style.display = "none";
+        if (screensOr) screensOr.style.display = "none";
+      }
+    }, 3000);
+  }
+
   /* ---- App screenshots tabs ---- */
   var screenTabs = document.querySelectorAll(".screens-tab");
   var screenImgs = document.querySelectorAll(".screens-img");

@@ -400,9 +400,30 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; font-
 .step-illu { margin-top: 22px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-soft); height: 150px; overflow: hidden; }
 
 /* ========================================================================
-   APP SCREENSHOTS
+   APP SCREENSHOTS + VIDEO DEMO
    ======================================================================== */
-.screens-wrap { max-width: 960px; margin-inline: auto; }
+
+.demo-video-wrap { max-width: var(--maxw); margin-inline: auto; margin-bottom: 0; }
+.demo-video {
+  display: block; width: 100%; aspect-ratio: 1280 / 720;
+  background: #0d0d0f; object-fit: cover;
+}
+.demo-video-sub {
+  text-align: center; font-size: 13px; color: var(--text-3);
+  margin-top: 12px; letter-spacing: .01em;
+}
+.screens-or {
+  text-align: center; margin: 40px 0 28px; position: relative;
+  font-size: 13.5px; font-weight: 600; color: var(--text-3); letter-spacing: .02em;
+}
+.screens-or::before, .screens-or::after {
+  content: ""; position: absolute; top: 50%; width: calc(50% - 100px);
+  height: 1px; background: var(--border);
+}
+.screens-or::before { left: 0; }
+.screens-or::after  { right: 0; }
+
+.screens-wrap { max-width: var(--maxw); margin-inline: auto; }
 
 .screens-tabs {
   display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
@@ -439,7 +460,7 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; font-
 
 .screens-img-wrap {
   position: relative; overflow: hidden;
-  height: clamp(320px, 42vw, 560px);
+  aspect-ratio: 900 / 560;
   background: #f9f9f9;
 }
 .screens-img {
@@ -640,11 +661,10 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; font-
   .plans-dots { display: flex; }
 }
 
-/* --- 620px: móvil pequeño --- */
 @media (max-width: 680px) {
   .screens-tab { padding: 8px 14px; font-size: 13px; }
-  .screens-img-wrap { height: clamp(200px, 55vw, 320px); }
 }
+/* --- 620px: móvil pequeño --- */
 @media (max-width: 620px) {
   .mock-app { grid-template-columns: 50px 1fr; }
   .mock-cart { display: none; }
