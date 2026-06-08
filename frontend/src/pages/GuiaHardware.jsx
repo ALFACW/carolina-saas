@@ -92,7 +92,7 @@ export default function GuiaHardware() {
         <Step num="1" title="Descarga e inicia el servidor de impresión">
           <div className="space-y-3 mt-3 text-sm text-ink-2">
             <p>
-              El servidor viene en un archivo ZIP. Solo necesitas descargarlo, extraerlo y hacer doble clic.
+              El ZIP se descarga <strong className="text-ink">desde este navegador y en este equipo</strong> — trae un token único para este dispositivo. Repite el proceso en cada PC o tablet que use impresora.
             </p>
             <ol className="space-y-2 list-decimal list-inside">
               <li>
@@ -100,7 +100,7 @@ export default function GuiaHardware() {
                 <a href="/configuracion" className="text-accent font-semibold underline hover:no-underline">
                   Configuración → Impresora → Descargar ZIP
                 </a>
-                {' '}(incluye tu configuración lista)
+                {' '}— el <Code>config.json</Code> ya viene configurado para este equipo
               </li>
               <li>
                 <strong className="text-ink">Extrae el ZIP</strong> en una carpeta fija (clic derecho → Extraer aquí), por ejemplo{' '}
@@ -114,7 +114,7 @@ export default function GuiaHardware() {
               <li>Deja la ventana abierta — es el servidor corriendo en segundo plano</li>
             </ol>
             <Ok>
-              Cuando veas el mensaje <Code>http://localhost:8765</Code> en la ventana, el servidor está listo.
+              Una vez configurado, cualquier usuario que inicie sesión en este equipo usará la misma impresora sin necesidad de volver a descargar nada.
             </Ok>
             <Tip>
               Para que inicie automáticamente con Windows: crea un acceso directo a <Code>Iniciar.bat</Code>
