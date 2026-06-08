@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
+import { bluetoothDisponible, conectarImpresora, imprimirBluetooth } from '../lib/bluetoothPrint'
 
 const K = {
   deviceToken:   'carolina_device_token',
@@ -42,6 +43,14 @@ export function useLocalPrint() {
   const [impresoras, setImpresoras] = useState([])
   const [errorMsg,   setErrorMsg]   = useState('')
 
+  // ── Bluetooth ──────────────────────────────────────────────────────────
+  const btRef                                   = useRef(null) // { device, characteristic }
+  const [btDisponible,  setBtDisponible]         = useState(false)
+  const [btConectado,   setBtConectado]          = useState(false)
+  const [btNombre,      setBtNombre]             = useState(() => localStorage.getItem('carolina_bt_nombre') || '')
+  const [btConectando,  setBtConectando]         = useState(false)
+  const [btError,       setBtError]             = useState('')
+
   const [impTermica,     setImpTermica]     = useState(() => get(K.impTermica, ''))
   const [impA4,          setImpA4]          = useState(() => get(K.impA4, ''))
   const [densidad,       setDensidad]       = useState(() => parseInt(get(K.densidad, '6')))
@@ -52,6 +61,34 @@ export function useLocalPrint() {
   const [gavetaAuto,     setGavetaAuto]     = useState(() => get(K.gaveta_auto, 'true') === 'true')
   const [scannerMs,      setScannerMs]      = useState(() => parseInt(get(K.scanner_ms, '80')))
   const [scannerMin,     setScannerMin]     = useState(() => parseInt(get(K.scanner_min, '3')))
+
+  useEffect(() => { setBtDisponible(bluetoothDisponible()) }, [])
+
+  const conectarBluetooth = useCallback(async () => {
+    setBtConectando(true)
+    setBtError('')
+    try {
+      const conn = await conectarImpresora()
+      btRef.current = conn
+      setBtConectado(true)
+      setBtNombre(conn.device.name || 'Impresora BT')
+      localStorage.setItem('carolina_bt_nombre', conn.device.name || 'Impresora BT')
+      conn.device.addEventListener('gattserverdisconnected', () => {
+        btRef.current = null
+        setBtConectado(false)
+      })
+    } catch (e) {
+      setBtError(e.message)
+    } finally {
+      setBtConectando(false)
+    }
+  }, [])
+
+  const desconectarBluetooth = useCallback(() => {
+    btRef.current?.device?.gatt?.disconnect()
+    btRef.current = null
+    setBtConectado(false)
+  }, [])
 
   const anchoCars = anchoPapel === '58' ? 32 : 48
 
@@ -115,8 +152,9 @@ export function useLocalPrint() {
   }, [])
 
   const imprimirTicket = useCallback(async (datosEscPos) => {
-    if (estado !== 'conectado') throw new Error('Servidor de impresión no disponible')
-    if (!impTermica) throw new Error('Selecciona una impresora en Configuración')
+    const usaBluetooth = btConectado && btRef.current?.characteristic
+    if (!usaBluetooth && estado !== 'conectado') throw new Error('Servidor de impresión no disponible')
+    if (!usaBluetooth && !impTermica) throw new Error('Selecciona una impresora en Configuración')
 
     let bytes = escPosABytes(datosEscPos)
 
@@ -136,9 +174,13 @@ export function useLocalPrint() {
       }
     }
 
-    const device = localStorage.getItem(K.deviceToken)
-    await api.post('/api/print/job', { bytes, impresora: impTermica, device })
-  }, [estado, impTermica, anchoCars])
+    if (usaBluetooth) {
+      await imprimirBluetooth(btRef.current.characteristic, bytes)
+    } else {
+      const device = localStorage.getItem(K.deviceToken)
+      await api.post('/api/print/job', { bytes, impresora: impTermica, device })
+    }
+  }, [estado, impTermica, anchoCars, btConectado])
 
   const abrirGaveta = useCallback(async () => {
     if (estado !== 'conectado' || !impTermica) return false
@@ -206,5 +248,8 @@ export function useLocalPrint() {
     scannerMs, guardarScannerMs,
     scannerMin, guardarScannerMin,
     imprimirTicket, abrirGaveta, imprimirPrueba, imprimirA4, buscarImpresoras,
+    // Bluetooth
+    btDisponible, btConectado, btNombre, btConectando, btError,
+    conectarBluetooth, desconectarBluetooth,
   }
 }

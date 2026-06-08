@@ -232,6 +232,47 @@ export default function Configuracion() {
           {tab === 'hardware' && (
             <div className="space-y-6">
 
+              {/* ── Bluetooth (solo si el navegador lo soporta) ── */}
+              {qz.btDisponible && (
+                <div className="bg-white rounded-xl border border-border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-sm text-ink">Impresora Bluetooth</p>
+                      <p className="text-xs text-ink-2 mt-0.5">Para móvil y tablet — conecta directo sin servidor</p>
+                    </div>
+                    {qz.btConectado && (
+                      <span className="inline-flex items-center gap-1.5 text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />Conectada
+                      </span>
+                    )}
+                  </div>
+
+                  {qz.btConectado ? (
+                    <div className="flex items-center justify-between bg-surface-soft rounded-lg px-3 py-2.5">
+                      <span className="text-sm font-medium text-ink">{qz.btNombre}</span>
+                      <button
+                        onClick={qz.desconectarBluetooth}
+                        className="text-xs text-danger hover:text-danger/80 font-medium">
+                        Desconectar
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={qz.conectarBluetooth}
+                      disabled={qz.btConectando}
+                      className="w-full py-2.5 rounded-lg border-2 border-accent text-accent text-sm font-semibold hover:bg-accent hover:text-white transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
+                      {qz.btConectando
+                        ? <><Loader2 className="w-4 h-4 animate-spin" />Buscando...</>
+                        : 'Conectar impresora Bluetooth'
+                      }
+                    </button>
+                  )}
+
+                  {qz.btError && <p className="text-xs text-danger">{qz.btError}</p>}
+                  <p className="text-xs text-ink-2">Compatible con Android Chrome. iOS no soporta Web Bluetooth.</p>
+                </div>
+              )}
+
               {/* Estado servidor */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
