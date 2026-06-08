@@ -248,7 +248,8 @@ export default function Configuracion() {
                     onClick={async () => {
                       try {
                         const api = (await import('../services/api')).default
-                        const res = await api.get('/api/print/download', { responseType: 'blob' })
+                        const device = localStorage.getItem('carolina_device_token') || ''
+                        const res = await api.get('/api/print/download', { params: { device }, responseType: 'blob' })
                         const url = URL.createObjectURL(res.data)
                         const a = document.createElement('a')
                         a.href = url; a.download = 'carolinapos-print.zip'; a.click()
@@ -276,7 +277,8 @@ export default function Configuracion() {
                     onClick={async () => {
                       try {
                         const api = (await import('../services/api')).default
-                        const res = await api.get('/api/print/download', { responseType: 'blob' })
+                        const device = localStorage.getItem('carolina_device_token') || ''
+                        const res = await api.get('/api/print/download', { params: { device }, responseType: 'blob' })
                         const url = URL.createObjectURL(res.data)
                         const a   = document.createElement('a')
                         a.href = url; a.download = 'carolinapos-print.zip'; a.click()
