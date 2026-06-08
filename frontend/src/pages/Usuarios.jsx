@@ -25,7 +25,7 @@ function RolBadge({ rol }) {
   )
 }
 
-const FORM_VACÍO = { nombre: '', email: '', password: '', rol: 'cajero', activo: true }
+const FORM_VACÍO = { nombre: '', email: '', username: '', password: '', rol: 'cajero', activo: true }
 
 export default function Usuarios() {
   const qc = useQueryClient()
@@ -91,7 +91,7 @@ export default function Usuarios() {
 
   const abrirEditar = (u) => {
     setEditando(u)
-    setForm({ nombre: u.nombre, email: u.email, password: '', rol: u.rol, activo: u.activo })
+    setForm({ nombre: u.nombre, email: u.email, username: u.username || '', password: '', rol: u.rol, activo: u.activo })
     setErrors({})
     setModalAbierto(true)
   }
@@ -114,6 +114,7 @@ export default function Usuarios() {
     if (!form.nombre.trim()) e.nombre = 'Requerido'
     if (!form.email.trim()) e.email = 'Requerido'
     else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(form.email)) e.email = 'Email inválido'
+    if (form.username && !/^[a-z0-9_]{3,30}$/.test(form.username)) e.username = 'Solo minúsculas, números y _ (3–30 caracteres)'
     if (!editando && !form.password) e.password = 'Requerido'
     if (!form.rol) e.rol = 'Requerido'
     return e
@@ -125,10 +126,10 @@ export default function Usuarios() {
     if (Object.keys(e2).length > 0) { setErrors(e2); return }
 
     if (editando) {
-      const datos = { nombre: form.nombre, email: form.email, rol: form.rol, activo: form.activo }
+      const datos = { nombre: form.nombre, email: form.email, rol: form.rol, activo: form.activo, username: form.username || null }
       editarMutation.mutate({ id: editando.id || editando._id, datos })
     } else {
-      crearMutation.mutate({ nombre: form.nombre, email: form.email, password: form.password, rol: form.rol })
+      crearMutation.mutate({ nombre: form.nombre, email: form.email, password: form.password, rol: form.rol, username: form.username || undefined })
     }
   }
 
@@ -154,7 +155,16 @@ export default function Usuarios() {
   }
 
   const columnas = [
-    { key: 'nombre', label: 'Nombre' },
+    {
+      key: 'nombre',
+      label: 'Nombre',
+      render: (v, row) => (
+        <div>
+          <p className="font-medium text-ink">{v}</p>
+          {row.username && <p className="text-xs text-ink-2">@{row.username}</p>}
+        </div>
+      ),
+    },
     { key: 'email', label: 'Email' },
     {
       key: 'rol',
@@ -249,6 +259,15 @@ export default function Usuarios() {
             onChange={cambiar}
             error={errors.email}
             placeholder="juan@empresa.com"
+          />
+          <Input
+            label="Username (opcional)"
+            name="username"
+            value={form.username}
+            onChange={cambiar}
+            error={errors.username}
+            placeholder="juan_perez"
+            hint="Permite iniciar sesión sin email. Solo minúsculas, números y _"
           />
           {!editando && (
             <Input

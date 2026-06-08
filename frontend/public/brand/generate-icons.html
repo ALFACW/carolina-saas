@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Generar íconos PWA — CarolinaPOS</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+    canvas { display: none; }
+    .preview { display: flex; gap: 24px; align-items: flex-end; margin: 24px 0; }
+    .preview img { border: 1px solid #ddd; border-radius: 12px; }
+    button { background: #1c61c0; color: white; border: none; padding: 12px 28px; border-radius: 8px; font-size: 15px; cursor: pointer; font-weight: 600; }
+    button:hover { background: #1550a0; }
+    p { color: #555; }
+    code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h2>Generar íconos PNG — CarolinaPOS</h2>
+  <p>Haz click en <strong>Generar y descargar</strong> para obtener <code>icon-192.png</code> e <code>icon-512.png</code>. Luego muévelos a la carpeta <code>public/brand/</code>.</p>
+
+  <canvas id="c192" width="192" height="192"></canvas>
+  <canvas id="c512" width="512" height="512"></canvas>
+
+  <div class="preview" id="preview"></div>
+
+  <button onclick="generar()">Generar y descargar</button>
+
+  <script>
+    function dibujar(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      const r = size * 0.18; // border-radius
+
+      // Fondo azul con bordes redondeados
+      ctx.beginPath();
+      ctx.moveTo(r, 0);
+      ctx.lineTo(size - r, 0);
+      ctx.quadraticCurveTo(size, 0, size, r);
+      ctx.lineTo(size, size - r);
+      ctx.quadraticCurveTo(size, size, size - r, size);
+      ctx.lineTo(r, size);
+      ctx.quadraticCurveTo(0, size, 0, size - r);
+      ctx.lineTo(0, r);
+      ctx.quadraticCurveTo(0, 0, r, 0);
+      ctx.closePath();
+      ctx.fillStyle = '#1c61c0';
+      ctx.fill();
+
+      // Letra "C" centrada en fuente sans-serif bold
+      const fontSize = Math.round(size * 0.58);
+      ctx.font = `bold ${fontSize}px 'Quicksand', 'DM Sans', Arial, sans-serif`;
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('C', size / 2, size / 2 + size * 0.03);
+
+      // Badge "POS" en esquina inferior derecha
+      const badgeW = size * 0.36;
+      const badgeH = size * 0.16;
+      const bx = size - badgeW - size * 0.06;
+      const by = size - badgeH - size * 0.06;
+      const br = badgeH * 0.35;
+      ctx.beginPath();
+      ctx.moveTo(bx + br, by);
+      ctx.lineTo(bx + badgeW - br, by);
+      ctx.quadraticCurveTo(bx + badgeW, by, bx + badgeW, by + br);
+      ctx.lineTo(bx + badgeW, by + badgeH - br);
+      ctx.quadraticCurveTo(bx + badgeW, by + badgeH, bx + badgeW - br, by + badgeH);
+      ctx.lineTo(bx + br, by + badgeH);
+      ctx.quadraticCurveTo(bx, by + badgeH, bx, by + badgeH - br);
+      ctx.lineTo(bx, by + br);
+      ctx.quadraticCurveTo(bx, by, bx + br, by);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.fill();
+
+      const badgeFontSize = Math.round(badgeH * 0.62);
+      ctx.font = `bold ${badgeFontSize}px Arial, sans-serif`;
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('POS', bx + badgeW / 2, by + badgeH / 2);
+    }
+
+    function generar() {
+      const c192 = document.getElementById('c192');
+      const c512 = document.getElementById('c512');
+      dibujar(c192, 192);
+      dibujar(c512, 512);
+
+      // Mostrar previews
+      const preview = document.getElementById('preview');
+      preview.innerHTML = '';
+      [{ c: c192, label: '192×192' }, { c: c512, label: '512×512', w: 96 }].forEach(({ c, label, w }) => {
+        const div = document.createElement('div');
+        div.style.textAlign = 'center';
+        const img = document.createElement('img');
+        img.src = c.toDataURL('image/png');
+        img.width = w || 48;
+        img.height = w || 48;
+        const p = document.createElement('p');
+        p.style.margin = '4px 0 0';
+        p.style.fontSize = '12px';
+        p.style.color = '#666';
+        p.textContent = label;
+        div.appendChild(img);
+        div.appendChild(p);
+        preview.appendChild(div);
+      });
+
+      // Descargar ambos
+      const a192 = document.createElement('a');
+      a192.download = 'icon-192.png';
+      a192.href = c192.toDataURL('image/png');
+      a192.click();
+
+      setTimeout(() => {
+        const a512 = document.createElement('a');
+        a512.download = 'icon-512.png';
+        a512.href = c512.toDataURL('image/png');
+        a512.click();
+      }, 500);
+    }
+  </script>
+</body>
+</html>

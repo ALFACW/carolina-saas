@@ -3,6 +3,83 @@
 const axios = require('axios');
 const logger = require('./logger');
 
+// Códigos DANE para municipios colombianos más comunes
+const DANE_MUNICIPIOS = {
+  'bogota': '11001', 'bogotá': '11001',
+  'medellin': '05001', 'medellín': '05001',
+  'cali': '76001',
+  'barranquilla': '08001',
+  'cartagena': '13001',
+  'cucuta': '54001', 'cúcuta': '54001',
+  'bucaramanga': '68001',
+  'pereira': '66001',
+  'santa marta': '47001',
+  'ibague': '73001', 'ibagué': '73001',
+  'pasto': '52001',
+  'manizales': '17001',
+  'neiva': '41001',
+  'villavicencio': '50001',
+  'armenia': '63001',
+  'monteria': '23001', 'montería': '23001',
+  'valledupar': '20001',
+  'sincelejo': '70001',
+  'popayan': '19001', 'popayán': '19001',
+  'tunja': '15001',
+  'florencia': '18001',
+  'quibdo': '27001', 'quibdó': '27001',
+  'riohacha': '44001',
+  'san gil': '68679',
+  'bello': '05088',
+  'itagui': '05360', 'itagüí': '05360',
+  'envigado': '05266',
+  'buenaventura': '76109',
+  'palmira': '76520',
+  'buga': '76111',
+  'tulua': '76834', 'tuluá': '76834',
+  'calarca': '63130', 'calarcá': '63130',
+  'la tebaida': '63401',
+  'circasia': '63212',
+  'montenegro': '63470',
+  'quimbaya': '63594',
+  'filandia': '63272',
+  'espinal': '73268',
+  'girardot': '25307',
+  'fusagasuga': '25290', 'fusagasugá': '25290',
+  'facatativa': '25269', 'facatativá': '25269',
+  'zipaquira': '25899', 'zipaquirá': '25899',
+  'soacha': '25754',
+  'chia': '25175', 'chía': '25175',
+  'cajica': '25126', 'cajicá': '25126',
+  'mosquera': '25473',
+  'madrid': '25430',
+  'funza': '25286',
+  'tocancipa': '25817', 'tocancipá': '25817',
+  'gachancipa': '25295', 'gachanciipá': '25295',
+  'yopal': '85001',
+  'arauca': '81001',
+  'mocoa': '86001',
+  'mitu': '97001', 'mitú': '97001',
+  'puerto inirida': '94001', 'puerto inírida': '94001',
+  'san jose del guaviare': '95001', 'san josé del guaviare': '95001',
+  'leticia': '91001',
+  'puerto carreno': '99001', 'puerto carreño': '99001',
+  'inirida': '94001',
+};
+
+function getMunicipioCode(ciudad) {
+  if (!ciudad) return '11001';
+  const key = ciudad.toLowerCase().trim()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // quitar tildes para normalizar
+    .trim();
+  // buscar primero con tildes normalizadas, luego tal cual
+  const normalizedMap = {};
+  for (const [k, v] of Object.entries(DANE_MUNICIPIOS)) {
+    const nk = k.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    normalizedMap[nk] = v;
+  }
+  return normalizedMap[key] || DANE_MUNICIPIOS[ciudad.toLowerCase().trim()] || '11001';
+}
+
 // Mapeo de métodos de pago Carolina → Factus
 const PAGO_MAP = {
   efectivo:        { payment_method_code: '10', payment_form: '1' },
@@ -90,7 +167,7 @@ class FactusClient {
         address:                      cliente.direccion  || '',
         email:                        cliente.email      || '',
         phone:                        cliente.telefono   || '',
-        municipality_code:            '11001', // default Bogotá; mejorar con lookup
+        municipality_code:            getMunicipioCode(cliente.ciudad),
       };
       if (esNIT) {
         customer.company    = cliente.nombre;

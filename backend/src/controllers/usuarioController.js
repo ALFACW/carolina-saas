@@ -8,6 +8,7 @@ const crearSchema = z.object({
   email:    z.string().email(),
   password: z.string().min(6),
   rol:      z.enum(['admin', 'supervisor', 'cajero', 'vendedor', 'inventario']).default('cajero'),
+  username: z.string().min(3).max(30).regex(/^[a-z0-9_]+$/, 'Solo letras minúsculas, números y guion bajo').optional().nullable(),
 })
 
 const updateSchema = z.object({
@@ -15,6 +16,7 @@ const updateSchema = z.object({
   email:    z.string().email().optional(),
   rol:      z.enum(['admin', 'supervisor', 'cajero', 'vendedor', 'inventario']).optional(),
   activo:   z.boolean().optional(),
+  username: z.string().min(3).max(30).regex(/^[a-z0-9_]+$/, 'Solo letras minúsculas, números y guion bajo').optional().nullable(),
 })
 
 const resetPasswordSchema = z.object({
@@ -25,7 +27,7 @@ const resetPasswordSchema = z.object({
 async function getAll(req, res, next) {
   try {
     const { rows } = await db.query(
-      `SELECT id, nombre, email, rol, activo, ultimo_login, fecha_creacion
+      `SELECT id, nombre, email, username, rol, activo, ultimo_login, fecha_creacion
        FROM users
        WHERE tenant_id = $1
        ORDER BY fecha_creacion`,
@@ -47,12 +49,21 @@ async function create(req, res, next) {
     )
     if (existe.length) return res.status(400).json({ error: 'Ya existe un usuario con ese email' })
 
+    // Verificar username único global (si se provee)
+    if (data.username) {
+      const { rows: usernameExiste } = await db.query(
+        'SELECT id FROM users WHERE username = $1',
+        [data.username]
+      )
+      if (usernameExiste.length) return res.status(400).json({ error: 'Ese username ya está en uso' })
+    }
+
     const hash = await bcrypt.hash(data.password, 12)
     const { rows } = await db.query(
-      `INSERT INTO users (tenant_id, email, password_hash, nombre, rol)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, nombre, email, rol, activo, fecha_creacion`,
-      [req.tenant.id, data.email, hash, data.nombre, data.rol]
+      `INSERT INTO users (tenant_id, email, password_hash, nombre, rol, username)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, nombre, email, username, rol, activo, fecha_creacion`,
+      [req.tenant.id, data.email, hash, data.nombre, data.rol, data.username || null]
     )
     logger.info('Usuario creado', { tenant_id: req.tenant.id, email: data.email, rol: data.rol })
     res.status(201).json(rows[0])
@@ -91,20 +102,30 @@ async function update(req, res, next) {
       if (emailExiste.length) return res.status(400).json({ error: 'Ya existe un usuario con ese email' })
     }
 
+    // Verificar username único si se está cambiando
+    if (data.username) {
+      const { rows: usernameExiste } = await db.query(
+        'SELECT id FROM users WHERE username = $1 AND id != $2',
+        [data.username, req.params.id]
+      )
+      if (usernameExiste.length) return res.status(400).json({ error: 'Ese username ya está en uso' })
+    }
+
     const updates = []
     const values = []
     let idx = 3
 
-    if (data.nombre !== undefined) { updates.push(`nombre = $${idx++}`); values.push(data.nombre) }
-    if (data.email  !== undefined) { updates.push(`email = $${idx++}`);  values.push(data.email) }
-    if (data.rol    !== undefined) { updates.push(`rol = $${idx++}`);    values.push(data.rol) }
-    if (data.activo !== undefined) { updates.push(`activo = $${idx++}`); values.push(data.activo) }
+    if (data.nombre   !== undefined) { updates.push(`nombre = $${idx++}`);   values.push(data.nombre) }
+    if (data.email    !== undefined) { updates.push(`email = $${idx++}`);    values.push(data.email) }
+    if (data.rol      !== undefined) { updates.push(`rol = $${idx++}`);      values.push(data.rol) }
+    if (data.activo   !== undefined) { updates.push(`activo = $${idx++}`);   values.push(data.activo) }
+    if ('username' in data)          { updates.push(`username = $${idx++}`); values.push(data.username || null) }
 
     if (!updates.length) return res.status(400).json({ error: 'Sin datos para actualizar' })
 
     const { rows } = await db.query(
       `UPDATE users SET ${updates.join(', ')} WHERE id = $1 AND tenant_id = $2
-       RETURNING id, nombre, email, rol, activo, fecha_creacion`,
+       RETURNING id, nombre, email, username, rol, activo, fecha_creacion`,
       [req.params.id, req.tenant.id, ...values]
     )
     if (!rows.length) return res.status(404).json({ error: 'Usuario no encontrado' })

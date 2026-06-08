@@ -12,12 +12,23 @@ const PLANES = [
 export default function Register() {
   const [step, setStep] = useState(1)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const { register } = useAuth()
   const navigate = useNavigate()
 
   const [empresa, setEmpresa] = useState({ nombre: '', nit: '', email: '', telefono: '', ciudad: '', plan: 'basico' })
   const [admin, setAdmin] = useState({ nombre: '', email: '', password: '' })
+
+  const setEmpresaField = (key, value) => {
+    setEmpresa(p => ({ ...p, [key]: value }))
+    if (fieldErrors[key]) setFieldErrors(p => ({ ...p, [key]: '' }))
+  }
+
+  const setAdminField = (key, value) => {
+    setAdmin(p => ({ ...p, [key]: value }))
+    if (fieldErrors[key]) setFieldErrors(p => ({ ...p, [key]: '' }))
+  }
 
   const validarNIT = (nit) => {
     const limpio = nit.replace(/[.\-\s]/g, '')
@@ -38,17 +49,39 @@ export default function Register() {
     return ['', 'Débil', 'Regular', 'Buena', 'Fuerte'][s]
   }
 
+  const validarStep1 = () => {
+    const e = {}
+    if (!empresa.nombre.trim()) e.nombre = 'El nombre de la empresa es requerido'
+    if (!empresa.nit.trim()) e.nit = 'El NIT es requerido'
+    else if (!validarNIT(empresa.nit)) e.nit = 'NIT inválido. Solo números sin puntos ni guión.'
+    if (!empresa.email.trim()) e.email = 'El email es requerido'
+    else if (!/^[^@]+@[^@]+\.[^@]+$/.test(empresa.email)) e.email = 'Email inválido'
+    return e
+  }
+
+  const validarStep2 = () => {
+    const e = {}
+    if (!admin.nombre.trim()) e.nombre = 'El nombre es requerido'
+    if (!admin.email.trim()) e.email = 'El email es requerido'
+    else if (!/^[^@]+@[^@]+\.[^@]+$/.test(admin.email)) e.email = 'Email inválido'
+    if (!admin.password) e.password = 'La contraseña es requerida'
+    else if (admin.password.length < 8) e.password = 'Mínimo 8 caracteres'
+    return e
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (step === 1) {
-      if (!validarNIT(empresa.nit)) {
-        setError('NIT inválido. Ingresa solo los números sin puntos ni guión.')
-        return
-      }
+      const errs = validarStep1()
+      if (Object.keys(errs).length > 0) { setFieldErrors(errs); return }
+      setFieldErrors({})
       setError('')
       setStep(2)
       return
     }
+    const errs = validarStep2()
+    if (Object.keys(errs).length > 0) { setFieldErrors(errs); return }
+    setFieldErrors({})
     setError('')
     setLoading(true)
     try {
@@ -98,9 +131,9 @@ export default function Register() {
               <>
                 <h2 className="text-base font-semibold text-ink mb-4">Datos de tu empresa</h2>
                 {[
-                  { label: 'Nombre de la empresa *', key: 'nombre', placeholder: 'Mi Empresa SAS', required: true },
-                  { label: 'NIT *', key: 'nit', placeholder: '9001234567', required: true },
-                  { label: 'Email empresarial *', key: 'email', type: 'email', placeholder: 'info@empresa.com', required: true },
+                  { label: 'Nombre de la empresa *', key: 'nombre', placeholder: 'Mi Empresa SAS' },
+                  { label: 'NIT *', key: 'nit', placeholder: '9001234567' },
+                  { label: 'Email empresarial *', key: 'email', type: 'email', placeholder: 'info@empresa.com' },
                   { label: 'Teléfono', key: 'telefono', placeholder: '+57 300 000 0000' },
                   { label: 'Ciudad', key: 'ciudad', placeholder: 'Bogotá' },
                 ].map(({ label, key, ...rest }) => (
@@ -108,13 +141,18 @@ export default function Register() {
                     <label className="block text-sm font-medium text-ink mb-1.5">{label}</label>
                     <input
                       value={empresa[key]}
-                      onChange={e => setEmpresa(p => ({ ...p, [key]: e.target.value }))}
-                      className="w-full px-3 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent text-sm transition-colors"
+                      onChange={e => setEmpresaField(key, e.target.value)}
+                      className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-sm transition-colors ${
+                        fieldErrors[key]
+                          ? 'border-danger bg-red-50 focus:ring-danger/30 focus:border-danger'
+                          : 'border-border focus:ring-accent/30 focus:border-accent'
+                      }`}
                       {...rest}
                     />
-                    {key === 'nit' && (
-                      <p className="text-xs text-ink-2 mt-1">Solo números, sin puntos ni guión. Ej: 9001234567</p>
-                    )}
+                    {fieldErrors[key]
+                      ? <p className="text-xs text-danger mt-1">{fieldErrors[key]}</p>
+                      : key === 'nit' && <p className="text-xs text-ink-2 mt-1">Solo números, sin puntos ni guión. Ej: 9001234567</p>
+                    }
                   </div>
                 ))}
 
@@ -159,18 +197,23 @@ export default function Register() {
                 </div>
 
                 {[
-                  { label: 'Nombre completo *', key: 'nombre', placeholder: 'Juan Pérez', required: true },
-                  { label: 'Email de acceso *', key: 'email', type: 'email', placeholder: 'admin@empresa.com', required: true },
-                  { label: 'Contraseña *', key: 'password', type: 'password', placeholder: 'Mínimo 8 caracteres', required: true, minLength: 8 },
+                  { label: 'Nombre completo *', key: 'nombre', placeholder: 'Juan Pérez' },
+                  { label: 'Email de acceso *', key: 'email', type: 'email', placeholder: 'admin@empresa.com' },
+                  { label: 'Contraseña *', key: 'password', type: 'password', placeholder: 'Mínimo 8 caracteres' },
                 ].map(({ label, key, ...rest }) => (
                   <div key={key}>
                     <label className="block text-sm font-medium text-ink mb-1.5">{label}</label>
                     <input
                       value={admin[key]}
-                      onChange={e => setAdmin(p => ({ ...p, [key]: e.target.value }))}
-                      className="w-full px-3 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent text-sm transition-colors"
+                      onChange={e => setAdminField(key, e.target.value)}
+                      className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-sm transition-colors ${
+                        fieldErrors[key]
+                          ? 'border-danger bg-red-50 focus:ring-danger/30 focus:border-danger'
+                          : 'border-border focus:ring-accent/30 focus:border-accent'
+                      }`}
                       {...rest}
                     />
+                    {fieldErrors[key] && <p className="text-xs text-danger mt-1">{fieldErrors[key]}</p>}
                     {key === 'password' && admin.password && (
                       <div className="mt-2">
                         <div className="flex gap-1 mb-1">
