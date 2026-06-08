@@ -1,17 +1,9 @@
 const { Pool } = require('pg');
 const logger = require('../lib/logger');
 
-const sslConfig = () => {
-  if (process.env.NODE_ENV !== 'production') return false;
-  // Railway usa certificados firmados por CA pública — verificar por defecto.
-  // Si el proveedor usa cert autofirmado, setear DB_SSL_REJECT_UNAUTHORIZED=false.
-  const reject = process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false';
-  return { rejectUnauthorized: reject };
-};
-
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: sslConfig(),
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
