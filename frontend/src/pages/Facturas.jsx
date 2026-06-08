@@ -8,6 +8,7 @@ import { Table } from '../components/Common/Table'
 import { Button } from '../components/Common/Button'
 import { COP } from '../lib/format'
 import { exportarFacturas } from '../lib/exportExcel'
+import { useConfirm } from '../hooks/useConfirm'
 const ESTADO_COLORS = {
   enviada: 'bg-green-100 text-green-700',
   aceptada: 'bg-blue-100 text-blue-700',
@@ -19,6 +20,7 @@ const ESTADO_COLORS = {
 export default function Facturas() {
   const qc = useQueryClient()
   const navigate = useNavigate()
+  const confirm = useConfirm()
   const hoy = new Date().toISOString().split('T')[0]
   const [filtros, setFiltros] = useState({ estado: '', fecha_desde: hoy, fecha_hasta: hoy, totalMin: '', totalMax: '' })
   const [page, setPage] = useState(1)
@@ -75,7 +77,10 @@ export default function Facturas() {
         </Link>
         {row.estado !== 'anulada' && (
           <button
-            onClick={() => { if (window.confirm('¿Anular esta factura?')) anularMutation.mutate(row.id) }}
+            onClick={async () => {
+              const ok = await confirm({ title: 'Anular factura', description: '¿Anular esta factura? Esta acción no se puede deshacer y se notificará a la DIAN.', confirmText: 'Anular', variant: 'danger' })
+              if (ok) anularMutation.mutate(row.id)
+            }}
             className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg"
             title="Anular factura"
           >
@@ -146,7 +151,8 @@ export default function Facturas() {
           columns={columns}
           data={facturasFiltradas}
           loading={isLoading}
-          emptyMessage="No hay facturas"
+          emptyPreset="facturas"
+          emptyAction={{ label: 'Ir al POS', to: '/pos' }}
           onRowClick={(row) => navigate(`/facturas/${row.id}`)}
         />
       </div>

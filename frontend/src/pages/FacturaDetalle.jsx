@@ -10,6 +10,7 @@ import { COP } from '../lib/format'
 import { TicketImpresion } from '../components/POS/TicketImpresion'
 import { useLocalPrint } from '../hooks/useLocalPrint'
 import { useAuth } from '../context/AuthContext'
+import { useConfirm } from '../hooks/useConfirm'
 import api from '../services/api'
 
 export default function FacturaDetalle() {
@@ -18,6 +19,7 @@ export default function FacturaDetalle() {
   const qc = useQueryClient()
   const { tenant } = useAuth()
   const qzTray = useLocalPrint()
+  const confirm = useConfirm()
 
   const [showTicket, setShowTicket] = useState(false)
 
@@ -172,7 +174,10 @@ export default function FacturaDetalle() {
           </button>
           {factura?.estado !== 'anulada' && (
             <button
-              onClick={() => { if (window.confirm('¿Anular esta factura?')) anularMutation.mutate() }}
+              onClick={async () => {
+                const ok = await confirm({ title: 'Anular factura', description: '¿Anular esta factura? Esta acción no se puede deshacer y se notificará a la DIAN.', confirmText: 'Anular', variant: 'danger' })
+                if (ok) anularMutation.mutate()
+              }}
               disabled={anularMutation.isPending}
               className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-danger border border-red-200 font-medium px-4 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50"
             >

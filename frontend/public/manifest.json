@@ -1,0 +1,33 @@
+{
+  "name": "CarolinaPOS",
+  "short_name": "CarolinaPOS",
+  "description": "Punto de venta y facturación electrónica DIAN",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#1c61c0",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nueva venta",
+      "short_name": "POS",
+      "url": "/pos",
+      "description": "Ir al punto de venta"
+    },
+    {
+      "name": "Facturas",
+      "url": "/facturas"
+    }
+  ],
+  "categories": ["business", "finance"],
+  "screenshots": []
+}

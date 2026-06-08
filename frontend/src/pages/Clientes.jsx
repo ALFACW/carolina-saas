@@ -66,7 +66,8 @@ export default function Clientes() {
           aria-label="Buscar" />
       </div>
       <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-        <Table columns={columns} data={data?.clientes || []} loading={isLoading} emptyMessage="No hay clientes" />
+        <Table columns={columns} data={data?.clientes || []} loading={isLoading}
+          emptyPreset="clientes" emptyAction={{ label: '+ Nuevo cliente', to: '/clientes/nuevo' }} />
       </div>
       <ConfirmDialog
         open={confirmDialog.open}

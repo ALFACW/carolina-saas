@@ -152,7 +152,8 @@ export default function Productos() {
       </div>
 
       <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-        <Table columns={columns} data={data?.productos || []} loading={isLoading} emptyMessage="Sin productos aún" />
+        <Table columns={columns} data={data?.productos || []} loading={isLoading}
+          emptyPreset="productos" emptyAction={{ label: '+ Nuevo producto', to: '/productos/nuevo' }} />
       </div>
 
       {data && data.total > 20 && (

@@ -8,6 +8,7 @@ import { proveedoresService } from '../services/proveedores'
 import { Table } from '../components/Common/Table'
 import { Button } from '../components/Common/Button'
 import { COP } from '../lib/format'
+import { useConfirm } from '../hooks/useConfirm'
 
 const ESTADO_BADGE = {
   borrador:  'bg-yellow-100 text-yellow-700',
@@ -24,6 +25,7 @@ const ESTADO_LABEL = {
 export default function Compras() {
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const confirm = useConfirm()
   const [search, setSearch] = useState('')
   const [estado, setEstado] = useState('')
   const [proveedorId, setProveedorId] = useState('')
@@ -62,16 +64,22 @@ export default function Compras() {
     onError: (err) => toast.error(err?.response?.data?.error || 'Error al cancelar la compra'),
   })
 
-  const handleRecibir = (compra) => {
-    if (window.confirm(`¿Marcar la compra #${compra.numero_factura || compra.id} como recibida? Esto actualizará el stock de los productos.`)) {
-      recibirMutation.mutate(compra.id)
-    }
+  const handleRecibir = async (compra) => {
+    const ok = await confirm({
+      title: 'Recibir compra',
+      description: `Esto marcará la compra #${compra.numero_factura || compra.id} como recibida y actualizará el stock automáticamente.`,
+      confirmText: 'Recibir', variant: 'info',
+    })
+    if (ok) recibirMutation.mutate(compra.id)
   }
 
-  const handleCancelar = (compra) => {
-    if (window.confirm(`¿Cancelar la compra #${compra.numero_factura || compra.id}?`)) {
-      cancelarMutation.mutate(compra.id)
-    }
+  const handleCancelar = async (compra) => {
+    const ok = await confirm({
+      title: 'Cancelar compra',
+      description: `¿Cancelar la compra #${compra.numero_factura || compra.id}? Esta acción no se puede deshacer.`,
+      confirmText: 'Cancelar compra', variant: 'danger',
+    })
+    if (ok) cancelarMutation.mutate(compra.id)
   }
 
   const resetFiltros = () => {
@@ -254,7 +262,8 @@ export default function Compras() {
           columns={columns}
           data={data?.compras || []}
           loading={isLoading}
-          emptyMessage="No hay órdenes de compra"
+          emptyPreset="compras"
+          emptyAction={{ label: '+ Nueva compra', to: '/compras/nueva' }}
         />
       </div>
 

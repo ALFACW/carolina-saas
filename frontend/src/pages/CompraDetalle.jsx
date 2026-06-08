@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { comprasService } from '../services/compras'
 import { Button } from '../components/Common/Button'
 import { COP } from '../lib/format'
+import { useConfirm } from '../hooks/useConfirm'
 
 const ESTADO_BADGE = {
   borrador:  'bg-yellow-50 text-warning border border-yellow-200',
@@ -32,6 +33,7 @@ export default function CompraDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const confirm = useConfirm()
 
   const { data: compra, isLoading, isError } = useQuery({
     queryKey: ['compra', id],
@@ -48,10 +50,13 @@ export default function CompraDetalle() {
     onError: (err) => toast.error(err?.response?.data?.error || 'Error al recibir la compra'),
   })
 
-  const handleRecibir = () => {
-    if (window.confirm('¿Marcar esta compra como recibida? El stock de los productos se actualizará automáticamente.')) {
-      recibirMutation.mutate()
-    }
+  const handleRecibir = async () => {
+    const ok = await confirm({
+      title: 'Recibir compra',
+      description: 'El stock de todos los productos de esta compra se actualizará automáticamente.',
+      confirmText: 'Recibir compra', variant: 'info',
+    })
+    if (ok) recibirMutation.mutate()
   }
 
   if (isLoading) {

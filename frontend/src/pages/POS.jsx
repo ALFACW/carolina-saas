@@ -122,6 +122,17 @@ export default function POS() {
     return () => setSidebar(true)
   }, [])
 
+  // Advertir si el cajero intenta cerrar/recargar con carrito lleno
+  useEffect(() => {
+    const handler = (e) => {
+      if (usePOSStore.getState().carrito.length === 0) return
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [])
+
   const scannerMs  = parseInt(localStorage.getItem('carolina_scanner_ms')  || '80')
   const scannerMin = parseInt(localStorage.getItem('carolina_scanner_min') || '3')
 

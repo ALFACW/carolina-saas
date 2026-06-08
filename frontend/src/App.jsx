@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { Layout } from './components/Layout/Layout'
 import { RoleGuard } from './components/Auth/RoleGuard'
 import SplashScreen from './components/Common/SplashScreen'
+import { ConfirmProvider } from './hooks/useConfirm'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
@@ -105,10 +106,12 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ErrorBoundary>
-          <AppRoutes />
-        </ErrorBoundary>
-        <Toaster position="top-right" richColors closeButton />
+        <ConfirmProvider>
+          <ErrorBoundary>
+            <AppRoutes />
+          </ErrorBoundary>
+          <Toaster position="top-right" richColors closeButton />
+        </ConfirmProvider>
       </AuthProvider>
     </BrowserRouter>
   )

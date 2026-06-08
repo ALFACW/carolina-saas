@@ -1,4 +1,5 @@
 import React from 'react'
+import EmptyState from './EmptyState'
 
 function SkeletonRow({ cols }) {
   return (
@@ -12,7 +13,7 @@ function SkeletonRow({ cols }) {
   )
 }
 
-export function Table({ columns, data, loading, emptyMessage = 'Sin registros', onRowClick }) {
+export function Table({ columns, data, loading, emptyMessage = 'Sin registros', emptyPreset, emptyAction, onRowClick }) {
   return (
     <div className="w-full bg-white rounded-xl border border-border shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -33,8 +34,8 @@ export function Table({ columns, data, loading, emptyMessage = 'Sin registros', 
               ))
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-5 py-10 text-center text-sm text-ink-2">
-                  {emptyMessage}
+                <td colSpan={columns.length}>
+                  <EmptyState preset={emptyPreset} desc={!emptyPreset ? emptyMessage : undefined} action={emptyAction} compact />
                 </td>
               </tr>
             ) : data.map((row, i) => (

@@ -185,7 +185,7 @@ export default function Proveedores() {
           columns={columns}
           data={data?.proveedores || []}
           loading={isLoading}
-          emptyMessage="No hay proveedores registrados"
+          emptyPreset="proveedores"
         />
       </div>
 
