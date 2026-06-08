@@ -7,8 +7,34 @@
     @apply antialiased bg-surface-soft text-ink;
     font-feature-settings: "kern" 1, "liga" 1;
   }
-  button:not(:disabled) {
-    @apply active:opacity-75 active:scale-[0.97] transition-all;
+  /* ── Interactivos: feedback visual centralizado ───────────────────────── */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  label[for],
+  summary {
+    @apply select-none active:opacity-75 active:scale-[0.97];
+    transition: opacity 80ms ease, transform 80ms ease, background-color 120ms ease,
+                color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+  }
+
+  /* Focus visible solo con teclado (no al hacer clic) */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent/50 ring-offset-1;
+  }
+  :focus:not(:focus-visible) {
+    @apply outline-none;
+  }
+
+  /* Links */
+  a {
+    @apply transition-colors duration-100;
+  }
+
+  /* Inputs y selects */
+  input:not([type="range"]),
+  select,
+  textarea {
+    transition: border-color 120ms ease, box-shadow 120ms ease;
   }
   h1, h2, h3, h4 {
     @apply tracking-tight;
