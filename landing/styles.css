@@ -400,6 +400,58 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; font-
 .step-illu { margin-top: 22px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-soft); height: 150px; overflow: hidden; }
 
 /* ========================================================================
+   APP SCREENSHOTS
+   ======================================================================== */
+.screens-wrap { max-width: 960px; margin-inline: auto; }
+
+.screens-tabs {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  margin-bottom: 28px;
+}
+.screens-tab {
+  padding: 9px 20px; border-radius: 100px; font-size: 14px; font-weight: 600;
+  color: var(--text-2); background: #fff; border: 1.5px solid var(--border);
+  cursor: pointer; transition: all .18s ease;
+}
+.screens-tab:hover { border-color: var(--accent); color: var(--accent); }
+.screens-tab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+.screens-frame {
+  border-radius: var(--radius-lg); overflow: hidden;
+  box-shadow: var(--shadow-lg); border: 1px solid var(--border-strong);
+  background: #fdfdfd;
+}
+.screens-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; background: #f4f4f6; border-bottom: 1px solid var(--border);
+}
+.screens-dots { display: flex; gap: 6px; }
+.screens-dots i {
+  display: block; width: 11px; height: 11px; border-radius: 50%;
+}
+.screens-url {
+  flex: 1; max-width: 280px; margin-inline: auto;
+  height: 26px; border-radius: 7px; background: #fff; border: 1px solid var(--border);
+  display: flex; align-items: center; gap: 6px; padding: 0 11px;
+  font-size: 12px; color: var(--text-3);
+}
+.screens-url svg { color: var(--ok); flex: none; }
+
+.screens-img-wrap {
+  position: relative; overflow: hidden;
+  height: clamp(320px, 42vw, 560px);
+  background: #f9f9f9;
+}
+.screens-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: top left;
+  opacity: 0; transform: scale(1.01);
+  transition: opacity .45s ease, transform .45s ease;
+  pointer-events: none; display: block;
+}
+.screens-img.active { opacity: 1; transform: scale(1); pointer-events: auto; }
+
+/* ========================================================================
    HARDWARE
    ======================================================================== */
 .hw-wrap { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: clamp(32px, 5vw, 64px); align-items: center; }
@@ -408,10 +460,12 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; font-
 .hw-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
 .hw-thumb {
   height: 132px; display: grid; place-items: center; position: relative;
-  background:
-    repeating-linear-gradient(135deg, #f0f1f4 0 10px, #f7f8fa 10px 20px);
+  background: var(--bg-softer);
   border-bottom: 1px solid var(--border);
 }
+.hw-thumb--printer { background: linear-gradient(145deg, #f2f4f8 0%, #eef0f5 100%); }
+.hw-thumb--scanner { background: linear-gradient(145deg, #edf5ff 0%, #e8f3fe 100%); }
+.hw-thumb--drawer  { background: linear-gradient(145deg, #f0f5f2 0%, #ecf5ef 100%); }
 .hw-thumb .ph-tag {
   font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 10.5px; letter-spacing: .04em;
   color: #9a9aa4; background: rgba(255,255,255,.72); border: 1px dashed #c7c7d0; padding: 4px 9px; border-radius: 6px;
@@ -587,6 +641,10 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; font-
 }
 
 /* --- 620px: móvil pequeño --- */
+@media (max-width: 680px) {
+  .screens-tab { padding: 8px 14px; font-size: 13px; }
+  .screens-img-wrap { height: clamp(200px, 55vw, 320px); }
+}
 @media (max-width: 620px) {
   .mock-app { grid-template-columns: 50px 1fr; }
   .mock-cart { display: none; }

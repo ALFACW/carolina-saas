@@ -134,6 +134,17 @@
     });
   }
 
+  /* ---- App screenshots tabs ---- */
+  var screenTabs = document.querySelectorAll(".screens-tab");
+  var screenImgs = document.querySelectorAll(".screens-img");
+  screenTabs.forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      var key = tab.dataset.screen;
+      screenTabs.forEach(function (t) { t.classList.toggle("active", t === tab); });
+      screenImgs.forEach(function (img) { img.classList.toggle("active", img.dataset.screen === key); });
+    });
+  });
+
   /* ---- Smooth anchor offset for sticky nav ---- */
   document.querySelectorAll('a[href^="#"]').forEach(function (link) {
     link.addEventListener("click", function (e) {
