@@ -34,7 +34,7 @@ const SCREENS = [
   { name: 'cierres',    route: '/cierres'   },
 ]
 
-const OUT     = join(__dirname, '../public/brand/screens')
+const OUT     = join(__dirname, '../src/assets/screens')
 const REPO    = join(__dirname, '../..')   // raíz del repo git
 
 function git(cmd) {
@@ -84,7 +84,7 @@ function git(cmd) {
 
       const outPath = join(OUT, `${s.name}.png`)
       await page.screenshot({ path: outPath, clip: { x: 0, y: 0, width: 1440, height: 900 } })
-      captured.push(`frontend/public/brand/screens/${s.name}.png`)
+      captured.push(`frontend/src/assets/screens/${s.name}.png`)
       console.log(' ✅')
     } catch (err) {
       console.log(` ⚠️  ${err.message}`)

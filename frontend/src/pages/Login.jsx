@@ -3,13 +3,18 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getApiError } from '../lib/errors'
 import { AlertCircle, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react'
+import imgPos        from '../assets/screens/pos.png'
+import imgDashboard  from '../assets/screens/dashboard.png'
+import imgFacturas   from '../assets/screens/facturas.png'
+import imgProductos  from '../assets/screens/productos.png'
+import imgCierres    from '../assets/screens/cierres.png'
 
 const SLIDES = [
-  { img: '/brand/screens/pos.png',        title: 'Punto de Venta',     desc: 'Escanea, cobra y actualiza inventario al instante.' },
-  { img: '/brand/screens/dashboard.png',  title: 'Dashboard en vivo',  desc: 'Visualiza ventas e ingresos del día y del mes en tiempo real.' },
-  { img: '/brand/screens/facturas.png',   title: 'Facturación DIAN',   desc: 'Emite facturas electrónicas válidas legalmente sin complicaciones.' },
-  { img: '/brand/screens/productos.png',  title: 'Inventario',         desc: 'Controla stock, precios e IVA de todos tus productos.' },
-  { img: '/brand/screens/cierres.png',    title: 'Cierres de caja',    desc: 'Cuadratura de efectivo y seguimiento de turnos por cajero.' },
+  { img: imgPos,        title: 'Punto de Venta',     desc: 'Escanea, cobra y actualiza inventario al instante.' },
+  { img: imgDashboard,  title: 'Dashboard en vivo',  desc: 'Visualiza ventas e ingresos del día y del mes en tiempo real.' },
+  { img: imgFacturas,   title: 'Facturación DIAN',   desc: 'Emite facturas electrónicas válidas legalmente sin complicaciones.' },
+  { img: imgProductos,  title: 'Inventario',         desc: 'Controla stock, precios e IVA de todos tus productos.' },
+  { img: imgCierres,    title: 'Cierres de caja',    desc: 'Cuadratura de efectivo y seguimiento de turnos por cajero.' },
 ]
 
 export default function Login() {
