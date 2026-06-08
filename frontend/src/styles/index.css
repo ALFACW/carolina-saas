@@ -7,6 +7,9 @@
     @apply antialiased bg-surface-soft text-ink;
     font-feature-settings: "kern" 1, "liga" 1;
   }
+  button:not(:disabled) {
+    @apply active:opacity-75 active:scale-[0.97] transition-all;
+  }
   h1, h2, h3, h4 {
     @apply tracking-tight;
   }

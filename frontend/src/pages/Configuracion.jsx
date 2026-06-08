@@ -154,7 +154,7 @@ export default function Configuracion() {
                         Cambiar logo
                         <input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" onChange={handleLogo} className="hidden" />
                       </label>
-                      <button onClick={eliminarLogo} className="flex-1 py-2 border border-red-200 rounded-lg text-red-500 hover:bg-red-50 transition-colors text-sm">
+                      <button onClick={eliminarLogo} className="flex-1 py-2 border border-red-200 rounded-lg text-red-500 hover:bg-red-50 active:bg-red-100 active:scale-95 transition-all text-sm">
                         Eliminar
                       </button>
                     </div>
@@ -239,7 +239,7 @@ export default function Configuracion() {
                   {qz.estado === 'error'       && <span className="inline-flex items-center gap-1.5 text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-full font-medium">Sin servidor</span>}
                   {qz.estado === 'desconectado'&& <span className="inline-flex items-center gap-1.5 text-xs bg-surface-soft text-ink-2 px-3 py-1.5 rounded-full font-medium">Sin servidor</span>}
                   {qz.estado === 'conectando'  && <span className="inline-flex items-center gap-1.5 text-xs bg-surface-soft text-ink-2 px-3 py-1.5 rounded-full font-medium"><Loader2 className="w-3 h-3 animate-spin" />Conectando...</span>}
-                  <button onClick={qz.conectar} className="p-1.5 text-ink-2 hover:text-ink rounded transition-colors" title="Reconectar">
+                  <button onClick={qz.conectar} className="p-1.5 text-ink-2 hover:text-ink active:scale-90 rounded transition-all" title="Reconectar">
                     <RefreshCw className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -300,7 +300,7 @@ export default function Configuracion() {
 
                   {qz.errorMsg && <p className="text-red-600 text-xs">{qz.errorMsg}</p>}
                   <button onClick={qz.conectar}
-                    className="inline-flex items-center gap-2 text-xs text-ink-2 hover:text-ink transition-colors">
+                    className="inline-flex items-center gap-2 text-xs text-ink-2 hover:text-ink active:opacity-60 transition-all">
                     <RefreshCw className="w-3.5 h-3.5" />Verificar conexión
                   </button>
                 </div>
@@ -509,7 +509,7 @@ export default function Configuracion() {
                           className="flex-1" />
                         <Volume2 className="w-3.5 h-3.5 text-ink-2 flex-shrink-0" />
                         <button onClick={() => sounds.scan()}
-                          className="text-xs text-ink-2 hover:text-ink border border-border px-2.5 py-1.5 rounded-lg">
+                          className="text-xs text-ink-2 hover:text-ink active:bg-gray-200 active:scale-95 border border-border px-2.5 py-1.5 rounded-lg transition-all">
                           Probar
                         </button>
                       </div>
