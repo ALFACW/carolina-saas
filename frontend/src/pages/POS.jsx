@@ -19,7 +19,7 @@ import { Modal } from '../components/Common/Modal'
 import { useAuth } from '../context/AuthContext'
 import { useSounds } from '../hooks/useSounds'
 import { useLocalPrint } from '../hooks/useLocalPrint'
-import { buildTicket } from '../lib/escpos'
+import { buildTicket, buildTicketCierre } from '../lib/escpos'
 import { COP } from '../lib/format'
 
 export default function POS() {
@@ -71,7 +71,29 @@ export default function POS() {
 
   const cerrarAnteriorMutation = useMutation({
     mutationFn: ({ id, datos }) => cajasService.cerrarSesion(id, datos),
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      // Imprimir ticket de cierre si hay impresora disponible
+      try {
+        const qz = qzTrayRef.current
+        if (qz && (qz.conectado || qz.btConectado)) {
+          const sesionData = {
+            ...data.sesion,
+            cajero_nombre: user?.nombre || '-',
+            ...data.resumen,
+          }
+          const ticket = buildTicketCierre({
+            empresa: tenant || {},
+            sesion: sesionData,
+            W: qz.anchoCars,
+            densidad: qz.densidad,
+            avancePapel: qz.avancePapel,
+            modoCortePapel: qz.modoCortePapel,
+          })
+          await qz.imprimirTicket(ticket)
+        }
+      } catch (e) {
+        console.warn('No se pudo imprimir cierre anterior:', e.message)
+      }
       qc.invalidateQueries({ queryKey: ['sesion-activa'] })
       setModalCaja('abrir')
       setContadoAnterior('')
