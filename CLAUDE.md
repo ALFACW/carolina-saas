@@ -13,9 +13,10 @@
 | Frontend | React 18 + Vite + Tailwind CSS + Zustand + React Router v6 |
 | Backend | Node.js + Express |
 | Base de datos | PostgreSQL multi-tenant (`tenant_id` en todas las tablas) |
-| Backend deploy | Railway |
+| Backend deploy | Railway (región `us-east4` — pendiente mover a SA) |
 | Frontend deploy | Netlify → app.carolinapos.co |
 | Impresión | Relay vía Railway + servidor.py local (ESC/POS via win32print) |
+| Impresión Bluetooth | Web Bluetooth API (Android Chrome) — `lib/bluetoothPrint.js` |
 | Facturación DIAN | Factus API (actualmente en sandbox) |
 | Auth | JWT + refresh tokens + Zustand persist |
 
@@ -24,20 +25,21 @@
 ## Módulos Implementados
 
 - **Auth**: Login con correo o username, roles por tenant (admin/supervisor/cajero/vendedor/inventario)
-- **POS**: Carrito, búsqueda productos, descuentos por ítem, métodos de pago, procesamiento venta → Factus DIAN
+- **POS**: Carrito, búsqueda rápida (pg_trgm), descuentos por ítem, métodos de pago, próxima factura visible, procesamiento venta → Factus DIAN
 - **Facturación DIAN**: Factus API, PDF, envío email, nota crédito, rangos numeración
 - **Ticket ESC/POS**: Layout 4 columnas, QR validación DIAN, densidad configurable, 58/80mm
-- **Impresión Relay**: Frontend → Railway `/api/print/job` → servidor.py local (win32print). Elimina CORS/Chrome PNA para siempre. Token por tenant en `tenants.printer_token`.
+- **Impresión Relay**: Frontend → Railway `/api/print/job` → servidor.py local (win32print). Token **por dispositivo** en `localStorage` (`carolina_device_token`) + tabla `print_devices` en PostgreSQL.
+- **Impresión Bluetooth**: Web Bluetooth para Android Chrome. Soporta 4 servicios GATT (Xprinter, Serialio, Nordic UART, Genérico). Chunks de 512 bytes.
 - **Inventario**: Productos, stock, movimientos, alertas stock bajo, importar
 - **Clientes**: CRUD con tipo doc CC/NIT/CE, búsqueda desde POS
 - **Proveedores + Compras**: CRUD, actualiza stock automáticamente
 - **Cartera**: Facturas a crédito, seguimiento pagos
-- **Caja y Sesiones**: Apertura/cierre con arqueo, múltiples cajas por tienda
+- **Caja y Sesiones**: Apertura/cierre con arqueo, múltiples cajas por tienda, imprime ticket de cierre al cerrar turno anterior
 - **Reportes**: Dashboard métricas, ventas por período/producto/cajero
-- **Configuración**: Empresa, impresora, DIAN (resolución, prefijo, Factus keys)
+- **Configuración**: Empresa, impresora, DIAN (resolución, prefijo, Factus keys), Bluetooth
 - **Super Admin**: `/super-admin` — gestión de todos los tenants
 - **Usuarios**: CRUD con roles, username opcional
-- **Guía Hardware**: `/guia-hardware` — instrucciones servidor.py + impresora
+- **Guía Hardware**: `/guia-hardware` — instrucciones servidor.py + impresora (con token por dispositivo)
 
 ---
 
@@ -54,6 +56,8 @@
 
 5. **Factus sandbox vs prod**: `FACTUS_BASE_URL` distingue ambientes. No mezclar nunca.
 
+6. **Token de impresora**: Es por **dispositivo** (navegador), no por usuario ni por tenant. Se guarda en `localStorage` como `carolina_device_token` y en la tabla `print_devices`. Permite múltiples PCs con distintas impresoras bajo el mismo usuario/tenant.
+
 ---
 
 ## Archivos Clave
@@ -61,16 +65,26 @@
 ```
 frontend/src/
 ├── lib/escpos.js            ← Generador ESC/POS (CRÍTICO - no tocar sin cuidado)
-├── hooks/useLocalPrint.js   ← Hook impresión relay (reemplazó useQZTray)
+├── lib/bluetoothPrint.js    ← Impresión BT via Web Bluetooth (Android Chrome)
+├── hooks/useLocalPrint.js   ← Hook impresión relay + Bluetooth (reemplazó useQZTray)
 ├── store/posStore.js        ← Carrito + cálculo IVA colombiano
 ├── pages/POS.jsx            ← Punto de venta
-└── pages/Configuracion.jsx  ← Config empresa + impresora + DIAN
+├── pages/Configuracion.jsx  ← Config empresa + impresora + DIAN + Bluetooth
+├── context/AuthContext.jsx  ← Splash screen state (splashing, triggerSplash)
+├── components/Common/
+│   ├── SplashScreen.jsx     ← Pantalla de carga con logo CarolinaPOS
+│   ├── ErrorBoundary.jsx    ← Error boundary global
+│   └── PageSkeleton.jsx     ← Skeleton loaders reutilizables
+└── styles/index.css         ← Design system global (10 secciones)
 
 backend/src/
-├── lib/factus.js            ← Cliente Factus API (CRÍTICO)
-├── routes/printRelay.js     ← Cola de trabajos de impresión relay
-├── controllers/posController.js    ← Procesar venta + Factus
+├── lib/factus.js                   ← Cliente Factus API (CRÍTICO)
+├── routes/printRelay.js            ← Cola de trabajos, tabla print_devices
+├── routes/auth.js                  ← Rate limiting: 20 intentos/15 min por IP
+├── controllers/posController.js    ← Procesar venta + Factus + búsqueda rápida
 └── controllers/authController.js   ← Login con email o username
+
+backend/src/db/migrations/          ← Historial SQL numerado (001..022)
 
 carolinapos-print/
 ├── servidor.py              ← Servidor local polling Railway (win32print, sin Flask)
@@ -86,7 +100,10 @@ DATABASE_URL, JWT_SECRET, REFRESH_TOKEN_SECRET
 FACTUS_BASE_URL=https://api-sandbox.factus.com.co  ← cambiar a prod cuando toque
 FACTUS_CLIENT_ID, FACTUS_CLIENT_SECRET, FACTUS_USERNAME, FACTUS_PASSWORD
 FRONTEND_URL=https://app.carolinapos.co
+EMAIL_USER, EMAIL_PASS, EMAIL_FROM
 ```
+
+Ver `backend/.env.example` para documentación completa.
 
 ---
 
@@ -98,21 +115,19 @@ FRONTEND_URL=https://app.carolinapos.co
    ```
    *(email actualizado por el usuario — era carlos@tiendademo.com)*
 
-2. **DNS app.carolinapos.co**: ✅ CNAME → Netlify. `FRONTEND_URL` Railway pendiente actualizar a `https://app.carolinapos.co`
+2. **Editar username** desde módulo Usuarios admin
 
-3. **Landing page carolinapos.co**: ✅ Desplegada en Cloudflare Pages → carolinapos.co
+3. **Reimprimir ticket desde FacturaDetalle**: Agregar botón + llamada `buildTicket` con parámetro `W`
 
-4. **Emails Zoho Mail**: contacto@, soporte@, ventas@, noreply@carolinapos.co
+4. **Factus producción**: Cambiar `FACTUS_BASE_URL` cuando cliente tenga resolución DIAN real
 
-5. **Editar username** desde módulo Usuarios admin
+5. **Cobro suscripciones Wompi**: Integrar cuando haya 10+ clientes. Antes: activación manual Super Admin.
 
-6. **Reimprimir ticket desde FacturaDetalle**: Agregar botón + llamada `buildTicket` con parámetro `W`
+6. **Municipio dinámico Factus**: Actualmente hardcodeado `11001` (Bogotá). Hacer lookup real.
 
-7. **Factus producción**: Cambiar `FACTUS_BASE_URL` cuando cliente tenga resolución DIAN real
+7. **Railway región**: Cambiar de `sfo` a `us-east4` para mejor latencia Colombia. Requiere plan pago.
 
-8. **Cobro suscripciones Wompi**: Integrar cuando haya 10+ clientes. Antes: activación manual Super Admin.
-
-9. **Municipio dinámico Factus**: Actualmente hardcodeado `11001` (Bogotá). Hacer lookup real.
+8. **iOS Bluetooth**: Web Bluetooth bloqueado por Apple. Opciones: relay vía PC (funciona hoy) o app React Native.
 
 ---
 

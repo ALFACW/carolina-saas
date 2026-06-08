@@ -295,7 +295,7 @@ export default function Configuracion() {
                         const a = document.createElement('a')
                         a.href = url; a.download = 'carolinapos-print.zip'; a.click()
                         URL.revokeObjectURL(url)
-                      } catch { alert('Error al descargar. Intenta de nuevo.') }
+                      } catch { toast.error('Error al descargar. Intenta de nuevo.') }
                     }}
                     className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent/80 font-medium transition-colors"
                   >
@@ -324,7 +324,7 @@ export default function Configuracion() {
                         const a   = document.createElement('a')
                         a.href = url; a.download = 'carolinapos-print.zip'; a.click()
                         URL.revokeObjectURL(url)
-                      } catch { alert('Error al descargar. Intenta de nuevo.') }
+                      } catch { toast.error('Error al descargar. Intenta de nuevo.') }
                     }}
                     className="inline-flex items-center gap-2 bg-accent text-white text-sm px-5 py-2.5 rounded-lg hover:bg-accent/90 font-medium transition-colors">
                     <Download className="w-4 h-4" />Descargar carolinapos-print.zip
@@ -370,7 +370,7 @@ export default function Configuracion() {
                           className="px-2.5 py-2 border border-border rounded-lg text-ink-2 hover:bg-surface-soft active:bg-gray-200 active:scale-95 transition-all">
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={async () => { try { await qz.imprimirPrueba() } catch(e) { alert(e.message) } }}
+                        <button onClick={async () => { try { await qz.imprimirPrueba() } catch(e) { toast.error(e.message) } }}
                           disabled={!qz.impTermica}
                           className="px-3 py-2 border border-border rounded-lg text-xs font-medium text-ink-2 hover:bg-surface-soft active:bg-gray-200 active:scale-95 transition-all disabled:opacity-40">
                           Prueba

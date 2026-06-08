@@ -4,6 +4,7 @@ import { Toaster } from 'sonner'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { Layout } from './components/Layout/Layout'
 import { RoleGuard } from './components/Auth/RoleGuard'
+import SplashScreen from './components/Common/SplashScreen'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
@@ -31,6 +32,8 @@ import CompraDetalle from './pages/CompraDetalle'
 import Cartera from './pages/Cartera'
 import GuiaHardware from './pages/GuiaHardware'
 import CierresCaja from './pages/CierresCaja'
+import NotFound from './pages/NotFound'
+import ErrorBoundary from './components/Common/ErrorBoundary'
 
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useAuth()
@@ -45,51 +48,56 @@ function PublicRoute({ children }) {
 }
 
 function AppRoutes() {
+  const { splashing } = useAuth()
+
   return (
-    <Routes>
-      {/* Rutas públicas */}
-      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+    <>
+      {splashing && <SplashScreen />}
+      <Routes>
+        {/* Rutas públicas */}
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
 
-      {/* Super Admin (sin Layout normal) */}
-      <Route path="/super-admin/login" element={<SuperAdminLogin />} />
-      <Route path="/super-admin" element={<SuperAdmin />} />
+        {/* Super Admin (sin Layout normal) */}
+        <Route path="/super-admin/login" element={<SuperAdminLogin />} />
+        <Route path="/super-admin" element={<SuperAdmin />} />
 
-      {/* Rutas de caja: pantalla completa, sin Layout */}
-      <Route path="/caja/abrir" element={<PrivateRoute><AbrirCaja /></PrivateRoute>} />
-      <Route path="/caja/cerrar/:sesionId" element={<PrivateRoute><CerrarCaja /></PrivateRoute>} />
+        {/* Rutas de caja: pantalla completa, sin Layout */}
+        <Route path="/caja/abrir" element={<PrivateRoute><AbrirCaja /></PrivateRoute>} />
+        <Route path="/caja/cerrar/:sesionId" element={<PrivateRoute><CerrarCaja /></PrivateRoute>} />
 
-      {/* Rutas protegidas con Layout */}
-      <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<RoleGuard roles={['admin', 'supervisor']}><Dashboard /></RoleGuard>} />
-        <Route path="pos" element={<RoleGuard roles={['admin', 'supervisor', 'cajero', 'vendedor']}><POS /></RoleGuard>} />
-        <Route path="facturas" element={<RoleGuard roles={['admin', 'supervisor']}><Facturas /></RoleGuard>} />
-        <Route path="facturas/:id" element={<RoleGuard roles={['admin', 'supervisor']}><FacturaDetalle /></RoleGuard>} />
-        <Route path="productos" element={<RoleGuard roles={['admin', 'inventario']}><Productos /></RoleGuard>} />
-        <Route path="productos/nuevo" element={<RoleGuard roles={['admin', 'inventario']}><ProductoForm /></RoleGuard>} />
-        <Route path="productos/:id/editar" element={<RoleGuard roles={['admin', 'inventario']}><ProductoForm /></RoleGuard>} />
-        <Route path="clientes" element={<RoleGuard roles={['admin', 'supervisor', 'inventario']}><Clientes /></RoleGuard>} />
-        <Route path="clientes/nuevo" element={<RoleGuard roles={['admin', 'supervisor', 'inventario']}><ClienteForm /></RoleGuard>} />
-        <Route path="clientes/:id/editar" element={<RoleGuard roles={['admin', 'supervisor', 'inventario']}><ClienteForm /></RoleGuard>} />
-        <Route path="reportes" element={<RoleGuard roles={['admin', 'supervisor']}><Reportes /></RoleGuard>} />
-        <Route path="configuracion" element={<RoleGuard roles={['admin']}><Configuracion /></RoleGuard>} />
-        <Route path="guia-hardware" element={<GuiaHardware />} />
-        <Route path="mi-perfil" element={<MiPerfil />} />
-        <Route path="usuarios" element={<RoleGuard roles={['admin']}><Usuarios /></RoleGuard>} />
-        <Route path="cajas" element={<RoleGuard roles={['admin', 'supervisor']}><Cajas /></RoleGuard>} />
-        <Route path="cierres" element={<RoleGuard roles={['admin', 'supervisor']}><CierresCaja /></RoleGuard>} />
-        <Route path="sesiones/:id" element={<RoleGuard roles={['admin', 'supervisor']}><SesionDetalle /></RoleGuard>} />
-        <Route path="proveedores" element={<RoleGuard roles={['admin', 'supervisor']}><Proveedores /></RoleGuard>} />
-        <Route path="compras" element={<RoleGuard roles={['admin', 'supervisor']}><Compras /></RoleGuard>} />
-        <Route path="compras/nueva" element={<RoleGuard roles={['admin', 'supervisor']}><CompraForm /></RoleGuard>} />
-        <Route path="compras/:id/editar" element={<RoleGuard roles={['admin', 'supervisor']}><CompraForm /></RoleGuard>} />
-        <Route path="compras/:id" element={<RoleGuard roles={['admin', 'supervisor']}><CompraDetalle /></RoleGuard>} />
-        <Route path="cartera" element={<RoleGuard roles={['admin', 'supervisor']}><Cartera /></RoleGuard>} />
-      </Route>
+        {/* Rutas protegidas con Layout */}
+        <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<RoleGuard roles={['admin', 'supervisor']}><Dashboard /></RoleGuard>} />
+          <Route path="pos" element={<RoleGuard roles={['admin', 'supervisor', 'cajero', 'vendedor']}><POS /></RoleGuard>} />
+          <Route path="facturas" element={<RoleGuard roles={['admin', 'supervisor']}><Facturas /></RoleGuard>} />
+          <Route path="facturas/:id" element={<RoleGuard roles={['admin', 'supervisor']}><FacturaDetalle /></RoleGuard>} />
+          <Route path="productos" element={<RoleGuard roles={['admin', 'inventario']}><Productos /></RoleGuard>} />
+          <Route path="productos/nuevo" element={<RoleGuard roles={['admin', 'inventario']}><ProductoForm /></RoleGuard>} />
+          <Route path="productos/:id/editar" element={<RoleGuard roles={['admin', 'inventario']}><ProductoForm /></RoleGuard>} />
+          <Route path="clientes" element={<RoleGuard roles={['admin', 'supervisor', 'inventario']}><Clientes /></RoleGuard>} />
+          <Route path="clientes/nuevo" element={<RoleGuard roles={['admin', 'supervisor', 'inventario']}><ClienteForm /></RoleGuard>} />
+          <Route path="clientes/:id/editar" element={<RoleGuard roles={['admin', 'supervisor', 'inventario']}><ClienteForm /></RoleGuard>} />
+          <Route path="reportes" element={<RoleGuard roles={['admin', 'supervisor']}><Reportes /></RoleGuard>} />
+          <Route path="configuracion" element={<RoleGuard roles={['admin']}><Configuracion /></RoleGuard>} />
+          <Route path="guia-hardware" element={<GuiaHardware />} />
+          <Route path="mi-perfil" element={<MiPerfil />} />
+          <Route path="usuarios" element={<RoleGuard roles={['admin']}><Usuarios /></RoleGuard>} />
+          <Route path="cajas" element={<RoleGuard roles={['admin', 'supervisor']}><Cajas /></RoleGuard>} />
+          <Route path="cierres" element={<RoleGuard roles={['admin', 'supervisor']}><CierresCaja /></RoleGuard>} />
+          <Route path="sesiones/:id" element={<RoleGuard roles={['admin', 'supervisor']}><SesionDetalle /></RoleGuard>} />
+          <Route path="proveedores" element={<RoleGuard roles={['admin', 'supervisor']}><Proveedores /></RoleGuard>} />
+          <Route path="compras" element={<RoleGuard roles={['admin', 'supervisor']}><Compras /></RoleGuard>} />
+          <Route path="compras/nueva" element={<RoleGuard roles={['admin', 'supervisor']}><CompraForm /></RoleGuard>} />
+          <Route path="compras/:id/editar" element={<RoleGuard roles={['admin', 'supervisor']}><CompraForm /></RoleGuard>} />
+          <Route path="compras/:id" element={<RoleGuard roles={['admin', 'supervisor']}><CompraDetalle /></RoleGuard>} />
+          <Route path="cartera" element={<RoleGuard roles={['admin', 'supervisor']}><Cartera /></RoleGuard>} />
+        </Route>
 
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   )
 }
 
@@ -97,7 +105,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <ErrorBoundary>
+          <AppRoutes />
+        </ErrorBoundary>
         <Toaster position="top-right" richColors closeButton />
       </AuthProvider>
     </BrowserRouter>

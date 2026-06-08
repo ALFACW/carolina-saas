@@ -1,11 +1,18 @@
 import React from 'react'
 
-export function Table({ columns, data, loading, emptyMessage = 'Sin registros', onRowClick }) {
-  if (loading) return (
-    <div className="w-full bg-white rounded-xl border border-border shadow-sm">
-      <div className="p-10 text-center text-sm text-ink-2">Cargando...</div>
-    </div>
+function SkeletonRow({ cols }) {
+  return (
+    <tr className="border-b border-border/60">
+      {Array.from({ length: cols }).map((_, i) => (
+        <td key={i} className="px-5 py-3.5">
+          <div className="skeleton h-4 rounded" style={{ width: i === 0 ? '60%' : i === cols - 1 ? '30%' : '80%' }} />
+        </td>
+      ))}
+    </tr>
   )
+}
+
+export function Table({ columns, data, loading, emptyMessage = 'Sin registros', onRowClick }) {
   return (
     <div className="w-full bg-white rounded-xl border border-border shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -20,7 +27,11 @@ export function Table({ columns, data, loading, emptyMessage = 'Sin registros', 
             </tr>
           </thead>
           <tbody>
-            {data.length === 0 ? (
+            {loading ? (
+              Array.from({ length: 7 }).map((_, i) => (
+                <SkeletonRow key={i} cols={columns.length} />
+              ))
+            ) : data.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="px-5 py-10 text-center text-sm text-ink-2">
                   {emptyMessage}

@@ -6,7 +6,7 @@ import api from '../services/api'
 import { COP } from '../lib/format'
 import { DollarSign, ShoppingCart, AlertCircle, TrendingUp } from 'lucide-react'
 import KPICard from '../components/ui/KPICard'
-import PageHeader from '../components/ui/PageHeader'
+import { KPISkeleton, TableSkeleton } from '../components/Common/PageSkeleton'
 
 const ESTADO_STYLE = {
   enviada:  'bg-green-50 text-success',
@@ -16,7 +16,7 @@ const ESTADO_STYLE = {
 }
 
 export default function Dashboard() {
-  const { data: dash } = useQuery({
+  const { data: dash, isLoading } = useQuery({
     queryKey: ['pos-dashboard'],
     queryFn: posService.getDashboard,
     refetchInterval: false,
@@ -44,7 +44,7 @@ export default function Dashboard() {
   const ultimas = dash?.ultimas_facturas || []
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-ink">Dashboard</h1>
@@ -67,12 +67,16 @@ export default function Dashboard() {
       )}
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard icon={ShoppingCart} label="Ventas hoy" value={ventasHoy.cantidad} />
-        <KPICard icon={DollarSign} label="Ingresos hoy" value={COP(ventasHoy.total)} />
-        <KPICard icon={TrendingUp} label="Ventas del mes" value={ventasMes.cantidad} />
-        <KPICard icon={DollarSign} label="Ingresos del mes" value={COP(ventasMes.total)} />
-      </div>
+      {isLoading ? (
+        <KPISkeleton count={4} />
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <KPICard icon={ShoppingCart} label="Ventas hoy" value={ventasHoy.cantidad} />
+          <KPICard icon={DollarSign} label="Ingresos hoy" value={COP(ventasHoy.total)} />
+          <KPICard icon={TrendingUp} label="Ventas del mes" value={ventasMes.cantidad} />
+          <KPICard icon={DollarSign} label="Ingresos del mes" value={COP(ventasMes.total)} />
+        </div>
+      )}
 
       {/* Acciones rápidas */}
       <div>
@@ -102,7 +106,22 @@ export default function Dashboard() {
             <p className="text-sm font-semibold text-ink">Últimas facturas</p>
             <Link to="/facturas" className="text-xs text-ink-2 hover:text-ink font-medium">Ver todas</Link>
           </div>
-          {ultimas.length === 0 ? (
+          {isLoading ? (
+            <div className="p-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between py-2.5 border-b border-border last:border-0">
+                  <div className="space-y-1.5">
+                    <div className="skeleton h-3.5 w-28 rounded" />
+                    <div className="skeleton h-3 w-16 rounded" />
+                  </div>
+                  <div className="space-y-1.5 items-end flex flex-col">
+                    <div className="skeleton h-3.5 w-20 rounded" />
+                    <div className="skeleton h-4 w-16 rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : ultimas.length === 0 ? (
             <p className="px-5 py-8 text-sm text-ink-2">Sin facturas aún</p>
           ) : (
             <div className="divide-y divide-border">
@@ -130,7 +149,20 @@ export default function Dashboard() {
             <p className="text-sm font-semibold text-ink">Productos más vendidos</p>
             <Link to="/productos" className="text-xs text-ink-2 hover:text-ink font-medium">Ver todos</Link>
           </div>
-          {!topProductos?.length ? (
+          {isLoading ? (
+            <div className="p-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 py-2.5 border-b border-border last:border-0">
+                  <div className="skeleton w-4 h-3 rounded" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="skeleton h-3.5 w-36 rounded" />
+                    <div className="skeleton h-3 w-20 rounded" />
+                  </div>
+                  <div className="skeleton h-3.5 w-16 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : !topProductos?.length ? (
             <p className="px-5 py-8 text-sm text-ink-2">Sin datos de ventas aún</p>
           ) : (
             <div className="divide-y divide-border">

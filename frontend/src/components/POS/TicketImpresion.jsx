@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { Printer, Zap } from 'lucide-react'
+import { toast } from 'sonner'
 import { COP } from '../../lib/format'
 import { buildTicket } from '../../lib/escpos'
 
@@ -31,7 +32,7 @@ export function TicketImpresion({ venta, tenant, cliente, qzTray }) {
       })
       await qzTray.imprimirTicket(cmds)
     } catch (err) {
-      alert('Error al imprimir: ' + err.message)
+      toast.error('Error al imprimir: ' + err.message)
     } finally {
       setImprimiendo(false)
     }
