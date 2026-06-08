@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Download, XCircle, Printer, Send, CheckCircle2, X, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { getApiError } from '../lib/errors'
 import { facturasService } from '../services/facturas'
 import { Loading } from '../components/Common/Loading'
 import { Button } from '../components/Common/Button'
@@ -36,7 +37,7 @@ export default function FacturaDetalle() {
   const anularMutation = useMutation({
     mutationFn: () => facturasService.anular(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['factura', id] }); toast.success('Factura anulada') },
-    onError: (err) => toast.error(err?.response?.data?.error || 'Error al anular la factura'),
+    onError: (err) => toast.error(getApiError(err, 'Error al anular la factura')),
   })
 
   const pdfMutation = useMutation({
@@ -66,7 +67,7 @@ export default function FacturaDetalle() {
       toast.success('Factura enviada correctamente al correo')
     },
     onError: (err) => {
-      setEmailErr(err.response?.data?.error || 'Error al enviar el correo. Intenta nuevamente.')
+      setEmailErr(getApiError(err, 'Error al enviar el correo. Intenta nuevamente.'))
     },
   })
 

@@ -7,6 +7,7 @@ import {
   DollarSign, Clock, AlertTriangle,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { getApiError } from '../lib/errors'
 import { usePOSStore } from '../store/posStore'
 import { useUIStore } from '../store/uiStore'
 import { posService } from '../services/pos'
@@ -66,7 +67,7 @@ export default function POS() {
       setCajaIdModal('')
       setTimeout(() => searchRef.current?.focus(), 100)
     },
-    onError: (err) => setErrorModal(err?.response?.data?.error || 'Error al abrir la caja'),
+    onError: (err) => setErrorModal(getApiError(err, 'Error al abrir la caja')),
   })
 
   const cerrarAnteriorMutation = useMutation({
@@ -99,7 +100,7 @@ export default function POS() {
       setContadoAnterior('')
       setErrorModal('')
     },
-    onError: (err) => setErrorModal(err?.response?.data?.error || 'Error al cerrar la sesión anterior'),
+    onError: (err) => setErrorModal(getApiError(err, 'Error al cerrar la sesión anterior')),
   })
 
   useEffect(() => {
@@ -386,7 +387,7 @@ export default function POS() {
       qc.invalidateQueries({ queryKey: ['pos-dashboard'] })
       refetchProxima()
     },
-    onError: (err) => { soundError(); setErrorVenta(err.response?.data?.error || 'Error al procesar la venta') },
+    onError: (err) => { soundError(); setErrorVenta(getApiError(err, 'Error al procesar la venta')) },
   })
 
   const handleCobrar = () => {

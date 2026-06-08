@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Search, Eye, XCircle, Download, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { getApiError } from '../lib/errors'
 import { facturasService } from '../services/facturas'
 import { Table } from '../components/Common/Table'
 import { Button } from '../components/Common/Button'
@@ -53,7 +54,7 @@ export default function Facturas() {
   const anularMutation = useMutation({
     mutationFn: facturasService.anular,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['facturas'] }); toast.success('Factura anulada') },
-    onError: (err) => toast.error(err?.response?.data?.error || 'Error al anular la factura'),
+    onError: (err) => toast.error(getApiError(err, 'Error al anular la factura')),
   })
 
   const columns = [

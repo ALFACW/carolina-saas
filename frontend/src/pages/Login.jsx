@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getApiError } from '../lib/errors'
 import { AlertCircle, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react'
 
 // ── Paleta de la app ──────────────────────────────────────────────────────────
@@ -330,7 +331,7 @@ export default function Login() {
       await login(loginInput, password)
       navigate('/dashboard')
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al iniciar sesión')
+      setError(getApiError(err, 'Error al iniciar sesión'))
     } finally {
       setLoading(false)
     }

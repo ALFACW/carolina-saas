@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, PackageCheck, Edit } from 'lucide-react'
 import { toast } from 'sonner'
+import { getApiError } from '../lib/errors'
 import { comprasService } from '../services/compras'
 import { Button } from '../components/Common/Button'
 import { COP } from '../lib/format'
@@ -47,7 +48,7 @@ export default function CompraDetalle() {
       qc.invalidateQueries({ queryKey: ['compras'] })
       toast.success('Compra recibida — stock actualizado')
     },
-    onError: (err) => toast.error(err?.response?.data?.error || 'Error al recibir la compra'),
+    onError: (err) => toast.error(getApiError(err, 'Error al recibir la compra')),
   })
 
   const handleRecibir = async () => {

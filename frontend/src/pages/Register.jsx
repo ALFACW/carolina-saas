@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { AlertCircle, CheckCircle2 } from 'lucide-react'
+import { getApiError } from '../lib/errors'
 
 const PLANES = [
   { id: 'basico',      nombre: 'Básico',       precio: '$189.000/mes', desc: '3 usuarios · 2 cajas · 200 ventas/día' },
@@ -88,7 +89,7 @@ export default function Register() {
       await register(empresa, admin)
       navigate('/dashboard')
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al registrarse')
+      setError(getApiError(err, 'Error al registrarse'))
     } finally {
       setLoading(false)
     }
