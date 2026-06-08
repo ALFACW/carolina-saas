@@ -1,7 +1,7 @@
 /**
- * Captura screenshots de cada módulo de CarolinaPOS para el carrusel del login.
+ * Captura screenshots de cada módulo de CarolinaPOS y hace deploy automático.
  *
- * Uso:
+ * Uso (PowerShell):
  *   $env:CAPTURE_EMAIL="admin@tutienda.com"; $env:CAPTURE_PASSWORD="tupass"; npm run capture
  *
  * Env opcionales:
@@ -12,12 +12,13 @@ import { chromium } from 'playwright'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { mkdirSync } from 'fs'
+import { execSync } from 'child_process'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-const BASE_URL  = process.env.APP_URL       || 'https://app.carolinapos.co'
-const EMAIL     = process.env.CAPTURE_EMAIL
-const PASSWORD  = process.env.CAPTURE_PASSWORD
+const BASE_URL = process.env.APP_URL      || 'https://app.carolinapos.co'
+const EMAIL    = process.env.CAPTURE_EMAIL
+const PASSWORD = process.env.CAPTURE_PASSWORD
 
 if (!EMAIL || !PASSWORD) {
   console.error('\n❌  Faltan credenciales. Ejecuta así (PowerShell):\n')
@@ -33,7 +34,12 @@ const SCREENS = [
   { name: 'cierres',    route: '/cierres'   },
 ]
 
-const OUT = join(__dirname, '../public/brand/screens')
+const OUT     = join(__dirname, '../public/brand/screens')
+const REPO    = join(__dirname, '../..')   // raíz del repo git
+
+function git(cmd) {
+  return execSync(cmd, { cwd: REPO, encoding: 'utf8' }).trim()
+}
 
 ;(async () => {
   mkdirSync(OUT, { recursive: true })
@@ -58,7 +64,6 @@ const OUT = join(__dirname, '../public/brand/screens')
     await page.waitForURL('**/dashboard', { timeout: 20_000 })
     console.log('✅  Login exitoso\n')
   } catch {
-    // Puede haber redirigido a /caja/abrir primero
     const url = page.url()
     if (!url.includes('/dashboard') && !url.includes('/pos') && !url.includes('/caja')) {
       console.error('❌  Login falló — revisa las credenciales')
@@ -69,25 +74,42 @@ const OUT = join(__dirname, '../public/brand/screens')
   }
 
   // ── Screenshots ──────────────────────────────────────────────────────────────
+  const captured = []
   for (const s of SCREENS) {
-    process.stdout.write(`📸  Capturando /${s.name}...`)
+    process.stdout.write(`📸  Capturando ${s.route}...`)
     try {
       await page.goto(`${BASE_URL}${s.route}`, { waitUntil: 'domcontentloaded' })
       await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {})
-      // Espera extra para que carguen datos y gráficas
       await new Promise(r => setTimeout(r, 1800))
 
-      await page.screenshot({
-        path: join(OUT, `${s.name}.png`),
-        clip: { x: 0, y: 0, width: 1440, height: 900 },
-      })
+      const outPath = join(OUT, `${s.name}.png`)
+      await page.screenshot({ path: outPath, clip: { x: 0, y: 0, width: 1440, height: 900 } })
+      captured.push(`frontend/public/brand/screens/${s.name}.png`)
       console.log(' ✅')
     } catch (err) {
-      console.log(` ⚠️  Error: ${err.message}`)
+      console.log(` ⚠️  ${err.message}`)
     }
   }
 
   await browser.close()
-  console.log(`\n✨  Imágenes guardadas en frontend/public/brand/screens/`)
-  console.log('   Haz git add + commit para incluirlas en el deploy.\n')
+
+  if (captured.length === 0) {
+    console.error('\n❌  No se capturó ninguna imagen — abortando deploy.\n')
+    process.exit(1)
+  }
+
+  // ── Git commit + push ────────────────────────────────────────────────────────
+  console.log('\n📦  Haciendo commit y push...')
+  try {
+    git(`git add ${captured.join(' ')}`)
+    git(`git commit -m "Update login carousel screenshots (${captured.length} screens)"`)
+    git('git push')
+    console.log('🚀  Deploy listo — Netlify actualizará en ~1 min.\n')
+  } catch (err) {
+    if (err.message.includes('nothing to commit')) {
+      console.log('✅  Las imágenes no cambiaron — nada que commitear.\n')
+    } else {
+      console.error('❌  Error en git:', err.message)
+    }
+  }
 })()
