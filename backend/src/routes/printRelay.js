@@ -23,7 +23,7 @@ setInterval(() => {
 router.get('/status', authMiddleware, async (req, res) => {
   try {
     let { rows } = await db.query(
-      'SELECT printer_token FROM tenants WHERE id = $1',
+      'SELECT printer_token, printer_names FROM tenants WHERE id = $1',
       [req.user.tenant_id]
     )
     let token = rows[0]?.printer_token
@@ -34,9 +34,11 @@ router.get('/status', authMiddleware, async (req, res) => {
         [token, req.user.tenant_id]
       )
     }
-    const beat   = beats.get(token)
-    const online = beat ? (Date.now() - beat.ts) < 15000 : false
-    res.json({ online, token, printers: beat?.printers || [] })
+    const beat    = beats.get(token)
+    const online  = beat ? (Date.now() - beat.ts) < 15000 : false
+    // Si hay heartbeat reciente usa esas impresoras, si no usa las guardadas en DB
+    const printers = beat?.printers?.length ? beat.printers : (rows[0]?.printer_names || [])
+    res.json({ online, token, printers })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -75,8 +77,17 @@ router.delete('/job/:token/:id', (req, res) => {
 })
 
 // POST /api/print/heartbeat/:token — servidor local: heartbeat + lista impresoras
-router.post('/heartbeat/:token', (req, res) => {
-  beats.set(req.params.token, { ts: Date.now(), printers: req.body?.printers || [] })
+router.post('/heartbeat/:token', async (req, res) => {
+  const token    = req.params.token
+  const printers = req.body?.printers || []
+  beats.set(token, { ts: Date.now(), printers })
+  // Persistir en DB para sobrevivir reinicios de Railway
+  try {
+    await db.query(
+      'UPDATE tenants SET printer_names = $1 WHERE printer_token = $2',
+      [printers, token]
+    )
+  } catch (_) {}
   res.json({ ok: true })
 })
 
