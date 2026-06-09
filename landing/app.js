@@ -134,22 +134,6 @@
     });
   }
 
-  /* ---- Demo video: hide full section if webm missing ---- */
-  var demoSection = document.querySelector(".demo-hero-video");
-  var demoVid = demoSection && demoSection.querySelector("video");
-  if (demoVid) {
-    function hideDemoSection() {
-      if (demoSection) demoSection.style.display = "none";
-    }
-    demoVid.addEventListener("error", hideDemoSection);
-    demoVid.querySelector && demoVid.querySelector("source") &&
-      demoVid.querySelector("source").addEventListener("error", hideDemoSection);
-    // Fallback: if no data after 4s, file probably doesn't exist
-    setTimeout(function () {
-      if (demoVid.readyState === 0) hideDemoSection();
-    }, 4000);
-  }
-
   /* ---- App screenshots tabs ---- */
   var screenTabs = document.querySelectorAll(".screens-tab");
   var screenImgs = document.querySelectorAll(".screens-img");
