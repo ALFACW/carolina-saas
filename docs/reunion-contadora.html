@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Reunión Contadora — CarolinaPOS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 13px;
+    color: #1a1a2e;
+    background: #fff;
+    padding: 40px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 3px solid #1c61c0; padding-bottom: 18px; margin-bottom: 28px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-circle {
+    width: 42px; height: 42px; border-radius: 50%; background: #1c61c0;
+    color: #fff; font-weight: 700; font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: Georgia, serif;
+  }
+  .logo-text { font-size: 20px; font-weight: 700; color: #111; }
+  .logo-text span { background: #1c61c0; color: #fff; padding: 2px 8px; border-radius: 5px; margin-left: 4px; font-size: 13px; }
+  .header-meta { text-align: right; color: #666; font-size: 12px; line-height: 1.7; }
+
+  h1 { font-size: 22px; font-weight: 700; color: #1c61c0; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 32px; }
+
+  /* SECCIONES */
+  .section { margin-bottom: 28px; }
+  .section-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: #fff; background: #1c61c0;
+    padding: 7px 14px; border-radius: 6px; margin-bottom: 14px;
+    display: inline-block;
+  }
+
+  /* PREGUNTAS */
+  .questions { list-style: none; }
+  .questions li {
+    padding: 10px 14px; border-left: 3px solid #1c61c0;
+    background: #f4f8ff; border-radius: 0 8px 8px 0;
+    margin-bottom: 8px; line-height: 1.55;
+  }
+  .questions li .num {
+    font-weight: 700; color: #1c61c0; margin-right: 6px;
+  }
+  .questions li .sub {
+    display: block; font-size: 11.5px; color: #666; margin-top: 4px; padding-left: 18px;
+  }
+
+  /* ASIENTOS */
+  .asiento-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .asiento-box {
+    border: 1px solid #dde4f0; border-radius: 10px; overflow: hidden;
+  }
+  .asiento-title {
+    background: #1c61c0; color: #fff; font-weight: 700; font-size: 12px;
+    padding: 8px 14px;
+  }
+  .asiento-body { padding: 12px 14px; }
+  table.entry { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.entry th {
+    text-align: left; font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: .05em; color: #888; padding: 0 0 6px; border-bottom: 1px solid #eee;
+  }
+  table.entry td { padding: 5px 0; border-bottom: 1px solid #f0f0f0; }
+  table.entry td:last-child { text-align: right; font-weight: 600; }
+  table.entry tr.debit td { color: #1a1a2e; }
+  table.entry tr.credit td { color: #555; padding-left: 16px; }
+  table.entry tr.total td { font-weight: 700; border-top: 1.5px solid #1c61c0; border-bottom: none; padding-top: 8px; font-size: 11px; color: #1c61c0; }
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 100px; margin-left: 6px; }
+  .badge-d { background: #dbeefe; color: #1c61c0; }
+  .badge-c { background: #e7f6ee; color: #1f9d61; }
+
+  /* TABLA CUENTAS */
+  table.cuentas { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.cuentas th {
+    background: #1c61c0; color: #fff; padding: 8px 12px; text-align: left; font-size: 11px;
+  }
+  table.cuentas td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+  table.cuentas tr:nth-child(even) td { background: #f8faff; }
+  .ok { color: #1f9d61; font-weight: 700; }
+  .warn { color: #e67e22; font-weight: 700; }
+
+  /* TABLA TRANSACCIONES */
+  table.trans { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  table.trans th { background: #1a1a2e; color: #fff; padding: 7px 10px; text-align: left; font-size: 11px; }
+  table.trans td { padding: 7px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
+  table.trans tr:nth-child(even) td { background: #f9f9f9; }
+  .acct { font-family: "Courier New", monospace; font-weight: 700; color: #1c61c0; }
+
+  /* RECURSOS */
+  .recursos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .recurso {
+    border: 1px solid #dde4f0; border-radius: 8px; padding: 12px 14px;
+  }
+  .recurso h4 { font-size: 12px; font-weight: 700; color: #1c61c0; margin-bottom: 4px; }
+  .recurso p { font-size: 11.5px; color: #555; line-height: 1.5; }
+  .recurso a { color: #1c61c0; font-size: 11px; word-break: break-all; }
+
+  /* CONTACTOS */
+  .contactos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .contacto {
+    border: 1px solid #dde4f0; border-radius: 8px; padding: 12px 14px;
+  }
+  .contacto h4 { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .contacto p { font-size: 12px; color: #555; line-height: 1.8; }
+
+  /* RESPUESTA INVESTIGADA */
+  .answer {
+    background: #f0faf5; border-left: 3px solid #1f9d61; border-radius: 0 8px 8px 0;
+    padding: 9px 14px; font-size: 11.5px; color: #1a4a2e; line-height: 1.6;
+    margin: 4px 0 12px 0;
+  }
+  .answer .ans-label {
+    display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: #1f9d61; margin-bottom: 4px;
+  }
+  .answer.pending {
+    background: #fff8e1; border-left-color: #f39c12; color: #7d5a00;
+  }
+  .answer.pending .ans-label { color: #c0892a; }
+
+  /* NOTA IMPORTANTE */
+  .nota {
+    background: #fff8e1; border-left: 4px solid #f39c12; border-radius: 0 8px 8px 0;
+    padding: 12px 16px; font-size: 12px; color: #7d5a00; line-height: 1.6;
+    margin-bottom: 14px;
+  }
+  .nota strong { color: #e67e22; }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 36px; padding-top: 16px; border-top: 1px solid #eee;
+    text-align: center; font-size: 11px; color: #aaa;
+  }
+
+  @media print {
+    body { padding: 20px; font-size: 12px; }
+    .section { page-break-inside: avoid; }
+    .asiento-grid, .recursos-grid, .contactos-grid { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-circle">C</div>
+    <div class="logo-text">Carolina<span>POS</span></div>
+  </div>
+  <div class="header-meta">
+    Documento interno<br/>
+    Módulo contable — preparación reunión<br/>
+    Junio 2026
+  </div>
+</div>
+
+<h1>Reunión con Contadora</h1>
+<p class="subtitle">Preguntas, asientos a validar, cuentas PUC y recursos de referencia para el módulo contable de CarolinaPOS.</p>
+
+
+<!-- ====== CONTEXTO ====== -->
+<div class="section">
+  <div class="section-title">Contexto del proyecto</div>
+  <p style="line-height:1.7; color:#444;">
+    CarolinaPOS es un SaaS colombiano de punto de venta y facturación electrónica DIAN. Queremos agregar un
+    <strong>módulo contable</strong> que genere asientos automáticos por cada venta y compra, y que produzca
+    los reportes básicos (Balance general, Estado de resultados, Libro de IVA) para que el contador de cada
+    cliente pueda cerrar el mes sin tener que ingresar datos manualmente.
+  </p>
+  <br/>
+  <div class="nota">
+    <strong>Objetivo de la reunión:</strong> Validar que los asientos contables automáticos que implementaremos
+    sean correctos según las NIIF colombianas y el PUC (Decreto 2650). Sin esta validación no iniciamos el desarrollo.
+  </div>
+</div>
+
+
+<!-- ====== PREGUNTAS ====== -->
+<div class="section">
+  <div class="section-title">Preguntas para la contadora</div>
+  <p style="margin-bottom:14px; color:#555; font-size:12px;">
+    Las preguntas marcadas con <span style="color:#1f9d61;font-weight:700;">✓ Investigado</span> tienen respuesta provisional encontrada —
+    confirmar con la contadora. Las marcadas con <span style="color:#c0892a;font-weight:700;">⏳ Pendiente</span> requieren su criterio.
+  </p>
+
+  <p style="margin-bottom:12px; color:#555; font-size:12px; font-weight:600;">Bloque 1 — Asientos de venta</p>
+  <ul class="questions">
+    <li>
+      <span class="num">1.</span>¿El asiento débito 1105 Caja / crédito 4135 Ventas + crédito 2408 IVA por pagar es correcto para venta al contado con IVA incluido del 19%?
+      <span class="sub">¿Cambia si el pago es con tarjeta débito, tarjeta crédito o transferencia en vez de efectivo?</span>
+    </li>
+    <div class="answer">
+      <div class="ans-label">✓ Investigado</div>
+      Sí, el asiento <strong>1105 / 4135 + 2408</strong> es el estándar confirmado por múltiples fuentes (Gerencie, ActualíCese, PUC.com.co) para venta al contado.<br/>
+      Para pagos con <strong>tarjeta o transferencia</strong> el débito va en <strong>1110 Bancos</strong> en vez de 1105 Caja, porque el dinero llega a la cuenta bancaria, no a la caja física. Algunos negocios usan una subcuenta separada 1110-05 para Daviplata/Nequi. <strong>Confirmar si la contadora prefiere subcuentas o cuenta única 1110.</strong>
+    </div>
+
+    <li>
+      <span class="num">2.</span>Para ventas a crédito (fiados), ¿se usa la cuenta 1305 Clientes en lugar de 1105 Caja?
+    </li>
+    <div class="answer">
+      <div class="ans-label">✓ Investigado</div>
+      Sí. La cuenta <strong>1305 Clientes</strong> (o 1305-XX por cliente) registra la deuda del comprador. Cuando paga, se reversa: débito 1105/1110 crédito 1305. Esto ya está en el asiento #3 del documento.
+    </div>
+
+    <li>
+      <span class="num">3.</span>¿La cuenta 4135 (Comercio al por mayor y al por menor) es la correcta para todos los tipos de negocio — tiendas, droguerías, restaurantes?
+      <span class="sub">¿O hay cuentas distintas según el sector?</span>
+    </li>
+    <div class="answer">
+      <div class="ans-label">✓ Investigado</div>
+      <strong>No es igual para todos.</strong> Según el PUC y Gerencie:<br/>
+      • <strong>Tiendas, droguerías, supermercados:</strong> 4135 Comercio al por mayor y al por menor ✓<br/>
+      • <strong>Restaurantes, bares, cafeterías:</strong> 4140 Hoteles, restaurantes, cafeterías y similares<br/>
+      • <strong>Servicios (peluquerías, talleres):</strong> 4180 Servicios<br/>
+      CarolinaPOS debería tener un campo "sector" en la configuración del tenant para elegir la cuenta correcta. <strong>Confirmar con la contadora qué sectores cubriremos primero.</strong>
+    </div>
+  </ul>
+
+  <p style="margin: 18px 0 12px; color:#555; font-size:12px; font-weight:600;">Bloque 2 — Asientos de compra</p>
+  <ul class="questions">
+    <li>
+      <span class="num">4.</span>¿El IVA descontable (IVA pagado en compras) va siempre en débito de la cuenta 2408?
+      <span class="sub">Confirmamos que NO va en cuenta 2367 (esa es para retenciones de IVA a terceros).</span>
+    </li>
+    <div class="answer">
+      <div class="ans-label">✓ Investigado</div>
+      Confirmado. El <strong>IVA descontable va en débito de 2408</strong> (mismo grupo que el IVA generado, pero en el lado débito para reducir el saldo a pagar). La cuenta <strong>2367 es para reteIVA practicado a terceros</strong> — es decir, cuando nosotros somos agentes retenedores de IVA, lo cual no aplica a negocios pequeños. No usar 2367 para IVA de compras.
+    </div>
+
+    <li>
+      <span class="num">5.</span>¿Qué pasa cuando el proveedor no es responsable de IVA (régimen simple o no responsable)?
+      <span class="sub">¿No se registra IVA descontable en ese caso?</span>
+    </li>
+    <div class="answer">
+      <div class="ans-label">✓ Investigado</div>
+      Correcto: si el proveedor <strong>no es responsable de IVA</strong> (está en régimen de no responsables), no cobra IVA y la factura no tiene IVA separado. En ese caso el asiento de compra <strong>no tiene débito en 2408</strong> — todo el valor va a 6205. CarolinaPOS debe permitir marcar la compra como "sin IVA" o "proveedor no responsable". <strong>Preguntar a la contadora si en esos casos el precio incluye IVA implícito o si realmente no hay IVA.</strong>
+    </div>
+
+    <li>
+      <span class="num">6.</span>¿La cuenta 6205 es correcta para el costo de la mercancía comprada?
+    </li>
+    <div class="answer">
+      <div class="ans-label">✓ Investigado</div>
+      Sí. La cuenta <strong>6205 Compras de mercancías</strong> (Clase 6 — Costos) es la estándar para registrar el costo de los productos adquiridos para reventa. Si el negocio fabrica productos propios usaría la clase 73 (Costos de producción), pero para tiendas que compran y revenden, 6205 es correcto.
+    </div>
+  </ul>
+
+  <p style="margin: 18px 0 12px; color:#555; font-size:12px; font-weight:600;">Bloque 3 — Retenciones</p>
+  <ul class="questions">
+    <li>
+      <span class="num">7.</span>¿Los negocios pequeños (tiendas, droguerías) aplican retenciones en sus compras?
+      <span class="sub">¿A partir de qué monto de compra hay obligación de retener?</span>
+    </li>
+    <div class="answer">
+      <div class="ans-label">✓ Investigado</div>
+      La mayoría de negocios pequeños <strong>NO son agentes de retención</strong> (no están obligados a retener). Para ser agente retenedor se debe ser: persona jurídica, o persona natural con ingresos &gt;92.000 UVT (~$4.300M COP en 2025). La mayoría de los clientes típicos de CarolinaPOS (tiendas, droguerías) quedan por debajo.<br/>
+      Sin embargo, si un cliente <em>sí</em> es agente retenedor, las retenciones aplican en compras a partir de <strong>27 UVT (~$1.27M COP)</strong> para reteFuente. <strong>Preguntar a la contadora qué porcentaje de los clientes esperados serán agentes retenedores.</strong>
+    </div>
+
+    <li>
+      <span class="num">8.</span>¿Cuándo aplica reteIVA, reteFuente y reteICA para este tipo de negocios?
+    </li>
+    <div class="answer">
+      <div class="ans-label">✓ Investigado — confirmar porcentajes exactos</div>
+      Solo aplica si el cliente <strong>es agente retenedor</strong> (ver pregunta 7). Si aplica:<br/>
+      • <strong>ReteFuente (2368):</strong> 2.5%–3.5% sobre compras de bienes. Base mínima: 27 UVT (~$1.27M).<br/>
+      • <strong>ReteIVA (2367):</strong> 15% del IVA facturado (no del total). Solo grandes superficies o autorizados DIAN.<br/>
+      • <strong>ReteICA (2472):</strong> Varía por municipio, típicamente 4–11 por mil. Solo si municipio lo exige.<br/>
+      <strong>Para la mayoría de los clientes CarolinaPOS: ninguna de estas aplica. Confirmar con la contadora si debemos igual mostrar campos opcionales de retención.</strong>
+    </div>
+
+    <li>
+      <span class="num">9.</span>¿Los asientos de retención van en cuentas 2368 (reteFuente), 2367 (reteIVA) y 2472 (reteICA)?
+    </li>
+    <div class="answer">
+      <div class="ans-label">✓ Investigado</div>
+      Sí, las cuentas son correctas según el PUC:<br/>
+      • <strong>2367</strong> — Retenciones e impuestos sobre las ventas retenido (reteIVA recibido)<br/>
+      • <strong>2368</strong> — Retención en la fuente (reteFuente a pagar a la DIAN)<br/>
+      • <strong>2472</strong> — Impuesto de Industria y Comercio retenido (reteICA)<br/>
+      Estas cuentas son <em>pasivos</em> (crédito) cuando el negocio retiene a sus proveedores, o <em>contra-activos</em> (débito) cuando le retienen a él.
+    </div>
+  </ul>
+
+  <p style="margin: 18px 0 12px; color:#555; font-size:12px; font-weight:600;">Bloque 4 — Régimen tributario</p>
+  <ul class="questions">
+    <li>
+      <span class="num">10.</span>¿Los clientes típicos de CarolinaPOS (tiendas pequeñas) son responsables de IVA o están en régimen simple de tributación?
+      <span class="sub">¿Cambian los asientos según el régimen?</span>
+    </li>
+    <div class="answer">
+      <div class="ans-label">✓ Investigado — confirmar criterio de implementación</div>
+      Hay dos escenarios comunes:<br/>
+      • <strong>No responsable de IVA:</strong> ventas &lt; 3.500 UVT (~$164M COP/año). No cobran IVA, no presentan F300. Sus asientos de venta van todo a 4135, sin separar IVA. Asiento: débito 1105 / crédito 4135 por el total.<br/>
+      • <strong>Responsable de IVA:</strong> superan el umbral o se inscribieron voluntariamente. Cobran IVA 19%, presentan F300, llevan 2408. Asiento estándar 1105 / 4135 + 2408.<br/>
+      • <strong>Régimen Simple (SIMPLE):</strong> alternativa para ingresos &lt; 80.000 UVT. Pagan una tarifa unificada. NO aplican retenciones en sus compras (importante). Si cobran IVA, igual lo declaran. Los asientos contables son iguales al responsable estándar.<br/>
+      <strong>Preguntar a la contadora: ¿debemos implementar los 3 casos desde el inicio, o solo el responsable de IVA?</strong>
+    </div>
+
+    <li>
+      <span class="num">11.</span>¿Un negocio en régimen simple sigue necesitando llevar contabilidad de partida doble?
+    </li>
+    <div class="answer">
+      <div class="ans-label">✓ Investigado</div>
+      <strong>Sí.</strong> El Régimen Simple cambia la tributación (tarifa única), pero no exime de llevar contabilidad. El Código de Comercio colombiano obliga a llevar contabilidad a todos los comerciantes. La diferencia está en las <em>declaraciones tributarias</em>, no en la contabilidad interna. Un negocio en SIMPLE sigue necesitando balance, estado de resultados y libro de IVA.
+    </div>
+  </ul>
+
+  <p style="margin: 18px 0 12px; color:#555; font-size:12px; font-weight:600;">Bloque 5 — Reportes para la DIAN</p>
+  <ul class="questions">
+    <li>
+      <span class="num">12.</span>¿Qué reportes mínimos necesita presentar un comerciante pequeño cada mes o bimestre?
+    </li>
+    <div class="answer">
+      <div class="ans-label">✓ Investigado — confirmar periodicidades</div>
+      Para <strong>responsables de IVA</strong>:<br/>
+      • <strong>Declaración IVA (F300):</strong> bimestral si ingresos &gt;92M COP/año; cuatrimestral si entre 15M y 92M; anual si menos de 15M.<br/>
+      • <strong>Declaración Renta (F110):</strong> anual (abril).<br/>
+      • <strong>ReteICA:</strong> bimestral en los municipios que aplique (si el negocio es agente retenedor).<br/>
+      Para <strong>no responsables de IVA</strong>: solo renta anual (si supera el mínimo).<br/>
+      Para <strong>Régimen Simple</strong>: declaración SIMPLE anual + anticipos bimestrales.<br/>
+      <strong>Confirmar con la contadora qué combinación es la más común entre los clientes objetivo.</strong>
+    </div>
+
+    <li>
+      <span class="num">13.</span>El Formulario 300 de IVA — ¿lo puede diligenciar con un Excel bien organizado que le exportemos desde CarolinaPOS?
+    </li>
+    <div class="answer">
+      <div class="ans-label">✓ Investigado</div>
+      <strong>Sí, completamente viable.</strong> El contador usa el Excel para calcular los totales y los transcribe al F300 en el portal DIAN (Muisca). No existe un formato XML de importación directa para el F300 — siempre es ingreso manual en Muisca. Por tanto, un Excel bien estructurado es suficiente y es lo que usan la mayoría de contadores colombianos para negocios de este tamaño. El XML DIAN solo aplica para grandes contribuyentes en medios magnéticos (exógena).
+    </div>
+
+    <li>
+      <span class="num">14.</span>¿Qué campos exactos necesita ese Excel para el F300? (fecha, NIT proveedor/cliente, valor neto, IVA...)
+    </li>
+    <div class="answer">
+      <div class="ans-label">✓ Investigado — confirmar campos adicionales</div>
+      Campos mínimos identificados para el Libro de IVA que alimenta el F300:<br/>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px;">
+        <tr style="background:#e8f4e8;"><th style="padding:4px 8px;text-align:left;border:1px solid #bcd">Campo</th><th style="padding:4px 8px;text-align:left;border:1px solid #bcd">Descripción</th><th style="padding:4px 8px;text-align:left;border:1px solid #bcd">Aplica a</th></tr>
+        <tr><td style="padding:4px 8px;border:1px solid #ddd">Fecha</td><td style="padding:4px 8px;border:1px solid #ddd">Fecha de la factura</td><td style="padding:4px 8px;border:1px solid #ddd">Ventas y compras</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid #ddd">NIT / CC</td><td style="padding:4px 8px;border:1px solid #ddd">NIT o cédula del cliente/proveedor</td><td style="padding:4px 8px;border:1px solid #ddd">Ventas y compras</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid #ddd">Nombre</td><td style="padding:4px 8px;border:1px solid #ddd">Razón social del cliente/proveedor</td><td style="padding:4px 8px;border:1px solid #ddd">Ventas y compras</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid #ddd">N° Factura</td><td style="padding:4px 8px;border:1px solid #ddd">Número del documento (CUFE si DIAN)</td><td style="padding:4px 8px;border:1px solid #ddd">Ventas y compras</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid #ddd">Valor base</td><td style="padding:4px 8px;border:1px solid #ddd">Valor sin IVA</td><td style="padding:4px 8px;border:1px solid #ddd">Ventas y compras</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid #ddd">IVA</td><td style="padding:4px 8px;border:1px solid #ddd">IVA facturado (19% u otras tarifas)</td><td style="padding:4px 8px;border:1px solid #ddd">Ventas y compras</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid #ddd">Total</td><td style="padding:4px 8px;border:1px solid #ddd">Valor total incluyendo IVA</td><td style="padding:4px 8px;border:1px solid #ddd">Ventas y compras</td></tr>
+      </table>
+      <br/><strong>Preguntar a la contadora si necesita algún campo adicional (tipo de operación, tarifa IVA si hay productos exentos, etc.).</strong>
+    </div>
+  </ul>
+
+  <p style="margin: 18px 0 12px; color:#555; font-size:12px; font-weight:600;">Bloque 6 — Propuesta de colaboración</p>
+  <ul class="questions">
+    <li>
+      <span class="num">15.</span>¿Estaría dispuesta a ser asesora contable de CarolinaPOS durante el desarrollo?
+      <span class="sub">A cambio de cuenta gratis, comisión por clientes referidos, o lo que acuerden.</span>
+    </li>
+    <div class="answer pending">
+      <div class="ans-label">⏳ Pendiente — depende de la reunión</div>
+      Proponer: validación de asientos (2-3 horas), revisión de reportes antes de lanzar, y disponibilidad para consultas puntuales durante el desarrollo. A cambio: cuenta CarolinaPOS gratis mientras dure la colaboración + posible comisión del 10-15% por cada cliente contador que refiera.
+    </div>
+  </ul>
+</div>
+
+
+<!-- ====== HALLAZGOS CLAVE ====== -->
+<div class="section">
+  <div class="section-title">Hallazgos clave antes de la reunión</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+
+    <div class="answer" style="margin:0;">
+      <div class="ans-label">✓ Asientos básicos confirmados</div>
+      Los asientos 1105/4135/2408 para ventas y 6205/2408/2205 para compras son correctos según PUC colombiano. Solo hay que ajustar la cuenta de ingresos (4135 vs 4140) según el sector del negocio.
+    </div>
+
+    <div class="answer" style="margin:0;">
+      <div class="ans-label">✓ Error corregido: cuenta 2408 en compras</div>
+      El IVA descontable de compras va en <strong>débito de 2408</strong>, no en 2367. La cuenta 2367 es exclusivamente para reteIVA practicado a terceros — la mayoría de negocios pequeños nunca usan esa cuenta.
+    </div>
+
+    <div class="answer" style="margin:0;">
+      <div class="ans-label">✓ Retenciones: mayoría NO aplica</div>
+      Los negocios pequeños (clientes típicos de CarolinaPOS) <strong>no son agentes de retención</strong>, por lo que reteIVA, reteFuente y reteICA no aplican en su contabilidad diaria. Simplifica enormemente el módulo v1.
+    </div>
+
+    <div class="answer" style="margin:0;">
+      <div class="ans-label">✓ Excel F300 es suficiente</div>
+      No hay API/XML de importación para el Formulario 300 — el contador ingresa los datos manualmente en Muisca. Un Excel bien estructurado con 7 columnas (fecha, NIT, nombre, factura, base, IVA, total) es todo lo necesario.
+    </div>
+
+    <div class="answer pending" style="margin:0;">
+      <div class="ans-label">⏳ Definir: ¿qué regímenes cubrimos en v1?</div>
+      Hay 3 casos: (a) no responsable de IVA, (b) responsable de IVA estándar, (c) régimen simple. Los asientos difieren principalmente en si se separa o no el IVA. Confirmar con la contadora qué porcentaje de clientes pertenece a cada caso.
+    </div>
+
+    <div class="answer pending" style="margin:0;">
+      <div class="ans-label">⏳ Definir: ¿sector único o configurable?</div>
+      La cuenta de ingresos (4135 tiendas vs 4140 restaurantes vs 4180 servicios) varía por sector. CarolinaPOS debería tener un campo configurable por tenant. Confirmar si es una lista corta o si hay más variaciones en la práctica.
+    </div>
+
+  </div>
+</div>
+
+<!-- ====== ASIENTOS A VALIDAR ====== -->
+<div class="section">
+  <div class="section-title">Asientos a validar</div>
+  <div class="asiento-grid">
+
+    <div class="asiento-box">
+      <div class="asiento-title">Venta al contado — $100.000 (IVA 19% incluido)</div>
+      <div class="asiento-body">
+        <table class="entry">
+          <tr><th>Cuenta</th><th>Descripción</th><th>Valor</th></tr>
+          <tr class="debit"><td><span class="acct">1105</span> <span class="badge badge-d">DÉB</span></td><td>Caja</td><td>$100.000</td></tr>
+          <tr class="credit"><td><span class="acct">4135</span> <span class="badge badge-c">CRÉ</span></td><td>Ventas comercio</td><td>$84.034</td></tr>
+          <tr class="credit"><td><span class="acct">2408</span> <span class="badge badge-c">CRÉ</span></td><td>IVA por pagar</td><td>$15.966</td></tr>
+          <tr class="total"><td colspan="2">Base: 100.000 ÷ 1,19 = 84.034 | IVA: 84.034 × 19% = 15.966</td><td>✓ Cuadra</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="asiento-box">
+      <div class="asiento-title">Compra a crédito — $50.000 (IVA 19% incluido)</div>
+      <div class="asiento-body">
+        <table class="entry">
+          <tr><th>Cuenta</th><th>Descripción</th><th>Valor</th></tr>
+          <tr class="debit"><td><span class="acct">6205</span> <span class="badge badge-d">DÉB</span></td><td>Costo mercancía</td><td>$42.017</td></tr>
+          <tr class="debit"><td><span class="acct">2408</span> <span class="badge badge-d">DÉB</span></td><td>IVA descontable</td><td>$7.983</td></tr>
+          <tr class="credit"><td><span class="acct">2205</span> <span class="badge badge-c">CRÉ</span></td><td>Proveedores nacionales</td><td>$50.000</td></tr>
+          <tr class="total"><td colspan="2">Débito 2408 reduce el pasivo IVA → neto DIAN: $15.966 - $7.983 = $7.983</td><td>✓ Cuadra</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="asiento-box">
+      <div class="asiento-title">Venta a crédito (fiado) — $100.000</div>
+      <div class="asiento-body">
+        <table class="entry">
+          <tr><th>Cuenta</th><th>Descripción</th><th>Valor</th></tr>
+          <tr class="debit"><td><span class="acct">1305</span> <span class="badge badge-d">DÉB</span></td><td>Clientes (cartera)</td><td>$100.000</td></tr>
+          <tr class="credit"><td><span class="acct">4135</span> <span class="badge badge-c">CRÉ</span></td><td>Ventas comercio</td><td>$84.034</td></tr>
+          <tr class="credit"><td><span class="acct">2408</span> <span class="badge badge-c">CRÉ</span></td><td>IVA por pagar</td><td>$15.966</td></tr>
+          <tr class="total"><td colspan="2">Igual que contado pero débito en 1305 en vez de 1105</td><td>✓ Cuadra</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="asiento-box">
+      <div class="asiento-title">Pago IVA a la DIAN (bimestral)</div>
+      <div class="asiento-body">
+        <table class="entry">
+          <tr><th>Cuenta</th><th>Descripción</th><th>Valor</th></tr>
+          <tr class="debit"><td><span class="acct">2408</span> <span class="badge badge-d">DÉB</span></td><td>IVA por pagar (saldo neto)</td><td>$7.983</td></tr>
+          <tr class="credit"><td><span class="acct">1110</span> <span class="badge badge-c">CRÉ</span></td><td>Bancos</td><td>$7.983</td></tr>
+          <tr class="total"><td colspan="2">Salda el pasivo acumulado en 2408</td><td>✓ Cuadra</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ====== CUENTAS PUC ====== -->
+<div class="section">
+  <div class="section-title">Cuentas PUC a validar</div>
+  <table class="cuentas">
+    <tr>
+      <th>Código</th><th>Nombre</th><th>Clase</th><th>Naturaleza</th><th>¿Validar?</th>
+    </tr>
+    <tr><td class="acct">1105</td><td>Caja</td><td>Activo</td><td>Débito</td><td class="ok">✓ Confirmar</td></tr>
+    <tr><td class="acct">1110</td><td>Bancos</td><td>Activo</td><td>Débito</td><td class="ok">✓ Confirmar</td></tr>
+    <tr><td class="acct">1305</td><td>Clientes (cartera)</td><td>Activo</td><td>Débito</td><td class="ok">✓ Confirmar</td></tr>
+    <tr><td class="acct">2205</td><td>Proveedores nacionales</td><td>Pasivo</td><td>Crédito</td><td class="ok">✓ Confirmar</td></tr>
+    <tr><td class="acct">2408</td><td>IVA por pagar / descontable</td><td>Pasivo</td><td>Variable</td><td class="warn">⚠ Confirmar uso dual</td></tr>
+    <tr><td class="acct">4135</td><td>Comercio al por mayor y menor</td><td>Ingresos</td><td>Crédito</td><td class="warn">⚠ ¿Aplica a todos los sectores?</td></tr>
+    <tr><td class="acct">6205</td><td>Compras de mercancías</td><td>Costos</td><td>Débito</td><td class="ok">✓ Confirmar</td></tr>
+    <tr><td class="acct">2367</td><td>IVA retenido a terceros</td><td>Pasivo</td><td>Crédito</td><td class="warn">⚠ Solo si somos agentes retenedores</td></tr>
+    <tr><td class="acct">2368</td><td>Retención en la fuente</td><td>Pasivo</td><td>Crédito</td><td class="warn">⚠ ¿Cuándo aplica?</td></tr>
+  </table>
+</div>
+
+
+<!-- ====== TABLA COMPLETA ====== -->
+<div class="section">
+  <div class="section-title">Tabla de transacciones automáticas propuestas</div>
+  <table class="trans">
+    <tr><th>Transacción</th><th>Débito</th><th>Crédito</th><th>Nota</th></tr>
+    <tr>
+      <td>Venta contado</td>
+      <td><span class="acct">1105</span> Caja</td>
+      <td><span class="acct">4135</span> Ventas<br/><span class="acct">2408</span> IVA por pagar</td>
+      <td>Automático al cerrar venta en POS</td>
+    </tr>
+    <tr>
+      <td>Venta a crédito</td>
+      <td><span class="acct">1305</span> Clientes</td>
+      <td><span class="acct">4135</span> Ventas<br/><span class="acct">2408</span> IVA por pagar</td>
+      <td>Automático al registrar fiado</td>
+    </tr>
+    <tr>
+      <td>Cobro de fiado</td>
+      <td><span class="acct">1105</span> Caja</td>
+      <td><span class="acct">1305</span> Clientes</td>
+      <td>Al registrar abono en módulo cartera</td>
+    </tr>
+    <tr>
+      <td>Compra a crédito</td>
+      <td><span class="acct">6205</span> Costo<br/><span class="acct">2408</span> IVA descontable</td>
+      <td><span class="acct">2205</span> Proveedores</td>
+      <td>Automático al registrar compra</td>
+    </tr>
+    <tr>
+      <td>Pago a proveedor</td>
+      <td><span class="acct">2205</span> Proveedores</td>
+      <td><span class="acct">1105/1110</span> Caja/Banco</td>
+      <td>Al registrar pago en módulo compras</td>
+    </tr>
+    <tr>
+      <td>Pago IVA a DIAN</td>
+      <td><span class="acct">2408</span> IVA por pagar</td>
+      <td><span class="acct">1110</span> Bancos</td>
+      <td>Manual, al presentar declaración</td>
+    </tr>
+  </table>
+</div>
+
+
+<!-- ====== REPORTES ====== -->
+<div class="section">
+  <div class="section-title">Reportes a implementar</div>
+  <div class="recursos-grid">
+    <div class="recurso">
+      <h4>Balance General</h4>
+      <p>
+        Activos (clase 1) = Pasivos (clase 2) + Patrimonio (clase 3)<br/><br/>
+        <strong>Activos corrientes:</strong> Caja, Bancos, Clientes, Inventario<br/>
+        <strong>Pasivos corrientes:</strong> Proveedores, IVA por pagar<br/>
+        <strong>Patrimonio:</strong> Capital, Utilidades acumuladas
+      </p>
+    </div>
+    <div class="recurso">
+      <h4>Estado de Resultados</h4>
+      <p>
+        Ingresos (clase 4)<br/>
+        − Costo de ventas (clase 6)<br/>
+        = Utilidad bruta<br/>
+        − Gastos operacionales (clase 5)<br/>
+        = <strong>Utilidad neta del período</strong>
+      </p>
+    </div>
+    <div class="recurso">
+      <h4>Libro de IVA (Formulario 300)</h4>
+      <p>
+        Exportar Excel con:<br/>
+        Fecha | NIT | Descripción | Valor neto | IVA generado | IVA descontable<br/><br/>
+        El contador lo usa para diligenciar el F300 en la DIAN.<br/>
+        <strong>Periodicidad:</strong> Bimestral o cuatrimestral según ingresos.
+      </p>
+    </div>
+    <div class="recurso">
+      <h4>Libro Mayor (futuro)</h4>
+      <p>
+        Movimientos por cuenta contable en un período.<br/>
+        Saldo inicial → débitos → créditos → saldo final.<br/><br/>
+        Permite al contador hacer conciliaciones y auditorías.
+      </p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ====== RECURSOS ====== -->
+<div class="section">
+  <div class="section-title">Recursos de referencia</div>
+  <div class="recursos-grid">
+    <div class="recurso">
+      <h4>PUC.com.co</h4>
+      <p>Catálogo completo de cuentas PUC con dinámicas y naturaleza de cada cuenta.</p>
+      <a href="https://puc.com.co">puc.com.co</a>
+    </div>
+    <div class="recurso">
+      <h4>Gerencie.com — IVA</h4>
+      <p>Ejemplos reales de contabilización del IVA generado y descontable en Colombia.</p>
+      <a href="https://www.gerencie.com/contabilizacion-del-iva-no-descontable.html">gerencie.com</a>
+    </div>
+    <div class="recurso">
+      <h4>CTCP — Consejo Técnico</h4>
+      <p>Ente oficial de normas contables en Colombia. Conceptos y orientaciones técnicas.</p>
+      <a href="https://www.ctcp.gov.co">ctcp.gov.co</a>
+    </div>
+    <div class="recurso">
+      <h4>Decreto 2650 — PUC Oficial</h4>
+      <p>PDF oficial del Plan Único de Cuentas colombiano con dinámicas de todas las cuentas.</p>
+      <a href="https://www.politecnicomayor.edu.co/virtual/documentos/PUC.pdf">Descargar PDF</a>
+    </div>
+    <div class="recurso">
+      <h4>Supersociedades — NIIF PYMES</h4>
+      <p>Guía práctica oficial para implementar NIIF PYMES en Colombia.</p>
+      <a href="https://www.supersociedades.gov.co/documents/80312/3818371/Guia-practica-05082014.pdf">Descargar PDF</a>
+    </div>
+    <div class="recurso">
+      <h4>DIAN — Formulario 300</h4>
+      <p>Formulario oficial de declaración de IVA bimestral/cuatrimestral.</p>
+      <a href="https://www.dian.gov.co/impuestos/sociedades/IVA/Paginas/Bimestral.aspx">dian.gov.co</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ====== CONTACTOS ALTERNATIVOS ====== -->
+<div class="section">
+  <div class="section-title">Alternativas de integración (si no se construye propio)</div>
+  <div class="contactos-grid">
+    <div class="contacto">
+      <h4>Alegra</h4>
+      <p>
+        Facturación DIAN + contabilidad + API REST<br/>
+        Programa de partners con comisiones<br/>
+        Planes desde $69.900 COP/mes<br/>
+        <strong>Web:</strong> alegra.com/colombia<br/>
+        <strong>API:</strong> developers.alegra.com
+      </p>
+    </div>
+    <div class="contacto">
+      <h4>Siigo</h4>
+      <p>
+        Líder del mercado colombiano<br/>
+        API REST disponible<br/>
+        Planes desde $145.993 COP/mes<br/>
+        <strong>Tel:</strong> (571) 580 2606<br/>
+        <strong>WhatsApp:</strong> 317 429 4883<br/>
+        <strong>API:</strong> developers.siigo.com
+      </p>
+    </div>
+  </div>
+</div>
+
+
+<!-- FOOTER -->
+<div class="footer">
+  CarolinaPOS — Documento interno de preparación reunión contadora · Junio 2026<br/>
+  carolinapos.co · app.carolinapos.co
+</div>
+
+</body>
+</html>
