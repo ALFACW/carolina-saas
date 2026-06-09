@@ -412,10 +412,29 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; font-
 .demo-video-wrap .screens-frame {
   box-shadow: 0 32px 80px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.1);
 }
+.demo-video-area { position: relative; cursor: pointer; }
 .demo-video {
   display: block; width: 100%; aspect-ratio: 1280 / 720;
   background: #0d0d0f; object-fit: cover;
 }
+
+/* play/pause button */
+.demo-play-btn {
+  position: absolute; bottom: 14px; right: 14px;
+  width: 42px; height: 42px; border-radius: 50%;
+  background: rgba(0,0,0,.52); border: 1.5px solid rgba(255,255,255,.28);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 4;
+  opacity: 0; transition: opacity .2s ease, background .18s ease;
+}
+.demo-video-area:hover .demo-play-btn { opacity: 1; }
+.demo-play-btn:hover { background: rgba(0,0,0,.75); }
+.demo-play-btn .icon-play  { display: none; }
+/* paused state */
+.demo-play-btn.paused { opacity: 1; }
+.demo-play-btn.paused .icon-pause { display: none; }
+.demo-play-btn.paused .icon-play  { display: block; }
+
 .demo-video-sub {
   text-align: center; font-size: 13px; color: rgba(255,255,255,.45);
   margin-top: 14px; letter-spacing: .01em;

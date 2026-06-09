@@ -134,6 +134,46 @@
     });
   }
 
+  /* ---- Demo video: play/pause + auto-pause on scroll out ---- */
+  var demoVid = document.getElementById("demo-video");
+  var playBtn = document.getElementById("demo-play-btn");
+  var demoSection = document.querySelector(".demo-hero-video");
+  var manuallyPaused = false;
+
+  if (demoVid && playBtn) {
+    function setPlaying() {
+      demoVid.play().catch(function() {});
+      playBtn.classList.remove("paused");
+    }
+    function setPaused(manual) {
+      demoVid.pause();
+      playBtn.classList.add("paused");
+      if (manual) manuallyPaused = true;
+    }
+
+    // Click on video or button toggles play/pause
+    document.querySelector(".demo-video-area").addEventListener("click", function () {
+      if (demoVid.paused) { manuallyPaused = false; setPlaying(); }
+      else setPaused(true);
+    });
+    // Prevent double-fire when clicking the button inside the area
+    playBtn.addEventListener("click", function (e) { e.stopPropagation(); });
+
+    // Auto-pause when section leaves viewport; auto-resume when it returns
+    if ("IntersectionObserver" in window && demoSection) {
+      var vidIO = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            if (!manuallyPaused) setPlaying();
+          } else {
+            demoVid.pause(); // pause without marking as manual
+          }
+        });
+      }, { threshold: 0.15 });
+      vidIO.observe(demoSection);
+    }
+  }
+
   /* ---- App screenshots tabs ---- */
   var screenTabs = document.querySelectorAll(".screens-tab");
   var screenImgs = document.querySelectorAll(".screens-img");
