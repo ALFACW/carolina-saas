@@ -107,6 +107,61 @@ Ver `backend/.env.example` para documentación completa.
 
 ---
 
+## Módulo Contable (Futuro)
+
+### Resumen
+Construir capa contable propia en CarolinaPOS. El 70% de los datos ya existen (ventas, compras, IVA). Falta organizarlos con lógica de partida doble.
+
+### Arquitectura
+3 tablas PostgreSQL multi-tenant:
+- `accounts` — PUC colombiano (~5000 cuentas, 9 clases)
+- `journal_entries` — cada movimiento (venta, compra, gasto)
+- `postings` — los dos lados de cada asiento (débito + crédito)
+
+**Regla invariable:** `SUM(débitos) = SUM(créditos)` por cada journal entry
+
+### Asientos automáticos (ejemplos)
+```
+Venta $100.000:
+  Débito  1105 Caja           $100.000
+  Crédito 4135 Ventas          $84.034
+  Crédito 2408 IVA por pagar   $15.966
+
+Compra $50.000:
+  Débito  6205 Costo mercancía  $42.017
+  Débito  2367 IVA descontable   $7.983
+  Crédito 2205 Proveedores      $50.000
+```
+
+### Pasos para construirlo
+1. Ejecutar `WebScarpingPUC` → importar PUC a PostgreSQL (seed inicial)
+2. Crear tablas `accounts`, `journal_entries`, `postings` con migraciones
+3. Función `buildAsientos()` que se dispara en cada venta/compra
+4. Reportes: Balance general, Estado de resultados, Libro de IVA (Excel primero, XML DIAN después)
+5. **Validar asientos con un contador colombiano antes de lanzar**
+
+### Reportes requeridos
+- **Balance general**: activos (clase 1) = pasivos (clase 2) + patrimonio (clase 3)
+- **Estado de resultados**: ingresos (clase 4) - costos (clase 6) - gastos (clase 5) = utilidad neta
+- **Libro de IVA**: ventas y compras del período → Excel para que contador diligencie Formulario 300 DIAN
+
+### Referencias técnicas
+- `github.com/pgr0ss/pgledger` — implementación 100% PostgreSQL, artículo 2025
+- `gist.github.com/NYKevin/9433376` — esquema SQL mínimo de partida doble
+- `github.com/blnkfinance/blnk` — ledger open source producción-ready (Go + PostgreSQL)
+- `github.com/YUND4/WebScarpingPUC` — genera PUC colombiano en JSON
+- `github.com/OCA/l10n-colombia` — lógica retenciones Colombia en XML (referencia)
+- `github.com/Asuskf/Sistema-Contable-Arcano` — reportes contables en C# (referencia)
+
+### Integraciones evaluadas (alternativa a construir propio)
+- **Alegra** — facturación DIAN + contabilidad + API REST + programa partners. `developers.alegra.com`
+- **Siigo** — líder Colombia, API en `developers.siigo.com`, contacto: WhatsApp 317 429 4883 / Tel (571) 580 2606
+
+### Prerequisito crítico
+Conseguir un contador colombiano que valide los asientos antes de lanzar. Sin eso el módulo puede ser técnicamente correcto pero contablemente inválido.
+
+---
+
 ## Tareas Pendientes
 
 1. **Editar username** desde módulo Usuarios admin
