@@ -420,8 +420,6 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; font-
   text-align: center; font-size: 13px; color: rgba(255,255,255,.45);
   margin-top: 14px; letter-spacing: .01em;
 }
-/* Oculta la sección si el video no carga */
-.demo-hero-video:has(video:not([src])) { display: none; }
 
 .screens-wrap { max-width: var(--maxw); margin-inline: auto; }
 
