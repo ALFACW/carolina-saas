@@ -129,7 +129,7 @@ Venta $100.000:
 
 Compra $50.000:
   Débito  6205 Costo mercancía  $42.017
-  Débito  2367 IVA descontable   $7.983
+  Débito  2408 IVA por pagar     $7.983  ← débito aquí reduce el pasivo IVA (NO usar 2367)
   Crédito 2205 Proveedores      $50.000
 ```
 
