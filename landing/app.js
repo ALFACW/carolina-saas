@@ -134,22 +134,20 @@
     });
   }
 
-  /* ---- Demo video: hide section if file missing ---- */
-  var videoWrap = document.getElementById("demo-video-wrap");
-  var screensOr = document.querySelector(".screens-or");
-  var demoVid = videoWrap && videoWrap.querySelector("video");
+  /* ---- Demo video: hide full section if webm missing ---- */
+  var demoSection = document.querySelector(".demo-hero-video");
+  var demoVid = demoSection && demoSection.querySelector("video");
   if (demoVid) {
-    demoVid.addEventListener("error", function () {
-      if (videoWrap) videoWrap.style.display = "none";
-      if (screensOr) screensOr.style.display = "none";
-    });
-    // If the video hasn't loaded after 3s, assume the file doesn't exist
+    function hideDemoSection() {
+      if (demoSection) demoSection.style.display = "none";
+    }
+    demoVid.addEventListener("error", hideDemoSection);
+    demoVid.querySelector && demoVid.querySelector("source") &&
+      demoVid.querySelector("source").addEventListener("error", hideDemoSection);
+    // Fallback: if no data after 4s, file probably doesn't exist
     setTimeout(function () {
-      if (demoVid.readyState === 0 && demoVid.error) {
-        if (videoWrap) videoWrap.style.display = "none";
-        if (screensOr) screensOr.style.display = "none";
-      }
-    }, 3000);
+      if (demoVid.readyState === 0) hideDemoSection();
+    }, 4000);
   }
 
   /* ---- App screenshots tabs ---- */

@@ -403,25 +403,25 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; font-
    APP SCREENSHOTS + VIDEO DEMO
    ======================================================================== */
 
-.demo-video-wrap { max-width: var(--maxw); margin-inline: auto; margin-bottom: 0; }
+/* Video justo debajo del hero — fondo que continúa el gradiente */
+.demo-hero-video {
+  background: linear-gradient(180deg, #1a59b0 0%, #0f3872 60%, #0a2550 100%);
+  padding-block: clamp(28px, 4vw, 52px) clamp(48px, 6vw, 80px);
+}
+.demo-video-wrap { max-width: var(--maxw); margin-inline: auto; }
+.demo-video-wrap .screens-frame {
+  box-shadow: 0 32px 80px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.1);
+}
 .demo-video {
   display: block; width: 100%; aspect-ratio: 1280 / 720;
   background: #0d0d0f; object-fit: cover;
 }
 .demo-video-sub {
-  text-align: center; font-size: 13px; color: var(--text-3);
-  margin-top: 12px; letter-spacing: .01em;
+  text-align: center; font-size: 13px; color: rgba(255,255,255,.45);
+  margin-top: 14px; letter-spacing: .01em;
 }
-.screens-or {
-  text-align: center; margin: 40px 0 28px; position: relative;
-  font-size: 13.5px; font-weight: 600; color: var(--text-3); letter-spacing: .02em;
-}
-.screens-or::before, .screens-or::after {
-  content: ""; position: absolute; top: 50%; width: calc(50% - 100px);
-  height: 1px; background: var(--border);
-}
-.screens-or::before { left: 0; }
-.screens-or::after  { right: 0; }
+/* Oculta la sección si el video no carga */
+.demo-hero-video:has(video:not([src])) { display: none; }
 
 .screens-wrap { max-width: var(--maxw); margin-inline: auto; }
 
