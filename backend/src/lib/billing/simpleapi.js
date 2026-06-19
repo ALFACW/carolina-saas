@@ -928,34 +928,79 @@ async function obtenerPDFBHERecibida(apiKey, { rutCertificado, password = '', fo
   return res.data; // PDF base64
 }
 
-// Listado de BHE emitidas o recibidas por año
-// POST /bhe/listado/emitidas/{anio}
-// POST /bhe/listado/recibidas/{anio}
-// Respuesta: { anio, rut, periodos[{mes, cantidadVigentes, cantidadAnuladas, honorarioBruto, retencionTerceros, retencionContribuyente, totalLiquido}], totales... }
-async function listadoBHEEmitidas(apiKey, { rutCertificado, password = '', anio }, certBuf) {
+// Listado de BHE emitidas — 3 variantes de URL con respuestas distintas:
+//
+// Anual:   /bhe/listado/emitidas/{anio}
+//   → { anio, rut, periodos[{mes, cantidadVigentes, ... totalLiquido}], totales... }
+//
+// Mensual: /bhe/listado/emitidas/{MM}/{YYYY}
+//   → { dia, mes, anio, rut, cantidadDocumentos, totalBruto, ..., boletas[] }
+//
+// Diario:  /bhe/listado/emitidas/{DD}/{MM}/{YYYY}
+//   → igual al mensual pero con día específico
+//
+// Input opcional: Detallado (boolean) — solo en mensual/diario
+async function listadoBHEEmitidas(apiKey, { rutCertificado, password = '', anio, mes = null, dia = null, detallado = false }, certBuf) {
   const json = { RutCertificado: rutCertificado, Password: password };
+  if (mes !== null) json.Detallado = detallado;
   const form = new FormData();
   form.append('input', JSON.stringify(json));
   form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+
+  let path;
+  if (dia !== null && mes !== null) {
+    path = `bhe/listado/emitidas/${String(dia).padStart(2,'0')}/${String(mes).padStart(2,'0')}/${anio}`;
+  } else if (mes !== null) {
+    path = `bhe/listado/emitidas/${String(mes).padStart(2,'0')}/${anio}`;
+  } else {
+    path = `bhe/listado/emitidas/${anio}`;
+  }
+
   const res = await axios.post(
-    `${FOLIOS_BASE}/bhe/listado/emitidas/${anio}`,
+    `${FOLIOS_BASE}/${path}`,
     form,
     { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
   );
   return res.data;
 }
 
-async function listadoBHERecibidas(apiKey, { rutCertificado, password = '', anio }, certBuf) {
+// Listado de BHE recibidas — mismas 3 variantes de URL
+async function listadoBHERecibidas(apiKey, { rutCertificado, password = '', anio, mes = null, dia = null, detallado = false }, certBuf) {
   const json = { RutCertificado: rutCertificado, Password: password };
+  if (mes !== null) json.Detallado = detallado;
   const form = new FormData();
   form.append('input', JSON.stringify(json));
   form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+
+  let path;
+  if (dia !== null && mes !== null) {
+    path = `bhe/listado/recibidas/${String(dia).padStart(2,'0')}/${String(mes).padStart(2,'0')}/${anio}`;
+  } else if (mes !== null) {
+    path = `bhe/listado/recibidas/${String(mes).padStart(2,'0')}/${anio}`;
+  } else {
+    path = `bhe/listado/recibidas/${anio}`;
+  }
+
   const res = await axios.post(
-    `${FOLIOS_BASE}/bhe/listado/recibidas/${anio}`,
+    `${FOLIOS_BASE}/${path}`,
     form,
     { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
   );
   return res.data;
+}
+
+// Enviar observación sobre una BHE recibida
+// POST /bhe/observacion/{tipoBoleta}/{folio}
+// Body JSON (no multipart): { RutUsuario, RutEmpresa, PasswordSII }
+// tipoBoleta: 1 = normal
+// Respuesta: texto plano "Observación enviada correctamente"
+async function observacionBHE(apiKey, { rutUsuario, rutEmpresa, passwordSII, folio, tipoBoleta = 1 }) {
+  const res = await axios.post(
+    `${FOLIOS_BASE}/bhe/observacion/${tipoBoleta}/${folio}`,
+    { RutUsuario: rutUsuario, RutEmpresa: rutEmpresa, PasswordSII: passwordSII },
+    { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
+  );
+  return res.data; // texto plano
 }
 
 // ──────────────────────────────────────────────
@@ -1019,8 +1064,9 @@ module.exports = {
   obtenerDireccionesBHE,
   obtenerPDFBHE,           // emitidas: por folio+anio, folio solo, o codigoBarras
   obtenerPDFBHERecibida,   // recibidas: por folio+anio o folio+fecha+RutEmisor
-  listadoBHEEmitidas,      // resumen anual por mes — emitidas
-  listadoBHERecibidas,     // resumen anual por mes — recibidas
+  listadoBHEEmitidas,      // anual/{anio} | mensual/{MM}/{YYYY} | diario/{DD}/{MM}/{YYYY}
+  listadoBHERecibidas,     // idem — con campo boletas[] en mensual/diario
+  observacionBHE,          // POST /bhe/observacion/{tipoBoleta}/{folio}
   // RCV — Registro de Compras y Ventas
   // Firma: (apiKey, { rutCertificado, password, rutEmpresa, ambiente }, mes, anio, certBuf)
   getRCVVentas,
