@@ -1,12 +1,14 @@
 // Cliente SimpleAPI — Facturación Electrónica SII Chile
-// Documentación: documentacion.simpleapi.cl
-// Multi-RUT: el RUT emisor va dentro del payload de cada DTE
-// SimpleAPI NO almacena documentos — CarolinaPOS guarda XML y PDF en dte_documents
+// REST API: generación, timbraje, firma y envío al SII son server-side (no requiere SDK ni Windows)
+// Multi-RUT: un API key soporta múltiples RUT — el RUT emisor va dentro del payload de cada DTE
+// Certificado digital: centralizado en servidores de SimpleAPI (se sube una vez por empresa)
+// CarolinaPOS guarda XML y PDF en tabla dte_documents (SimpleAPI no almacena documentos)
+// Documentación: documentacion.simpleapi.cl (requiere cuenta gratuita)
 
 const axios = require('axios');
 const logger = require('../logger');
 
-const BASE_URL = 'https://api.simpleapi.cl'; // confirmar URL exacta en documentacion.simpleapi.cl
+const BASE_URL = 'https://api.simpleapi.cl/api/v1'; // confirmado en ApiBase.cs del SDK
 
 // Tipos de DTE soportados
 const TIPO_DTE = {
@@ -20,10 +22,12 @@ const TIPO_DTE = {
 
 // ──────────────────────────────────────────────
 // Autenticación
+// Header exacto por confirmar con documentacion.simpleapi.cl
+// Opciones comunes: 'Authorization: Bearer <key>' o 'apikey: <key>'
 // ──────────────────────────────────────────────
 function getHeaders(apiKey) {
   return {
-    'Authorization': `Bearer ${apiKey}`,
+    'apikey': apiKey,           // TODO: confirmar nombre exacto del header
     'Content-Type': 'application/json',
   };
 }
@@ -58,88 +62,62 @@ function formatRUT(rut) {
 }
 
 // ──────────────────────────────────────────────
-// FOLIOS — SimpleAPI Folios
-// TODO: confirmar endpoints exactos en documentacion.simpleapi.cl → SimpleAPI Folios
+// FOLIOS — SimpleAPI Folios (producto separado)
+// Certificado digital debe estar centralizado en servidores SimpleAPI previamente
+// TODO: confirmar paths exactos en documentacion.simpleapi.cl → SimpleAPI Folios
 // ──────────────────────────────────────────────
 
 async function obtenerFolio(apiKey, rutEmisor, tipoDte) {
   const res = await axios.post(
-    `${BASE_URL}/folios/obtener`, // confirmar path
+    `${BASE_URL}/folios/obtener`,        // TODO: confirmar path
     { rut_emisor: rutEmisor, tipo_dte: tipoDte },
     { headers: getHeaders(apiKey) }
   );
-  return res.data; // { caf_xml, folio_desde, folio_hasta, fecha_autorizacion }
+  // Respuesta esperada: { caf_xml, folio_desde, folio_hasta, fecha_autorizacion }
+  return res.data;
 }
 
 async function consultarFolios(apiKey, rutEmisor, tipoDte) {
   const res = await axios.get(
-    `${BASE_URL}/folios/disponibles`, // confirmar path
+    `${BASE_URL}/folios/disponibles`,    // TODO: confirmar path
     { params: { rut_emisor: rutEmisor, tipo_dte: tipoDte }, headers: getHeaders(apiKey) }
+  );
+  return res.data;
+}
+
+async function anularFolio(apiKey, rutEmisor, tipoDte, folio) {
+  const res = await axios.post(
+    `${BASE_URL}/folios/anular`,         // TODO: confirmar path
+    { rut_emisor: rutEmisor, tipo_dte: tipoDte, folio },
+    { headers: getHeaders(apiKey) }
   );
   return res.data;
 }
 
 // ──────────────────────────────────────────────
 // EMISIÓN DTE — SimpleAPI DTE
-// TODO: confirmar endpoints exactos en documentacion.simpleapi.cl → SimpleAPI DTE
+// Server-side: SimpleAPI genera XML, timbra, firma y envía al SII
+// CarolinaPOS recibe xml_firmado + pdf_base64 y los guarda en dte_documents
+// TODO: confirmar paths exactos en documentacion.simpleapi.cl → SimpleAPI DTE
 // ──────────────────────────────────────────────
 
-/**
- * Emite una boleta electrónica (tipo 39) — ventas POS a consumidor final
- * El receptor es opcional (sin RUT obligatorio)
- */
-async function emitirBoleta(apiKey, { rutEmisor, razonSocialEmisor, folio, cafXml, items, totales }) {
+// Boleta (39) — ventas POS a consumidor final, sin RUT receptor obligatorio
+async function emitirBoleta(apiKey, { rutEmisor, razonSocialEmisor, giroEmisor, folio, items, totales, ambiente = 'produccion' }) {
   const payload = {
+    ambiente,                            // 'certificacion' | 'produccion'
     tipo_dte: TIPO_DTE.BOLETA,
-    rut_emisor: rutEmisor,
-    razon_social_emisor: razonSocialEmisor,
+    emisor: {
+      rut:          rutEmisor,
+      razon_social: razonSocialEmisor,
+      giro:         giroEmisor,
+    },
     folio,
-    caf_xml: cafXml,
     detalle: items.map((item, i) => ({
       nro_linea:   i + 1,
-      descripcion: item.nombre,
+      nombre:      item.nombre,
       cantidad:    item.cantidad,
       precio:      item.precio_unitario,
-    })),
-    totales: {
-      monto_neto: totales.neto,
-      iva:        totales.iva,
-      monto_total: totales.total,
-    },
-  };
-
-  const res = await axios.post(
-    `${BASE_URL}/dte/emitir`, // confirmar path
-    payload,
-    { headers: getHeaders(apiKey) }
-  );
-
-  logger.info(`[SimpleAPI] Boleta emitida — folio ${folio} RUT ${rutEmisor}`);
-  return res.data; // { xml_firmado, pdf_base64, folio, ... }
-}
-
-/**
- * Emite una factura electrónica (tipo 33) — ventas B2B con RUT receptor
- */
-async function emitirFactura(apiKey, { rutEmisor, razonSocialEmisor, folio, cafXml, receptor, items, totales }) {
-  const payload = {
-    tipo_dte: TIPO_DTE.FACTURA,
-    rut_emisor: rutEmisor,
-    razon_social_emisor: razonSocialEmisor,
-    folio,
-    caf_xml: cafXml,
-    receptor: {
-      rut:         receptor.rut,
-      razon_social: receptor.razonSocial,
-      giro:        receptor.giro,
-      direccion:   receptor.direccion,
-      ciudad:      receptor.ciudad,
-    },
-    detalle: items.map((item, i) => ({
-      nro_linea:   i + 1,
-      descripcion: item.nombre,
-      cantidad:    item.cantidad,
-      precio:      item.precio_unitario,
+      monto_item:  Math.round(item.cantidad * item.precio_unitario),
     })),
     totales: {
       monto_neto:  totales.neto,
@@ -148,26 +126,59 @@ async function emitirFactura(apiKey, { rutEmisor, razonSocialEmisor, folio, cafX
     },
   };
 
-  const res = await axios.post(
-    `${BASE_URL}/dte/emitir`, // confirmar path
-    payload,
-    { headers: getHeaders(apiKey) }
-  );
+  const res = await axios.post(`${BASE_URL}/dte/emitir`, payload, { headers: getHeaders(apiKey) });
+  logger.info(`[SimpleAPI] Boleta emitida — folio ${folio} RUT ${rutEmisor}`);
+  return res.data; // { xml_firmado, pdf_base64, folio, track_id, ... }
+}
 
+// Factura (33) — ventas B2B con RUT receptor obligatorio + giro + dirección
+async function emitirFactura(apiKey, { rutEmisor, razonSocialEmisor, giroEmisor, folio, receptor, items, totales, ambiente = 'produccion' }) {
+  const payload = {
+    ambiente,
+    tipo_dte: TIPO_DTE.FACTURA,
+    emisor: {
+      rut:          rutEmisor,
+      razon_social: razonSocialEmisor,
+      giro:         giroEmisor,
+    },
+    folio,
+    receptor: {
+      rut:          receptor.rut,
+      razon_social: receptor.razonSocial,
+      giro:         receptor.giro,       // obligatorio en factura 33
+      direccion:    receptor.direccion,  // obligatorio en factura 33
+      ciudad:       receptor.ciudad,     // obligatorio en factura 33
+    },
+    detalle: items.map((item, i) => ({
+      nro_linea:   i + 1,
+      nombre:      item.nombre,
+      cantidad:    item.cantidad,
+      precio:      item.precio_unitario,
+      monto_item:  Math.round(item.cantidad * item.precio_unitario),
+    })),
+    totales: {
+      monto_neto:  totales.neto,
+      iva:         totales.iva,
+      monto_total: totales.total,
+    },
+  };
+
+  const res = await axios.post(`${BASE_URL}/dte/emitir`, payload, { headers: getHeaders(apiKey) });
   logger.info(`[SimpleAPI] Factura emitida — folio ${folio} RUT emisor ${rutEmisor}`);
   return res.data;
 }
 
-/**
- * Emite nota de crédito (tipo 61) — anulación o descuento sobre DTE anterior
- */
-async function emitirNotaCredito(apiKey, { rutEmisor, razonSocialEmisor, folio, cafXml, dteReferencia, motivo, totales }) {
+// Nota de crédito (61) — anula o corrige un DTE anterior
+async function emitirNotaCredito(apiKey, { rutEmisor, razonSocialEmisor, giroEmisor, folio, dteReferencia, motivo, totales, ambiente = 'produccion' }) {
   const payload = {
+    ambiente,
     tipo_dte: TIPO_DTE.NOTA_CREDITO,
-    rut_emisor: rutEmisor,
-    razon_social_emisor: razonSocialEmisor,
+    emisor: {
+      rut:          rutEmisor,
+      razon_social: razonSocialEmisor,
+      giro:         giroEmisor,
+    },
     folio,
-    caf_xml: cafXml,
     referencia: {
       tipo_dte_ref: dteReferencia.tipoDte,
       folio_ref:    dteReferencia.folio,
@@ -180,12 +191,16 @@ async function emitirNotaCredito(apiKey, { rutEmisor, razonSocialEmisor, folio, 
     },
   };
 
-  const res = await axios.post(
-    `${BASE_URL}/dte/emitir`, // confirmar path
-    payload,
-    { headers: getHeaders(apiKey) }
-  );
+  const res = await axios.post(`${BASE_URL}/dte/emitir`, payload, { headers: getHeaders(apiKey) });
+  return res.data;
+}
 
+// Consultar estado de un DTE enviado al SII (track_id devuelto en emitir)
+async function consultarEstadoDTE(apiKey, rutEmisor, trackId) {
+  const res = await axios.get(
+    `${BASE_URL}/dte/estado`,            // TODO: confirmar path
+    { params: { rut_emisor: rutEmisor, track_id: trackId }, headers: getHeaders(apiKey) }
+  );
   return res.data;
 }
 
@@ -195,7 +210,9 @@ module.exports = {
   formatRUT,
   obtenerFolio,
   consultarFolios,
+  anularFolio,
   emitirBoleta,
   emitirFactura,
   emitirNotaCredito,
+  consultarEstadoDTE,
 };
