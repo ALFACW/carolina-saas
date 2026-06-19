@@ -405,6 +405,38 @@ async function enviarSobre(apiKey, { rutCertificado, password, ambiente, tipo },
 }
 
 // ──────────────────────────────────────────────
+// CONSULTAR ESTADO ENVÍO — Verifica si el SII aceptó o rechazó el sobre
+// POST https://api.simpleapi.cl/api/v1/consulta/envio
+// multipart: input(JSON) + files(PFX)  — NO lleva XML de DTE
+//
+// ServidorBoletaREST: false para facturas/NC/ND, true para boletas (servidor separado en SII)
+// Ambiente: 0 = certificación, 1 = producción
+// ──────────────────────────────────────────────
+async function consultarEstadoEnvio(apiKey, { rutCertificado, password, rutEmpresa, trackId, ambiente, esBoletaRest = false }, certBuf) {
+  const json = {
+    Certificado: {
+      Rut:      rutCertificado,
+      Password: password,
+    },
+    RutEmpresa:        rutEmpresa,
+    TrackId:           trackId,
+    Ambiente:          ambiente,
+    ServidorBoletaREST: esBoletaRest,
+  };
+
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+
+  const res = await axios.post(
+    `${DTE_BASE}/consulta/envio`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  return res.data;
+}
+
+// ──────────────────────────────────────────────
 // RUT — Lookup contribuyente en SII
 // GET https://rut.simpleapi.cl/v2/{RUT}
 // Auth: Authorization: <apikey>
@@ -489,6 +521,7 @@ module.exports = {
   emitirNotaCredito,
   generarSobre,
   enviarSobre,
+  consultarEstadoEnvio,
   getRCVVentas,
   getRCVCompras,
   calcularTotalesDesdeTotal,
