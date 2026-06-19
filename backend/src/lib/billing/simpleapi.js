@@ -24,6 +24,7 @@ const TIPO_DTE = {
   GUIA_DESPACHO:  52,
   NOTA_DEBITO:    56,
   NOTA_CREDITO:   61,
+  LIQUIDACION:    43,
 };
 
 // ──────────────────────────────────────────────
@@ -150,8 +151,9 @@ async function anularFolios(apiKey, { rutCertificado, password, rutEmpresa, tipo
 
 // Boleta electrónica (39) — venta a consumidor final
 // precios en items van CON IVA incluido (como llegan desde el POS)
+// rutCertificado: RUT del dueño del PFX (persona, puede diferir del RUT empresa)
 // certBuf = Buffer PFX | cafBuf = Buffer CAF XML del tipo 39
-async function emitirBoleta(apiKey, { rutEmisor, razonSocial, giro, direccion, comuna, folio, fecha, items, totales }, certBuf, cafBuf) {
+async function emitirBoleta(apiKey, { rutCertificado, password = '', rutEmisor, razonSocial, giro, direccion, comuna, folio, fecha, items, totales }, certBuf, cafBuf) {
   const doc = {
     Documento: {
       Encabezado: {
@@ -180,7 +182,7 @@ async function emitirBoleta(apiKey, { rutEmisor, razonSocial, giro, direccion, c
           MontoTotal: totales.total,      // precio con IVA (el que paga el cliente)
         },
       },
-      Detalles: items.map((item, i) => ({
+      Detalles: items.map((item) => ({
         IndicadorExento: 0,
         Nombre:          item.nombre,
         Descripcion:     item.descripcion || '',
@@ -193,8 +195,8 @@ async function emitirBoleta(apiKey, { rutEmisor, razonSocial, giro, direccion, c
       })),
     },
     Certificado: {
-      Rut:      rutEmisor,
-      Password: '', // SimpleAPI usa el PFX file — password va acá si el PFX tiene uno
+      Rut:      rutCertificado, // RUT del titular del PFX (no necesariamente el emisor)
+      Password: password,
     },
   };
 
@@ -212,24 +214,35 @@ async function emitirBoleta(apiKey, { rutEmisor, razonSocial, giro, direccion, c
 
 // Factura electrónica (33) — venta B2B con receptor identificado
 // precios en items van SIN IVA (neto)
-async function emitirFactura(apiKey, { rutEmisor, razonSocial, giro, actividadEconomica, direccion, comuna, folio, fecha, receptor, items, totales, formaPago = 1 }, certBuf, cafBuf) {
+// rutCertificado: RUT del dueño del PFX (persona, puede diferir del RUT empresa)
+// descuentosRecargos: [{ TipoMovimiento: 'Descuento'|'Recargo', Descripcion, TipoValor: 'Pesos'|'Porcentaje', Valor }]
+// referencias: [{ TipoDocumento, Folio, FechaDocumento, RazonReferencia }]
+async function emitirFactura(apiKey, {
+  rutCertificado, password = '', rutEmisor, razonSocial, giro, actividadEconomica,
+  direccion, comuna, folio, fecha, receptor, items, totales,
+  formaPago = 1, fechaVencimiento = null,
+  descuentosRecargos = [], referencias = [],
+}, certBuf, cafBuf) {
+  const identificacion = {
+    TipoDTE:      TIPO_DTE.FACTURA,
+    Folio:        folio,
+    FechaEmision: fecha,
+    FormaPago:    formaPago, // 1=Contado, 2=Crédito, 3=Sin costo
+  };
+  if (fechaVencimiento) identificacion.FechaVencimiento = fechaVencimiento;
+
   const doc = {
     Documento: {
       Encabezado: {
-        IdentificacionDTE: {
-          TipoDTE: TIPO_DTE.FACTURA,
-          Folio:   folio,
-          FechaEmision: fecha,
-          FormaPago: formaPago,           // 1=Contado, 2=Crédito, 3=Sin costo
-        },
+        IdentificacionDTE: identificacion,
         Emisor: {
-          Rut:               rutEmisor,
-          RazonSocial:       razonSocial,
-          Giro:              giro,
+          Rut:                rutEmisor,
+          RazonSocial:        razonSocial,
+          Giro:               giro,
           ActividadEconomica: Array.isArray(actividadEconomica) ? actividadEconomica : [actividadEconomica],
-          DireccionOrigen:   direccion,
-          ComunaOrigen:      comuna,
-          Telefono:          [],
+          DireccionOrigen:    direccion,
+          ComunaOrigen:       comuna,
+          Telefono:           [],
         },
         Receptor: {
           Rut:         receptor.rut,
@@ -239,6 +252,8 @@ async function emitirFactura(apiKey, { rutEmisor, razonSocial, giro, actividadEc
           Giro:        receptor.giro,
           Contacto:    receptor.contacto || '',
         },
+        RutSolicitante: '',
+        Transporte:     null,
         Totales: {
           MontoNeto:  totales.neto,
           TasaIVA:    19,
@@ -257,12 +272,12 @@ async function emitirFactura(apiKey, { rutEmisor, razonSocial, giro, actividadEc
         Recargo:         0,
         MontoItem:       Math.round(item.cantidad * item.precioNeto - (item.descuento || 0)),
       })),
-      Referencias:        [],
-      DescuentosRecargos: [],
+      Referencias:        referencias,
+      DescuentosRecargos: descuentosRecargos,
     },
     Certificado: {
-      Rut:      rutEmisor,
-      Password: '',
+      Rut:      rutCertificado, // RUT del titular del PFX (no necesariamente el emisor)
+      Password: password,
     },
   };
 
@@ -278,7 +293,8 @@ async function emitirFactura(apiKey, { rutEmisor, razonSocial, giro, actividadEc
 }
 
 // Nota de crédito (61) — anula o ajusta un DTE anterior
-async function emitirNotaCredito(apiKey, { rutEmisor, razonSocial, giro, folio, fecha, receptor, dteReferencia, motivo, items, totales }, certBuf, cafBuf) {
+// rutCertificado: RUT del dueño del PFX (persona, puede diferir del RUT empresa)
+async function emitirNotaCredito(apiKey, { rutCertificado, password = '', rutEmisor, razonSocial, giro, folio, fecha, receptor, dteReferencia, motivo, items, totales }, certBuf, cafBuf) {
   const doc = {
     Documento: {
       Encabezado: {
@@ -323,8 +339,8 @@ async function emitirNotaCredito(apiKey, { rutEmisor, razonSocial, giro, folio, 
       }],
     },
     Certificado: {
-      Rut:      rutEmisor,
-      Password: '',
+      Rut:      rutCertificado, // RUT del titular del PFX
+      Password: password,
     },
   };
 
@@ -617,24 +633,327 @@ async function consultarSuscripcion(apiKey) {
 }
 
 // ──────────────────────────────────────────────
-// RCV — Registro de Compras y Ventas (para módulo contable futuro)
-// POST servicios.simpleapi.cl/api/RCV/ventas/MM/AA
-// POST servicios.simpleapi.cl/api/RCV/compras/MM/AA
+// LIQUIDACIÓN-FACTURA (43) — Emisión de liquidación
+// POST https://api.simpleapi.cl/api/v1/dte/liquidacion/generar
+// Igual que /dte/generar pero clave raíz "Liquidacion" (no "Documento")
+// y tiene campo Comisiones en Totales + array Comisiones a nivel Liquidacion
+//
+// comisionesTotales: [{ ValorNeto, ValorExento, ValorIVA }]
+// comisiones: [{ TipoMovimiento: 'OtrosCargos'|..., Glosa, Tasa, ValorNeto, ValorExento, ValorIVA }]
 // ──────────────────────────────────────────────
-async function getRCVVentas(apiKey, rutEmisor, mes, anio) {
+async function emitirLiquidacion(apiKey, {
+  rutCertificado, password = '', rutEmisor, razonSocial, giro, actividadEconomica,
+  direccion, comuna, ciudad = '', folio, fecha, receptor, items, totales,
+  comisionesTotales = [], comisiones = [], referencias = [],
+  formaPago = 1, fechaVencimiento = null,
+}, certBuf, cafBuf) {
+  const identificacion = {
+    TipoDTE:      TIPO_DTE.LIQUIDACION,
+    Folio:        folio,
+    FechaEmision: fecha,
+    FormaPago:    formaPago,
+  };
+  if (fechaVencimiento) identificacion.FechaVencimiento = fechaVencimiento;
+
+  const doc = {
+    Liquidacion: {
+      Encabezado: {
+        IdentificacionDTE: identificacion,
+        Emisor: {
+          Rut:                rutEmisor,
+          RazonSocial:        razonSocial,
+          Giro:               giro,
+          ActividadEconomica: Array.isArray(actividadEconomica) ? actividadEconomica : [actividadEconomica],
+          DireccionOrigen:    direccion,
+          ComunaOrigen:       comuna,
+          CiudadOrigen:       ciudad,
+          Telefono:           [],
+        },
+        Receptor: {
+          Rut:               receptor.rut,
+          RazonSocial:       receptor.razonSocial,
+          Direccion:         receptor.direccion,
+          Comuna:            receptor.comuna,
+          Ciudad:            receptor.ciudad || '',
+          Giro:              receptor.giro,
+          Contacto:          receptor.contacto || '',
+          CorreoElectronico: receptor.email   || '',
+        },
+        Totales: {
+          MontoNeto:  totales.neto,
+          TasaIVA:    19,
+          IVA:        totales.iva,
+          MontoTotal: totales.total,
+          Comisiones: comisionesTotales,
+        },
+      },
+      Detalles: items.map((item) => ({
+        IndicadorExento:          0,
+        Nombre:                   item.nombre,
+        Descripcion:              item.descripcion || '',
+        Cantidad:                 item.cantidad,
+        UnidadMedida:             item.unidad || '',
+        Precio:                   item.precioNeto,
+        MontoItem:                Math.round(item.cantidad * item.precioNeto),
+        TipoDocumentoLiquidacion: item.tipoDocLiquidacion,
+      })),
+      Comisiones: comisiones,
+      Referencias: referencias,
+    },
+    Certificado: {
+      Rut:      rutCertificado,
+      Password: password,
+    },
+  };
+
+  const form = buildForm(doc, certBuf, cafBuf);
   const res = await axios.post(
-    `${FOLIOS_BASE}/RCV/ventas/${mes}/${anio}`,
-    { rut: rutEmisor },
-    { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
+    `${DTE_BASE}/dte/liquidacion/generar`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  logger.info(`[SimpleAPI] Liquidación 43 emitida — folio ${folio} RUT emisor ${rutEmisor}`);
+  return res.data;
+}
+
+// ──────────────────────────────────────────────
+// FIRMAR XML EXISTENTE — Agrega TED + firma a un DTE XML ya construido
+// POST https://api.simpleapi.cl/api/v1/dte/generar/xml
+// Útil cuando el DTE XML fue construido externamente (sin usar /dte/generar)
+//
+// dteXmlBuf: Buffer del DTE XML sin TED ni firma (el documento base)
+// certBuf:   Buffer PFX del certificado digital
+// cafBuf:    Buffer CAF XML del tipo de DTE
+// Orden en multipart: DTE XML primero, luego PFX, luego CAF
+// ──────────────────────────────────────────────
+async function firmarDTEXml(apiKey, { rutCertificado, password = '' }, dteXmlBuf, certBuf, cafBuf) {
+  const json = {
+    Certificado: {
+      Rut:      rutCertificado,
+      Password: password,
+    },
+  };
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', dteXmlBuf, { filename: 'dte.xml',  contentType: 'application/xml' });
+  form.append('files', certBuf,   { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+  form.append('files', cafBuf,    { filename: 'caf.xml',  contentType: 'application/xml' });
+
+  const res = await axios.post(
+    `${DTE_BASE}/dte/generar/xml`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  return res.data; // XML firmado con TED
+}
+
+// ──────────────────────────────────────────────
+// AUTH — Obtener JWT desde apikey (alternativa al header directo)
+// GET https://api.simpleapi.cl/api/auth/token
+// Body JSON: { apikey }
+// Respuesta: string JWT (no JSON)
+// Nota: el apikey directo en Authorization funciona igual — este JWT es opcional
+// ──────────────────────────────────────────────
+async function obtenerTokenJWT(apiKey) {
+  const res = await axios.get(`${DTE_BASE.replace('/api/v1', '')}/api/auth/token`, {
+    data: { apikey: apiKey },
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return res.data; // JWT string
+}
+
+// ──────────────────────────────────────────────
+// RCV — Registro de Compras y Ventas (para módulo contable futuro)
+// POST servicios.simpleapi.cl/api/RCV/ventas/{mes}/{anio}
+// POST servicios.simpleapi.cl/api/RCV/compras/{mes}/{anio}
+//
+// Input: multipart con Certificado PFX + JSON { RutCertificado, RutEmpresa, Ambiente, Password }
+// URL puede incluir día opcional: /ventas/{dia}/{mes}/{anio}
+// Respuesta: { caratula, compras: { resumenes, detalleCompras }, ventas: { resumenes, detalleVentas } }
+// ──────────────────────────────────────────────
+async function getRCVVentas(apiKey, { rutCertificado, password = '', rutEmpresa, ambiente = 1 }, mes, anio, certBuf) {
+  const json = { RutCertificado: rutCertificado, RutEmpresa: rutEmpresa, Ambiente: ambiente, Password: password };
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+  const res = await axios.post(
+    `${FOLIOS_BASE}/RCV/ventas/${String(mes).padStart(2,'0')}/${anio}`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
   );
   return res.data;
 }
 
-async function getRCVCompras(apiKey, rutEmisor, mes, anio) {
+async function getRCVCompras(apiKey, { rutCertificado, password = '', rutEmpresa, ambiente = 1 }, mes, anio, certBuf) {
+  const json = { RutCertificado: rutCertificado, RutEmpresa: rutEmpresa, Ambiente: ambiente, Password: password };
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
   const res = await axios.post(
-    `${FOLIOS_BASE}/RCV/compras/${mes}/${anio}`,
-    { rut: rutEmisor },
+    `${FOLIOS_BASE}/RCV/compras/${String(mes).padStart(2,'0')}/${anio}`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  return res.data;
+}
+
+// ──────────────────────────────────────────────
+// BHE — Boleta de Honorarios Electrónica (personas naturales)
+// servicios.simpleapi.cl/api/bhe/...
+// Se usa cuando el negocio PAGA honorarios a un trabajador independiente
+//
+// Retencion: 1 = con retención (SII descuenta 13%), 2 = sin retención
+// FechaEmision: formato "DD-MM-YYYY" (distinto al DTE que usa "YYYY-MM-DD")
+// Receptor.Region: número de región (13 = Metropolitana)
+// Respuesta: { folio, codigoBarras, fechaEmision, pdfBase64 }
+// ──────────────────────────────────────────────
+async function emitirBHE(apiKey, { rutCertificado, password = '', retencion = 1, fechaEmision, emisor, receptor, detalles }, certBuf) {
+  const json = {
+    RutCertificado: rutCertificado,
+    Password:       password,
+    Retencion:      retencion,
+    FechaEmision:   fechaEmision, // "DD-MM-YYYY"
+    Emisor:  emisor,              // { Direccion }
+    Receptor: {
+      Rut:       receptor.rut,
+      Nombre:    receptor.nombre,
+      Direccion: receptor.direccion,
+      Region:    receptor.region,
+      Comuna:    receptor.comuna,
+    },
+    Detalles: detalles.map((d) => ({
+      Nombre: d.nombre,
+      Valor:  d.valor,
+    })),
+  };
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+  const res = await axios.post(
+    `${FOLIOS_BASE}/bhe/emitir`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  // { folio, codigoBarras, fechaEmision, pdfBase64 }
+  return res.data;
+}
+
+// Anular BHE por folio
+// POST servicios.simpleapi.cl/api/bhe/anular/{folio}/{tipo}
+// tipo: 1 = BHE normal
+// Respuesta: string de texto plano "Boleta N° X anulada correctamente"
+async function anularBHE(apiKey, { rutCertificado, password = '', folio, tipo = 1 }, certBuf) {
+  const json = { RutCertificado: rutCertificado, Password: password };
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+  const res = await axios.post(
+    `${FOLIOS_BASE}/bhe/anular/${folio}/${tipo}`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  return res.data; // texto plano
+}
+
+// Enviar BHE por email
+// POST servicios.simpleapi.cl/api/bhe/mail/{folio}/{anio}
+// Body JSON (no multipart): { RutUsuario, PasswordSII, Correo }
+// Respuesta: string de texto plano
+async function enviarBHEMail(apiKey, { rutUsuario, passwordSII, correo, folio, anio }) {
+  const res = await axios.post(
+    `${FOLIOS_BASE}/bhe/mail/${folio}/${anio}`,
+    { RutUsuario: rutUsuario, PasswordSII: passwordSII, Correo: correo },
     { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
+  );
+  return res.data; // texto plano
+}
+
+// Consultar direcciones registradas del emisor BHE
+// GET servicios.simpleapi.cl/api/bhe/direcciones
+// Respuesta: array de strings con las direcciones
+async function obtenerDireccionesBHE(apiKey, { rutCertificado, password = '' }, certBuf) {
+  const json = { RutCertificado: rutCertificado, Password: password };
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+  const res = await axios.post(
+    `${FOLIOS_BASE}/bhe/direcciones`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  return res.data; // string[]
+}
+
+// Obtener PDF de BHE emitida (3 variantes de URL)
+// GET /bhe/pdf/emitidas/{folio}/{anio}           — por folio + año
+// GET /bhe/pdf/emitidas/{folio}                  — por folio + FechaEmision + RutEmpresa en input
+// GET /bhe/pdf/{codigoBarras}                    — por código de barras
+// Todas usan GET con multipart form-data (atípico pero confirmado)
+async function obtenerPDFBHE(apiKey, { rutCertificado, password = '', folio, anio = null, fechaEmision = null, rutEmpresa = null, codigoBarras = null }, certBuf) {
+  const json = { RutCertificado: rutCertificado, Password: password };
+  if (fechaEmision) json.FechaEmision = fechaEmision;
+  if (rutEmpresa)   json.RutEmpresa   = rutEmpresa;
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+
+  let path;
+  if (codigoBarras)  path = `bhe/pdf/${codigoBarras}`;
+  else if (anio)     path = `bhe/pdf/emitidas/${folio}/${anio}`;
+  else               path = `bhe/pdf/emitidas/${folio}`;
+
+  const res = await axios.get(
+    `${FOLIOS_BASE}/${path}`,
+    { data: form, headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  return res.data; // PDF base64
+}
+
+// PDF de BHE recibida (cuando el negocio recibe honorarios de un trabajador)
+// GET /bhe/pdf/recibidas/{folio}/{anio}      — por folio + año
+// GET /bhe/pdf/recibidas/{folio}             — por folio + FechaEmision + RutEmisor
+// rutEmisor: RUT del trabajador independiente que emitió la boleta
+async function obtenerPDFBHERecibida(apiKey, { rutCertificado, password = '', folio, anio = null, fechaEmision = null, rutEmisor }, certBuf) {
+  const json = { RutCertificado: rutCertificado, Password: password, RutEmisor: rutEmisor };
+  if (fechaEmision) json.FechaEmision = fechaEmision;
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+
+  const path = anio ? `bhe/pdf/recibidas/${folio}/${anio}` : `bhe/pdf/recibidas/${folio}`;
+  const res = await axios.get(
+    `${FOLIOS_BASE}/${path}`,
+    { data: form, headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  return res.data; // PDF base64
+}
+
+// Listado de BHE emitidas o recibidas por año
+// POST /bhe/listado/emitidas/{anio}
+// POST /bhe/listado/recibidas/{anio}
+// Respuesta: { anio, rut, periodos[{mes, cantidadVigentes, cantidadAnuladas, honorarioBruto, retencionTerceros, retencionContribuyente, totalLiquido}], totales... }
+async function listadoBHEEmitidas(apiKey, { rutCertificado, password = '', anio }, certBuf) {
+  const json = { RutCertificado: rutCertificado, Password: password };
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+  const res = await axios.post(
+    `${FOLIOS_BASE}/bhe/listado/emitidas/${anio}`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  return res.data;
+}
+
+async function listadoBHERecibidas(apiKey, { rutCertificado, password = '', anio }, certBuf) {
+  const json = { RutCertificado: rutCertificado, Password: password };
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+  const res = await axios.post(
+    `${FOLIOS_BASE}/bhe/listado/recibidas/${anio}`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
   );
   return res.data;
 }
@@ -662,8 +981,9 @@ module.exports = {
   // Utilidades RUT
   validarRUT,
   formatRUT,
-  // Auth interno
+  // Auth
   getHeaders,
+  obtenerTokenJWT,
   // Contribuyente
   buscarContribuyente,
   // Suscripción
@@ -674,9 +994,12 @@ module.exports = {
   consultarUsoFolios,
   anularFolios,
   // Emisión DTE
+  // rutCertificado = RUT del dueño del PFX (persona), puede diferir del RUT empresa (emisor)
   emitirBoleta,
   emitirFactura,
   emitirNotaCredito,
+  emitirLiquidacion,  // tipo 43 — endpoint /dte/liquidacion/generar
+  firmarDTEXml,       // firma un DTE XML ya construido — /dte/generar/xml
   // Envío SII
   generarSobre,
   enviarSobre,
@@ -689,7 +1012,17 @@ module.exports = {
   obtenerTimbre,
   obtenerPDFCarta,
   obtenerPDFTermico,   // 80mm y 58mm (reemplaza obtenerPDF80mm)
-  // RCV
+  // BHE — Boleta de Honorarios Electrónica (personas naturales)
+  emitirBHE,
+  anularBHE,
+  enviarBHEMail,
+  obtenerDireccionesBHE,
+  obtenerPDFBHE,           // emitidas: por folio+anio, folio solo, o codigoBarras
+  obtenerPDFBHERecibida,   // recibidas: por folio+anio o folio+fecha+RutEmisor
+  listadoBHEEmitidas,      // resumen anual por mes — emitidas
+  listadoBHERecibidas,     // resumen anual por mes — recibidas
+  // RCV — Registro de Compras y Ventas
+  // Firma: (apiKey, { rutCertificado, password, rutEmpresa, ambiente }, mes, anio, certBuf)
   getRCVVentas,
   getRCVCompras,
   // Helpers IVA Chile 19%
