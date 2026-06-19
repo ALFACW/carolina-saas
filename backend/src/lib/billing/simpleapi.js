@@ -437,6 +437,44 @@ async function consultarEstadoEnvio(apiKey, { rutCertificado, password, rutEmpre
 }
 
 // ──────────────────────────────────────────────
+// CONSULTAR DTE INDIVIDUAL — Estado de un documento específico en el SII
+// POST https://api.simpleapi.cl/api/v1/consulta/dte
+// A diferencia de consultarEstadoEnvio (por trackId de sobre),
+// este consulta por folio + receptor + monto + fecha del DTE
+//
+// Respuesta: { estado, ok, glosaEstado, responseXml }
+//   estados conocidos: 'DOK'=aceptado, 'FAN'=anulado, 'RCH'=rechazado
+// ──────────────────────────────────────────────
+async function consultarEstadoDTE(apiKey, { rutCertificado, password, rutEmpresa, rutReceptor, folio, total, fechaDTE, tipoDte, ambiente, esBoletaRest = false }, certBuf) {
+  const json = {
+    Certificado: {
+      Rut:      rutCertificado,
+      Password: password,
+    },
+    RutEmpresa:         rutEmpresa,
+    RutReceptor:        rutReceptor,
+    Folio:              folio,
+    Total:              total,
+    FechaDTE:           fechaDTE,   // 'YYYY-MM-DD'
+    Tipo:               tipoDte,
+    Ambiente:           ambiente,
+    ServidorBoletaREST: esBoletaRest,
+  };
+
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+
+  const res = await axios.post(
+    `${DTE_BASE}/consulta/dte`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  // { estado, ok, glosaEstado, erR_CODE, glosa_ERR_CODE, numeroAtencion, fechaAtencion, responseXml }
+  return res.data;
+}
+
+// ──────────────────────────────────────────────
 // RUT — Lookup contribuyente en SII
 // GET https://rut.simpleapi.cl/v2/{RUT}
 // Auth: Authorization: <apikey>
@@ -522,6 +560,7 @@ module.exports = {
   generarSobre,
   enviarSobre,
   consultarEstadoEnvio,
+  consultarEstadoDTE,
   getRCVVentas,
   getRCVCompras,
   calcularTotalesDesdeTotal,
