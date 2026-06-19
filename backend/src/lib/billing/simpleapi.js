@@ -1040,6 +1040,106 @@ async function observacionBHE(apiKey, { rutUsuario, rutEmpresa, passwordSII, fol
 }
 
 // ──────────────────────────────────────────────
+// BHE EMPRESAS — Boleta de Honorarios para empresas con credenciales SII
+// servicios.simpleapi.cl/api/bheempresas/...
+//
+// Diferencia vs BHE normal:
+//   /bhe/emitir        → auth con PFX (certBuf) + RutCertificado + Password
+//   /bheempresas/emitir → auth con RutUsuario + PasswordSII (JSON puro, sin PFX)
+//
+// Misma estructura de datos (Emisor, Receptor, Detalles) y misma respuesta.
+// ──────────────────────────────────────────────
+async function emitirBHEEmpresas(apiKey, { rutUsuario, passwordSII, retencion = 1, fechaEmision, emisor, receptor, detalles }) {
+  const body = {
+    RutUsuario:  rutUsuario,
+    PasswordSII: passwordSII,
+    Retencion:   retencion,
+    FechaEmision: fechaEmision, // "DD-MM-YYYY"
+    Emisor:   emisor,           // { Direccion: "0" } si no tiene una específica
+    Receptor: {
+      Rut:       receptor.rut,
+      Nombre:    receptor.nombre,
+      Direccion: receptor.direccion,
+      Region:    receptor.region,
+      Comuna:    receptor.comuna,
+    },
+    Detalles: detalles.map((d) => ({
+      Nombre: d.nombre,
+      Valor:  d.valor,
+    })),
+  };
+  const res = await axios.post(
+    `${FOLIOS_BASE}/bheempresas/emitir`,
+    body,
+    { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
+  );
+  // { folio, codigoBarras, fechaEmision, pdfBase64 }
+  return res.data;
+}
+
+async function anularBHEEmpresas(apiKey, { rutUsuario, passwordSII, folio, tipo = 1 }) {
+  const res = await axios.post(
+    `${FOLIOS_BASE}/bheempresas/anular/${folio}/${tipo}`,
+    { RutUsuario: rutUsuario, PasswordSII: passwordSII },
+    { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
+  );
+  return res.data; // texto plano
+}
+
+async function enviarBHEEmpresasMail(apiKey, { rutUsuario, passwordSII, correo, folio, anio }) {
+  const res = await axios.post(
+    `${FOLIOS_BASE}/bheempresas/mail/${folio}/${anio}`,
+    { RutUsuario: rutUsuario, PasswordSII: passwordSII, Correo: correo },
+    { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
+  );
+  return res.data; // texto plano
+}
+
+async function obtenerDireccionesBHEEmpresas(apiKey, { rutUsuario, passwordSII }) {
+  const res = await axios.post(
+    `${FOLIOS_BASE}/bheempresas/direcciones`,
+    { RutUsuario: rutUsuario, PasswordSII: passwordSII },
+    { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
+  );
+  return res.data; // string[]
+}
+
+// GET sin auth — lista regiones y comunas de Chile
+async function listarComunasBHEEmpresas(apiKey) {
+  const res = await axios.get(
+    `${FOLIOS_BASE}/bheempresas/listarComunas`,
+    { headers: getHeaders(apiKey) }
+  );
+  return res.data; // { regiones: [{ nombre, comunas[] }] }
+}
+
+// PDF BHE empresa — 3 variantes según params disponibles:
+//   folio + anio                              → GET /bheempresas/pdf/emitidas/{folio}/{anio}
+//   folio + fechaEmision + rutEmpresa         → GET /bheempresas/pdf/emitidas/{folio}
+//   codigoBarras                              → GET /bheempresas/pdf/{codigoBarras}
+async function obtenerPDFBHEEmpresas(apiKey, { rutUsuario, passwordSII, folio, anio, fechaEmision, rutEmpresa, codigoBarras }) {
+  let url;
+  const body = { RutUsuario: rutUsuario, PasswordSII: passwordSII };
+
+  if (codigoBarras) {
+    url = `${FOLIOS_BASE}/bheempresas/pdf/${codigoBarras}`;
+  } else if (anio && !fechaEmision) {
+    url = `${FOLIOS_BASE}/bheempresas/pdf/emitidas/${folio}/${anio}`;
+  } else {
+    // folio solo, con FechaEmision + RutEmpresa (RutUsuario = emisor)
+    url = `${FOLIOS_BASE}/bheempresas/pdf/emitidas/${folio}`;
+    body.RutEmpresa  = rutEmpresa;  // receptor/empresa pagadora
+    body.FechaEmision = fechaEmision;
+  }
+
+  const res = await axios.get(url, {
+    data: body,
+    headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' },
+  });
+  return res.data; // base64 PDF
+}
+
+// ──────────────────────────────────────────────
 // Helpers de cálculo IVA Chile (19%)
 // En boleta: precio incluye IVA → calcular neto desde el total
 // En factura: precio es neto → calcular IVA sobre el total neto
@@ -1104,6 +1204,14 @@ module.exports = {
   listadoBHEEmitidas,      // anual/{anio} | mensual/{MM}/{YYYY} | diario/{DD}/{MM}/{YYYY}
   listadoBHERecibidas,     // idem — con campo boletas[] en mensual/diario
   observacionBHE,          // POST /bhe/observacion/{tipoBoleta}/{folio}
+  // BHE EMPRESAS — mismos endpoints pero auth con RutUsuario+PasswordSII (sin PFX)
+  // servicios.simpleapi.cl/api/bheempresas/...
+  emitirBHEEmpresas,        // POST /bheempresas/emitir
+  anularBHEEmpresas,        // POST /bheempresas/anular/{folio}/{tipo}
+  enviarBHEEmpresasMail,    // POST /bheempresas/mail/{folio}/{anio}
+  obtenerDireccionesBHEEmpresas, // POST /bheempresas/direcciones → string[]
+  listarComunasBHEEmpresas, // GET /bheempresas/listarComunas (sin auth) → { regiones[] }
+  obtenerPDFBHEEmpresas,    // GET — 3 variantes: /{codigoBarras} | /emitidas/{folio}/{anio} | /emitidas/{folio}
   // RCV — Registro de Compras y Ventas
   // Firma: (apiKey, { rutCertificado, password, rutEmpresa, ambiente }, mes, anio, certBuf)
   getRCVVentas,
