@@ -1238,6 +1238,54 @@ async function obtenerPDFBHEEmpresas(apiKey, { rutUsuario, passwordSII, folio, a
 }
 
 // ──────────────────────────────────────────────
+// MAPAS — Utilidades geoespaciales SII Chile
+// servicios.simpleapi.cl/api/mapas/...
+// Sin auth de tenant — solo apiKey en header
+// ──────────────────────────────────────────────
+
+// POST /mapas/utils/comunas — lista completa de comunas con Id numérico SII
+// El Id es requerido por buscarDireccion. Sin body.
+async function listarComunasMapas(apiKey) {
+  const res = await axios.post(
+    `${FOLIOS_BASE}/mapas/utils/comunas`,
+    {},
+    { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
+  );
+  return res.data; // [{ Id, Comuna }]
+}
+
+// POST /mapas/buscar/direccion — buscar predio por dirección
+// Retorna datos SII: rol, destino, valor, área homogénea, coordenadas
+async function buscarDireccionMapas(apiKey, { idComuna, comuna, calle, numero }) {
+  const res = await axios.post(
+    `${FOLIOS_BASE}/mapas/buscar/direccion`,
+    { IdComuna: idComuna, Comuna: comuna, Calle: calle, Numero: numero },
+    { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
+  );
+  return res.data; // { Datos: { Rol, Direccion, Destino, ValorTotal, PosicionX, ... } }
+}
+
+// POST /mapas/buscar/rol — buscar predio por manzana+predio (rol catastral)
+async function buscarRolMapas(apiKey, { comuna, manzana, predio }) {
+  const res = await axios.post(
+    `${FOLIOS_BASE}/mapas/buscar/rol`,
+    { Comuna: comuna, Manzana: manzana, Predio: predio },
+    { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
+  );
+  return res.data; // { Datos: { ... } } — misma forma que buscarDireccion
+}
+
+// POST /mapas/buscar/reavaluo — buscar valores de área homogénea (revalúo SII)
+async function buscarReavaluo(apiKey, { comuna, reavaluo, codigo }) {
+  const res = await axios.post(
+    `${FOLIOS_BASE}/mapas/buscar/reavaluo`,
+    { Comuna: comuna, Reavaluo: reavaluo, Codigo: codigo },
+    { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
+  );
+  return res.data; // { Datos: { ValorUnitario, RangoSuperficie, ubicacionX/Y, ... } }
+}
+
+// ──────────────────────────────────────────────
 // Helpers de cálculo IVA Chile (19%)
 // En boleta: precio incluye IVA → calcular neto desde el total
 // En factura: precio es neto → calcular IVA sobre el total neto
@@ -1315,6 +1363,11 @@ module.exports = {
   listadoBHEEmpresasRecibidas,   // POST — idem para recibidas
   observacionBHEEmpresas,        // POST /bheempresas/observacion/{tipoBoleta}/{folio}
   emitirBHEEmpresasTerceros,     // POST /bheempresas/terceros/emitir — Emisor={Rut} (trabajador), auth SII
+  // Mapas SII — geolocalización y datos catastrales
+  listarComunasMapas,   // POST /mapas/utils/comunas → [{ Id, Comuna }]
+  buscarDireccionMapas, // POST /mapas/buscar/direccion → predio por calle+número
+  buscarRolMapas,       // POST /mapas/buscar/rol → predio por manzana+predio
+  buscarReavaluo,       // POST /mapas/buscar/reavaluo → área homogénea SII
   // RCV — Registro de Compras y Ventas
   // Firma: (apiKey, { rutCertificado, password, rutEmpresa, ambiente }, mes, anio, certBuf)
   getRCVVentas,
