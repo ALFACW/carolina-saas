@@ -329,6 +329,45 @@ async function emitirNotaCredito(apiKey, { rutEmisor, razonSocial, giro, folio, 
 }
 
 // ──────────────────────────────────────────────
+// SOBRE DE ENVÍO — Empaqueta el DTE para envío al SII
+// POST https://api.simpleapi.cl/api/v1/envio/generar
+// multipart: input(JSON) + files(PFX) + files(DTE XML del paso anterior)
+//
+// RutReceptor:
+//   Boleta (39): '60803000-K' (RUT del SII — receptor siempre es el SII)
+//   Factura (33): RUT real del receptor
+//
+// NumeroResolucion: 0 en certificación, número real en producción
+// ──────────────────────────────────────────────
+async function generarSobre(apiKey, { rutCertificado, password, rutEmisor, rutReceptor, fechaResolucion, numeroResolucion }, certBuf, dteXmlBuf) {
+  const json = {
+    Certificado: {
+      Rut:      rutCertificado,
+      Password: password,
+    },
+    Caratula: {
+      RutEmisor:        rutEmisor,
+      RutReceptor:      rutReceptor,      // '60803000-K' para boletas
+      FechaResolucion:  fechaResolucion,  // 'YYYY-MM-DD' de la resolución SII
+      NumeroResolucion: numeroResolucion, // 0 en certificación
+    },
+  };
+
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+  form.append('files', dteXmlBuf, { filename: 'dte.xml', contentType: 'application/xml' });
+
+  const res = await axios.post(
+    `${DTE_BASE}/envio/generar`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  // Respuesta: EnvioDTE XML firmado — listo para enviar al SII
+  return res.data;
+}
+
+// ──────────────────────────────────────────────
 // RUT — Lookup contribuyente en SII
 // GET https://rut.simpleapi.cl/v2/{RUT}
 // Auth: Authorization: <apikey>
@@ -411,6 +450,7 @@ module.exports = {
   emitirBoleta,
   emitirFactura,
   emitirNotaCredito,
+  generarSobre,
   getRCVVentas,
   getRCVCompras,
   calcularTotalesDesdeTotal,
