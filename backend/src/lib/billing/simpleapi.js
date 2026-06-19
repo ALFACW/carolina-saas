@@ -475,6 +475,57 @@ async function consultarEstadoDTE(apiKey, { rutCertificado, password, rutEmpresa
 }
 
 // ──────────────────────────────────────────────
+// IMPRESIÓN — Timbre y PDF del DTE
+// Nota: el campo del DTE XML es "fileEnvio" (no "files")
+// ──────────────────────────────────────────────
+
+// Timbre (QR del TED) — devuelve PNG en base64
+// GET https://api.simpleapi.cl/api/v1/impresion/timbre
+// Útil para tickets térmicos: incrustar el QR del timbre electrónico
+async function obtenerTimbre(apiKey, dteXmlBuf) {
+  const form = new FormData();
+  form.append('fileEnvio', dteXmlBuf, { filename: 'dte.xml', contentType: 'application/xml' });
+
+  const res = await axios.post(
+    `${DTE_BASE}/impresion/timbre`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  // Respuesta: string base64 del PNG con el QR del timbre electrónico
+  return res.data;
+}
+
+// PDF tamaño carta (A4) — devuelve PDF en base64
+// También disponible: /impresion/pdf/80mm/v2 y /impresion/pdf/56mm/v2 (para térmicas)
+async function obtenerPDF(apiKey, { numeroResolucion, unidadSII, fechaResolucion, vendedor, formaPago, condicionVenta, propiedadLogo = 'contain', tamano = 'carta' }, dteXmlBuf, logoBuf = null) {
+  const json = {
+    NumeroResolucion: numeroResolucion,
+    UnidadSII:        unidadSII,         // unidad del SII que autorizó, ej: 'ALTO HOSPICIO'
+    FechaResolucion:  fechaResolucion,   // 'YYYY-MM-DD'
+    Vendedor:         vendedor,
+    FormaPago:        formaPago,         // 'EFECTIVO', 'TARJETA', etc.
+    CondicionVenta:   condicionVenta,
+    PropiedadLogo:    propiedadLogo,     // 'contain' | 'cover'
+  };
+
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('fileEnvio', dteXmlBuf, { filename: 'dte.xml', contentType: 'application/xml' });
+  if (logoBuf) {
+    form.append('logo', logoBuf, { filename: 'logo.png', contentType: 'image/png' });
+  }
+
+  // tamano: 'carta' | '80mm' | '56mm'
+  const res = await axios.post(
+    `${DTE_BASE}/impresion/pdf/${tamano}/v2`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  // Respuesta: PDF en base64 — guardar en dte_documents.pdf_base64
+  return res.data;
+}
+
+// ──────────────────────────────────────────────
 // RUT — Lookup contribuyente en SII
 // GET https://rut.simpleapi.cl/v2/{RUT}
 // Auth: Authorization: <apikey>
@@ -561,6 +612,8 @@ module.exports = {
   enviarSobre,
   consultarEstadoEnvio,
   consultarEstadoDTE,
+  obtenerTimbre,
+  obtenerPDF,
   getRCVVentas,
   getRCVCompras,
   calcularTotalesDesdeTotal,
