@@ -8,7 +8,7 @@
 const axios = require('axios');
 const logger = require('../logger');
 
-const BASE_URL = 'https://api.simpleapi.cl/api/v1'; // confirmado en ApiBase.cs del SDK
+const BASE_URL = 'https://api.simpleapi.cl/api';
 
 // Tipos de DTE soportados
 const TIPO_DTE = {
@@ -21,13 +21,29 @@ const TIPO_DTE = {
 };
 
 // ──────────────────────────────────────────────
-// Autenticación
-// Header exacto por confirmar con documentacion.simpleapi.cl
-// Opciones comunes: 'Authorization: Bearer <key>' o 'apikey: <key>'
+// Autenticación — token JWT con vida de 24h
+// GET /api/auth/token  body: { apikey }  → texto plano con el JWT
 // ──────────────────────────────────────────────
-function getHeaders(apiKey) {
+const _tokenCache = {}; // { apiKey → { token, expiresAt } }
+
+async function getToken(apiKey) {
+  const cached = _tokenCache[apiKey];
+  if (cached && Date.now() < cached.expiresAt) return cached.token;
+
+  const res = await axios.get(`${BASE_URL}/auth/token`, {
+    headers: { 'Content-Type': 'application/json' },
+    data: { apikey: apiKey },          // GET con body — así lo documenta SimpleAPI
+  });
+
+  const token = typeof res.data === 'string' ? res.data.trim() : res.data;
+  _tokenCache[apiKey] = { token, expiresAt: Date.now() + 23 * 60 * 60 * 1000 }; // 23h por seguridad
+  return token;
+}
+
+async function getHeaders(apiKey) {
+  const token = await getToken(apiKey);
   return {
-    'apikey': apiKey,           // TODO: confirmar nombre exacto del header
+    'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
   };
 }
@@ -204,10 +220,38 @@ async function consultarEstadoDTE(apiKey, rutEmisor, trackId) {
   return res.data;
 }
 
+// ──────────────────────────────────────────────
+// RCV — Registro de Compras y Ventas
+// Útil para módulo contable: cruza lo emitido vs lo registrado en SII
+// POST /api/RCV/ventas/DD/MM/AA  o  /MM/AA
+// POST /api/RCV/compras/DD/MM/AA o  /MM/AA
+// ──────────────────────────────────────────────
+
+async function getRCVVentas(apiKey, rutEmisor, mes, anio) {
+  const headers = await getHeaders(apiKey);
+  const res = await axios.post(
+    `${BASE_URL}/RCV/ventas/${mes}/${anio}`,
+    { rut: rutEmisor },
+    { headers }
+  );
+  return res.data;
+}
+
+async function getRCVCompras(apiKey, rutEmisor, mes, anio) {
+  const headers = await getHeaders(apiKey);
+  const res = await axios.post(
+    `${BASE_URL}/RCV/compras/${mes}/${anio}`,
+    { rut: rutEmisor },
+    { headers }
+  );
+  return res.data;
+}
+
 module.exports = {
   TIPO_DTE,
   validarRUT,
   formatRUT,
+  getToken,
   obtenerFolio,
   consultarFolios,
   anularFolio,
@@ -215,4 +259,6 @@ module.exports = {
   emitirFactura,
   emitirNotaCredito,
   consultarEstadoDTE,
+  getRCVVentas,
+  getRCVCompras,
 };
