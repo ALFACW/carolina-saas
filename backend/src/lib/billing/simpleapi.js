@@ -43,9 +43,10 @@ function getHeaders(apiKey) {
 function buildForm(json, certBuf, cafBuf) {
   const form = new FormData();
   form.append('input', JSON.stringify(json));
+  // Ambos archivos usan el mismo campo "files" (curl confirma: dos --form 'files=@...')
   form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
   if (cafBuf) {
-    form.append('files2', cafBuf, { filename: 'caf.xml', contentType: 'application/xml' });
+    form.append('files', cafBuf, { filename: 'caf.xml', contentType: 'application/xml' });
   }
   return form;
 }
@@ -195,6 +196,8 @@ async function emitirBoleta(apiKey, { rutEmisor, razonSocial, giro, direccion, c
     { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
   );
   logger.info(`[SimpleAPI] Boleta emitida — folio ${folio} RUT ${rutEmisor}`);
+  // Respuesta: XML firmado del DTE (string iso-8859-1)
+  // Guardar en dte_documents.xml_firmado — es el documento oficial
   return res.data;
 }
 
@@ -261,6 +264,7 @@ async function emitirFactura(apiKey, { rutEmisor, razonSocial, giro, actividadEc
     { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
   );
   logger.info(`[SimpleAPI] Factura 33 emitida — folio ${folio} RUT emisor ${rutEmisor}`);
+  // Respuesta: XML firmado del DTE (string iso-8859-1) — misma estructura que boleta
   return res.data;
 }
 
