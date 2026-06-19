@@ -1,6 +1,7 @@
 const { z } = require('zod');
 const db = require('../db');
 const { getFactusClient } = require('../lib/factus');
+const { emitirDTEChile } = require('./siiController');
 const logger = require('../lib/logger');
 
 const ventaSchema = z.object({
@@ -135,8 +136,73 @@ async function procesarVenta(req, res, next) {
     let pdfUrl        = null;
     let estadoFactura = 'demo';
 
-    if (!modoDemo) {
-      // ── Modo real: emitir via Factus ───────────────────────────────
+    if (req.tenant.country === 'CL') {
+      // ── Modo Chile: emitir via SimpleAPI/SII ───────────────────────
+      let receptor = null;
+      if (data.cliente_id) {
+        const { rows: clienteRows } = await client.query(
+          'SELECT * FROM clientes WHERE id=$1 AND tenant_id=$2',
+          [data.cliente_id, req.tenant.id]
+        );
+        if (!clienteRows.length) throw Object.assign(new Error('Cliente no encontrado'), { status: 400 });
+        const cli = clienteRows[0];
+        // Usar factura (33) si el cliente tiene RUT, boleta (39) si no
+        if (cli.numero_identificacion) {
+          receptor = {
+            rut:       cli.numero_identificacion,
+            nombre:    cli.nombre,
+            giro:      cli.email || 'CLIENTE',
+            direccion: cli.direccion || '',
+            comuna:    cli.ciudad   || '',
+          };
+        }
+      }
+
+      const tipoDte = receptor ? 33 : 39;
+
+      // Items para DTE Chile — precio con IVA (SimpleAPI descuenta el 19%)
+      const itemsDTE = itemsFactura.map((it) => ({
+        nombre:   it.descripcion,
+        cantidad: it.cantidad,
+        precio:   Math.round(it.precio_unitario), // precio con IVA por unidad
+        // descuento porcentual si aplica
+        ...(it.descuento > 0 ? { descuentoPorcentaje: it.descuento } : {}),
+      }));
+
+      const dte = await emitirDTEChile(client, req.tenant, {
+        tipoDte,
+        items: itemsDTE,
+        total,
+        receptor,
+        fecha: new Date().toISOString().split('T')[0],
+      });
+
+      // Guardar en dte_documents
+      await client.query(
+        `INSERT INTO dte_documents
+           (tenant_id, tipo_dte, folio, rut_emisor, rut_receptor, razon_social_receptor,
+            monto_neto, monto_iva, monto_total, xml_firmado, pdf_base64, fecha_emision)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW())`,
+        [
+          req.tenant.id, tipoDte, dte.folio,
+          req.tenant.rut_empresa,
+          receptor?.rut || null,
+          receptor?.nombre || null,
+          Math.round(total / 1.19),
+          Math.round(total - total / 1.19),
+          Math.round(total),
+          dte.xml_firmado,
+          dte.pdfBase64,
+        ]
+      );
+
+      numeroFactura = String(dte.folio);
+      cufe          = dte.sobre_id;   // trackId SII (equivalente al CUFE colombiano)
+      pdfUrl        = null;           // PDF está en dte_documents.pdf_base64
+      estadoFactura = 'enviada';
+
+    } else if (!modoDemo) {
+      // ── Modo Colombia real: emitir via Factus ─────────────────────
       let clienteData = null;
       if (data.cliente_id) {
         const { rows: clienteRows } = await client.query(

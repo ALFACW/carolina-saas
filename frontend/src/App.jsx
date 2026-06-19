@@ -18,6 +18,7 @@ import Clientes from './pages/Clientes'
 import ClienteForm from './pages/ClienteForm'
 import Reportes from './pages/Reportes'
 import Configuracion from './pages/Configuracion'
+import ConfiguracionSII from './pages/ConfiguracionSII'
 import Usuarios from './pages/Usuarios'
 import MiPerfil from './pages/MiPerfil'
 import Cajas from './pages/Cajas'
@@ -82,6 +83,7 @@ function AppRoutes() {
           <Route path="clientes/:id/editar" element={<RoleGuard roles={['admin', 'supervisor', 'inventario']}><ClienteForm /></RoleGuard>} />
           <Route path="reportes" element={<RoleGuard roles={['admin', 'supervisor']}><Reportes /></RoleGuard>} />
           <Route path="configuracion" element={<RoleGuard roles={['admin']}><Configuracion /></RoleGuard>} />
+          <Route path="configuracion-sii" element={<RoleGuard roles={['admin']}><ConfiguracionSII /></RoleGuard>} />
           <Route path="guia-hardware" element={<GuiaHardware />} />
           <Route path="mi-perfil" element={<MiPerfil />} />
           <Route path="usuarios" element={<RoleGuard roles={['admin']}><Usuarios /></RoleGuard>} />

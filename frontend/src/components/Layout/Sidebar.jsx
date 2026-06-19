@@ -3,11 +3,11 @@ import { NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
   Home, ShoppingCart, FileText, Package, Users, Wallet,
-  BarChart3, Settings, LogOut, Truck, ShoppingBag, ClipboardList, Monitor, Clock,
+  BarChart3, Settings, LogOut, Truck, ShoppingBag, ClipboardList, Monitor, Clock, FileLock2,
 } from 'lucide-react'
 
 const NAV_POR_ROL = {
-  admin:      ['/dashboard', '/pos', '/facturas', '/productos', '/clientes', '/proveedores', '/compras', '/cartera', '/reportes', '/cierres', '/cajas', '/usuarios', '/configuracion'],
+  admin:      ['/dashboard', '/pos', '/facturas', '/productos', '/clientes', '/proveedores', '/compras', '/cartera', '/reportes', '/cierres', '/cajas', '/usuarios', '/configuracion', '/configuracion-sii'],
   supervisor: ['/dashboard', '/pos', '/facturas', '/clientes', '/proveedores', '/compras', '/cartera', '/reportes', '/cierres'],
   cajero:     ['/caja/abrir', '/pos'],
   vendedor:   ['/caja/abrir', '/pos'],
@@ -48,9 +48,10 @@ const MENU_GROUPS = [
   {
     group: 'Admin',
     items: [
-      { icon: Monitor,  label: 'Cajas',         path: '/cajas' },
-      { icon: Settings, label: 'Configuración', path: '/configuracion' },
-      { icon: Users,    label: 'Usuarios',      path: '/usuarios' },
+      { icon: Monitor,   label: 'Cajas',            path: '/cajas' },
+      { icon: Settings,  label: 'Configuración',    path: '/configuracion' },
+      { icon: FileLock2, label: 'Configurar SII CL', path: '/configuracion-sii' },
+      { icon: Users,     label: 'Usuarios',         path: '/usuarios' },
     ]
   },
 ]
