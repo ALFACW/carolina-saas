@@ -8,7 +8,9 @@
 const axios = require('axios');
 const logger = require('../logger');
 
-const BASE_URL = 'https://api.simpleapi.cl/api';
+const BASE_URL    = 'https://api.simpleapi.cl/api';
+const BASE_URL_V1 = 'https://api.simpleapi.cl/api/v1';
+const BASE_URL_RUT = 'https://rut.simpleapi.cl';
 
 // Tipos de DTE soportados
 const TIPO_DTE = {
@@ -221,6 +223,31 @@ async function consultarEstadoDTE(apiKey, rutEmisor, trackId) {
 }
 
 // ──────────────────────────────────────────────
+// RUT — Lookup de contribuyente en SII
+// GET https://rut.simpleapi.cl/v2/{RUT}
+// No requiere token — usa apikey directamente como header
+// Devuelve: razonSocial, actividadesEconomicas (con afectaIVA), domicilios
+// MUY útil: auto-completa los campos de receptor en Factura 33
+// ──────────────────────────────────────────────
+
+async function buscarContribuyente(apiKey, rut) {
+  const rutLimpio = rut.replace(/\./g, ''); // acepta 12.345.678-9 o 12345678-9
+  const res = await axios.get(`${BASE_URL_RUT}/v2/${rutLimpio}`, {
+    headers: { 'apikey': apiKey },
+  });
+  // Respuesta: { rut, razonSocial, actividadesEconomicas[{codigo,descripcion,afectaIVA}],
+  //             domicilios[{direccion,ciudad,comuna}], presentaInicioActividades, ... }
+  return res.data;
+}
+
+// Consultar uso y límites del plan activo
+async function consultarSuscripcion(apiKey) {
+  const headers = await getHeaders(apiKey);
+  const res = await axios.get(`${BASE_URL_V1}/suscripcion/status`, { headers });
+  return res.data; // [{ servicio, uso, maximo, respaldos }]
+}
+
+// ──────────────────────────────────────────────
 // RCV — Registro de Compras y Ventas
 // Útil para módulo contable: cruza lo emitido vs lo registrado en SII
 // POST /api/RCV/ventas/DD/MM/AA  o  /MM/AA
@@ -252,6 +279,8 @@ module.exports = {
   validarRUT,
   formatRUT,
   getToken,
+  buscarContribuyente,
+  consultarSuscripcion,
   obtenerFolio,
   consultarFolios,
   anularFolio,
