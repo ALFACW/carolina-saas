@@ -1096,33 +1096,82 @@ async function obtenerPDFBHEEmpresasRecibida(apiKey, { rutUsuario, passwordSII, 
   return res.data; // base64 PDF
 }
 
-// Listado BHE empresa emitidas — 2 variantes según params:
-//   anual:   POST /bheempresas/listado/emitidas/{anio}       → { periodos[] }
-//   mensual: POST /bheempresas/listado/emitidas/{MM}/{YYYY}  → { boletas[] }
-async function listadoBHEEmpresasEmitidas(apiKey, { rutUsuario, passwordSII, anio, mes = null }) {
-  const url = mes
-    ? `${FOLIOS_BASE}/bheempresas/listado/emitidas/${String(mes).padStart(2, '0')}/${anio}`
-    : `${FOLIOS_BASE}/bheempresas/listado/emitidas/${anio}`;
-  const res = await axios.post(
-    url,
-    { RutUsuario: rutUsuario, PasswordSII: passwordSII },
-    { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
-  );
-  // anual: { anio, rut, periodos[], totalVigentes, totalAnuladas, ... }
-  // mensual: { dia, mes, anio, rut, boletas[], cantidadDocumentos, ... }
+// Listado BHE empresa emitidas — 3 variantes según params:
+//   anual:   POST /bheempresas/listado/emitidas/{anio}            → { periodos[] }
+//   mensual: POST /bheempresas/listado/emitidas/{MM}/{YYYY}       → { boletas[] }
+//   diario:  POST /bheempresas/listado/emitidas/{DD}/{MM}/{YYYY}  → { boletas[] }
+async function listadoBHEEmpresasEmitidas(apiKey, { rutUsuario, passwordSII, anio, mes = null, dia = null, detallado = false }) {
+  let url;
+  if (dia && mes) {
+    url = `${FOLIOS_BASE}/bheempresas/listado/emitidas/${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${anio}`;
+  } else if (mes) {
+    url = `${FOLIOS_BASE}/bheempresas/listado/emitidas/${String(mes).padStart(2, '0')}/${anio}`;
+  } else {
+    url = `${FOLIOS_BASE}/bheempresas/listado/emitidas/${anio}`;
+  }
+  const body = { RutUsuario: rutUsuario, PasswordSII: passwordSII };
+  if (dia) body.Detallado = detallado;
+  const res = await axios.post(url, body, {
+    headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' },
+  });
+  // anual: { anio, rut, periodos[], totalVigentes, ... }
+  // mensual/diario: { dia, mes, anio, rut, boletas[], cantidadDocumentos, ... }
   return res.data;
 }
 
-// Listado BHE empresa recibidas — mismos 2 variantes
-async function listadoBHEEmpresasRecibidas(apiKey, { rutUsuario, passwordSII, anio, mes = null }) {
-  const url = mes
-    ? `${FOLIOS_BASE}/bheempresas/listado/recibidas/${String(mes).padStart(2, '0')}/${anio}`
-    : `${FOLIOS_BASE}/bheempresas/listado/recibidas/${anio}`;
+// Listado BHE empresa recibidas — mismas 3 variantes
+async function listadoBHEEmpresasRecibidas(apiKey, { rutUsuario, passwordSII, anio, mes = null, dia = null, detallado = false }) {
+  let url;
+  if (dia && mes) {
+    url = `${FOLIOS_BASE}/bheempresas/listado/recibidas/${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${anio}`;
+  } else if (mes) {
+    url = `${FOLIOS_BASE}/bheempresas/listado/recibidas/${String(mes).padStart(2, '0')}/${anio}`;
+  } else {
+    url = `${FOLIOS_BASE}/bheempresas/listado/recibidas/${anio}`;
+  }
+  const body = { RutUsuario: rutUsuario, PasswordSII: passwordSII };
+  if (dia) body.Detallado = detallado;
+  const res = await axios.post(url, body, {
+    headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' },
+  });
+  return res.data;
+}
+
+// POST /bheempresas/observacion/{tipoBoleta}/{folio}
+// rutUsuario = quien consulta, rutEmpresa = emisor de la BHE
+async function observacionBHEEmpresas(apiKey, { rutUsuario, rutEmpresa, passwordSII, folio, tipoBoleta = 1 }) {
   const res = await axios.post(
-    url,
-    { RutUsuario: rutUsuario, PasswordSII: passwordSII },
+    `${FOLIOS_BASE}/bheempresas/observacion/${tipoBoleta}/${folio}`,
+    { RutUsuario: rutUsuario, RutEmpresa: rutEmpresa, PasswordSII: passwordSII },
     { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
   );
+  return res.data; // texto plano
+}
+
+// BHE Empresas en nombre de terceros — empresa emite por un trabajador independiente
+// Auth SII (RutUsuario/PasswordSII), sin PFX — paralelo a emitirBHETerceros (que usa PFX)
+// Emisor.Rut = RUT del trabajador; RutUsuario = empresa/representante que autoriza
+async function emitirBHEEmpresasTerceros(apiKey, { rutUsuario, passwordSII, retencion = 2, fechaEmision, emisorRut, receptor, detalles }) {
+  const res = await axios.post(
+    `${FOLIOS_BASE}/bheempresas/terceros/emitir`,
+    {
+      RutUsuario:   rutUsuario,
+      PasswordSII:  passwordSII,
+      Retencion:    retencion,
+      FechaEmision: fechaEmision, // "DD-MM-YYYY"
+      Emisor:   { Rut: emisorRut },
+      Receptor: {
+        Rut:       receptor.rut,
+        Nombre:    receptor.nombre,
+        Direccion: receptor.direccion,
+        Region:    receptor.region,
+        Comuna:    receptor.comuna,
+      },
+      Detalles: detalles.map((d) => ({ Nombre: d.nombre, Valor: d.valor })),
+    },
+    { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
+  );
+  // { folio, codigoBarras, fechaEmision, pdfBase64 }
   return res.data;
 }
 
@@ -1262,8 +1311,10 @@ module.exports = {
   listarComunasBHEEmpresas, // GET /bheempresas/listarComunas (sin auth) → { regiones[] }
   obtenerPDFBHEEmpresas,         // GET — 3 variantes: /{codigoBarras} | /emitidas/{folio}/{anio} | /emitidas/{folio}
   obtenerPDFBHEEmpresasRecibida, // GET — /recibidas/{folio}/{anio} | /recibidas/{folio}
-  listadoBHEEmpresasEmitidas,    // POST /listado/emitidas/{anio} → periodos[] | /{MM}/{YYYY} → boletas[]
-  listadoBHEEmpresasRecibidas,   // POST /listado/recibidas/{anio} → periodos[] | /{MM}/{YYYY} → boletas[]
+  listadoBHEEmpresasEmitidas,    // POST — 3 variantes: /{anio} | /{MM}/{YYYY} | /{DD}/{MM}/{YYYY}
+  listadoBHEEmpresasRecibidas,   // POST — idem para recibidas
+  observacionBHEEmpresas,        // POST /bheempresas/observacion/{tipoBoleta}/{folio}
+  emitirBHEEmpresasTerceros,     // POST /bheempresas/terceros/emitir — Emisor={Rut} (trabajador), auth SII
   // RCV — Registro de Compras y Ventas
   // Firma: (apiKey, { rutCertificado, password, rutEmpresa, ambiente }, mes, anio, certBuf)
   getRCVVentas,
