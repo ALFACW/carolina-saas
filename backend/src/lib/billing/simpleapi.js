@@ -368,6 +368,43 @@ async function generarSobre(apiKey, { rutCertificado, password, rutEmisor, rutRe
 }
 
 // ──────────────────────────────────────────────
+// ENVIAR AL SII — Envía el EnvioDTE (sobre) al SII y obtiene TrackID
+// POST https://api.simpleapi.cl/api/v1/envio/enviar
+// multipart: input(JSON) + files(PFX) + files(EnvioDTE XML del paso anterior)
+//
+// Tipo: 2 = boleta, 1 = factura/otros DTE (por confirmar si hay más valores)
+// Ambiente: 0 = certificación, 1 = producción
+//
+// Respuesta JSON: { trackId, estado, ok, rutEnvia, rutEmpresa, fecha, glosa, errores }
+//   estado 'REC' = recibido por SII (aún no validado — usar consultarEstadoEnvio para seguimiento)
+// ──────────────────────────────────────────────
+async function enviarSobre(apiKey, { rutCertificado, password, ambiente, tipo }, certBuf, envioXmlBuf) {
+  const json = {
+    Certificado: {
+      Rut:      rutCertificado,
+      Password: password,
+    },
+    Ambiente: ambiente, // 0 = certificación, 1 = producción
+    Tipo:     tipo,     // 2 = boleta, 1 = factura
+  };
+
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+  form.append('files', envioXmlBuf, { filename: 'envio.xml', contentType: 'application/xml' });
+
+  const res = await axios.post(
+    `${DTE_BASE}/envio/enviar`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  // Respuesta: { trackId, estado, ok, rutEnvia, rutEmpresa, fecha, glosa, errores, responseXml }
+  // estado 'REC' = SII recibió el sobre (pendiente de validación)
+  logger.info(`[SimpleAPI] Sobre enviado al SII — trackId ${res.data?.trackId} estado ${res.data?.estado}`);
+  return res.data;
+}
+
+// ──────────────────────────────────────────────
 // RUT — Lookup contribuyente en SII
 // GET https://rut.simpleapi.cl/v2/{RUT}
 // Auth: Authorization: <apikey>
@@ -451,6 +488,7 @@ module.exports = {
   emitirFactura,
   emitirNotaCredito,
   generarSobre,
+  enviarSobre,
   getRCVVentas,
   getRCVCompras,
   calcularTotalesDesdeTotal,
