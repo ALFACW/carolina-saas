@@ -1077,6 +1077,55 @@ async function emitirBHEEmpresas(apiKey, { rutUsuario, passwordSII, retencion = 
   return res.data;
 }
 
+// PDF de BHE recibida (empresa es la receptora/pagadora)
+// GET /bheempresas/pdf/recibidas/{folio}/{anio}  — con RutEmisor, RutUsuario, PasswordSII
+// GET /bheempresas/pdf/recibidas/{folio}          — idem + FechaEmision
+async function obtenerPDFBHEEmpresasRecibida(apiKey, { rutUsuario, passwordSII, folio, anio, fechaEmision, rutEmisor }) {
+  let url;
+  const body = { RutEmisor: rutEmisor, RutUsuario: rutUsuario, PasswordSII: passwordSII };
+  if (anio && !fechaEmision) {
+    url = `${FOLIOS_BASE}/bheempresas/pdf/recibidas/${folio}/${anio}`;
+  } else {
+    url  = `${FOLIOS_BASE}/bheempresas/pdf/recibidas/${folio}`;
+    body.FechaEmision = fechaEmision;
+  }
+  const res = await axios.get(url, {
+    data: body,
+    headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' },
+  });
+  return res.data; // base64 PDF
+}
+
+// Listado BHE empresa emitidas — 2 variantes según params:
+//   anual:   POST /bheempresas/listado/emitidas/{anio}       → { periodos[] }
+//   mensual: POST /bheempresas/listado/emitidas/{MM}/{YYYY}  → { boletas[] }
+async function listadoBHEEmpresasEmitidas(apiKey, { rutUsuario, passwordSII, anio, mes = null }) {
+  const url = mes
+    ? `${FOLIOS_BASE}/bheempresas/listado/emitidas/${String(mes).padStart(2, '0')}/${anio}`
+    : `${FOLIOS_BASE}/bheempresas/listado/emitidas/${anio}`;
+  const res = await axios.post(
+    url,
+    { RutUsuario: rutUsuario, PasswordSII: passwordSII },
+    { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
+  );
+  // anual: { anio, rut, periodos[], totalVigentes, totalAnuladas, ... }
+  // mensual: { dia, mes, anio, rut, boletas[], cantidadDocumentos, ... }
+  return res.data;
+}
+
+// Listado BHE empresa recibidas — mismos 2 variantes
+async function listadoBHEEmpresasRecibidas(apiKey, { rutUsuario, passwordSII, anio, mes = null }) {
+  const url = mes
+    ? `${FOLIOS_BASE}/bheempresas/listado/recibidas/${String(mes).padStart(2, '0')}/${anio}`
+    : `${FOLIOS_BASE}/bheempresas/listado/recibidas/${anio}`;
+  const res = await axios.post(
+    url,
+    { RutUsuario: rutUsuario, PasswordSII: passwordSII },
+    { headers: { ...getHeaders(apiKey), 'Content-Type': 'application/json' } }
+  );
+  return res.data;
+}
+
 async function anularBHEEmpresas(apiKey, { rutUsuario, passwordSII, folio, tipo = 1 }) {
   const res = await axios.post(
     `${FOLIOS_BASE}/bheempresas/anular/${folio}/${tipo}`,
@@ -1211,7 +1260,10 @@ module.exports = {
   enviarBHEEmpresasMail,    // POST /bheempresas/mail/{folio}/{anio}
   obtenerDireccionesBHEEmpresas, // POST /bheempresas/direcciones → string[]
   listarComunasBHEEmpresas, // GET /bheempresas/listarComunas (sin auth) → { regiones[] }
-  obtenerPDFBHEEmpresas,    // GET — 3 variantes: /{codigoBarras} | /emitidas/{folio}/{anio} | /emitidas/{folio}
+  obtenerPDFBHEEmpresas,         // GET — 3 variantes: /{codigoBarras} | /emitidas/{folio}/{anio} | /emitidas/{folio}
+  obtenerPDFBHEEmpresasRecibida, // GET — /recibidas/{folio}/{anio} | /recibidas/{folio}
+  listadoBHEEmpresasEmitidas,    // POST /listado/emitidas/{anio} → periodos[] | /{MM}/{YYYY} → boletas[]
+  listadoBHEEmpresasRecibidas,   // POST /listado/recibidas/{anio} → periodos[] | /{MM}/{YYYY} → boletas[]
   // RCV — Registro de Compras y Ventas
   // Firma: (apiKey, { rutCertificado, password, rutEmpresa, ambiente }, mes, anio, certBuf)
   getRCVVentas,
