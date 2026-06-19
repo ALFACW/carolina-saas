@@ -119,8 +119,17 @@ async function consultarUsoFolios(apiKey, { rutCertificado, password, rutEmpresa
 }
 
 // Anular rango de folios
-async function anularFolios(apiKey, { rutCertificado, password, rutEmpresa, tipoDte, desde, hasta, ambiente = 1 }, certBuf) {
-  const form = buildForm({ RutCertificado: rutCertificado, Password: password, RutEmpresa: rutEmpresa, Ambiente: ambiente }, certBuf);
+// POST servicios.simpleapi.cl/api/folios/anulacion/{tipoDte}/{desde}/{hasta}
+// Respuesta: [{ exito, mensaje, folioInicialCAF, folioFinalCAF }]
+async function anularFolios(apiKey, { rutCertificado, password, rutEmpresa, tipoDte, desde, hasta, motivo = 'Anulación', ambiente = 1 }, certBuf) {
+  const json = {
+    RutCertificado: rutCertificado,
+    Password:       password,
+    RutEmpresa:     rutEmpresa,
+    Ambiente:       ambiente,
+    MotivoAnulacion: motivo,
+  };
+  const form = buildForm(json, certBuf);
   const res = await axios.post(
     `${FOLIOS_BASE}/folios/anulacion/${tipoDte}/${desde}/${hasta}`,
     form,
@@ -480,12 +489,11 @@ async function consultarEstadoDTE(apiKey, { rutCertificado, password, rutEmpresa
 // ──────────────────────────────────────────────
 
 // Timbre (QR del TED) — devuelve PNG en base64
-// GET https://api.simpleapi.cl/api/v1/impresion/timbre
+// POST https://api.simpleapi.cl/api/v1/impresion/timbre
 // Útil para tickets térmicos: incrustar el QR del timbre electrónico
 async function obtenerTimbre(apiKey, dteXmlBuf) {
   const form = new FormData();
   form.append('fileEnvio', dteXmlBuf, { filename: 'dte.xml', contentType: 'application/xml' });
-
   const res = await axios.post(
     `${DTE_BASE}/impresion/timbre`,
     form,
@@ -496,32 +504,86 @@ async function obtenerTimbre(apiKey, dteXmlBuf) {
 }
 
 // PDF tamaño carta (A4) — devuelve PDF en base64
-// También disponible: /impresion/pdf/80mm/v2 y /impresion/pdf/56mm/v2 (para térmicas)
-async function obtenerPDF(apiKey, { numeroResolucion, unidadSII, fechaResolucion, vendedor, formaPago, condicionVenta, propiedadLogo = 'contain', tamano = 'carta' }, dteXmlBuf, logoBuf = null) {
+// POST /api/v1/impresion/pdf/carta/v2
+// Input: NumeroResolucion, UnidadSII, FechaResolucion, Vendedor, FormaPago, CondicionVenta, PropiedadLogo
+// Acepta logo opcional
+async function obtenerPDFCarta(apiKey, { numeroResolucion, unidadSII, fechaResolucion, vendedor, formaPago, condicionVenta, propiedadLogo = 'contain' }, dteXmlBuf, logoBuf = null) {
   const json = {
     NumeroResolucion: numeroResolucion,
-    UnidadSII:        unidadSII,         // unidad del SII que autorizó, ej: 'ALTO HOSPICIO'
-    FechaResolucion:  fechaResolucion,   // 'YYYY-MM-DD'
+    UnidadSII:        unidadSII,
+    FechaResolucion:  fechaResolucion,
     Vendedor:         vendedor,
     FormaPago:        formaPago,         // 'EFECTIVO', 'TARJETA', etc.
     CondicionVenta:   condicionVenta,
     PropiedadLogo:    propiedadLogo,     // 'contain' | 'cover'
   };
-
   const form = new FormData();
   form.append('input', JSON.stringify(json));
   form.append('fileEnvio', dteXmlBuf, { filename: 'dte.xml', contentType: 'application/xml' });
-  if (logoBuf) {
-    form.append('logo', logoBuf, { filename: 'logo.png', contentType: 'image/png' });
-  }
+  if (logoBuf) form.append('logo', logoBuf, { filename: 'logo.png', contentType: 'image/png' });
+  const res = await axios.post(`${DTE_BASE}/impresion/pdf/carta/v2`, form, { headers: { ...getHeaders(apiKey), ...form.getHeaders() } });
+  return res.data; // PDF en base64
+}
 
-  // tamano: 'carta' | '80mm' | '56mm'
+// PDF rollo térmico: 80mm o 58mm
+// Endpoints soportados (mismos campos, distinto path):
+//   /impresion/base64/80mm  → base64 (preferred — guardar en DB)
+//   /impresion/pdf/80mm     → PDF binario
+//   /impresion/base64/58mm  → base64 58mm
+//   /impresion/pdf/58mm     → PDF binario 58mm
+// Input: NumeroResolucion, UnidadSII, FechaResolucion, Ejecutivo (NO Vendedor), Hora
+// Sin logo (diferencia clave con carta)
+async function obtenerPDFTermico(apiKey, { numeroResolucion, unidadSII, fechaResolucion, ejecutivo, hora }, dteXmlBuf, { base64 = true, ancho = '80mm' } = {}) {
+  const json = {
+    NumeroResolucion: numeroResolucion,
+    UnidadSII:        unidadSII,
+    FechaResolucion:  fechaResolucion,
+    Ejecutivo:        ejecutivo,   // vendedor/cajero (distinto al campo de carta)
+    Hora:             hora,        // 'HH:MM'
+  };
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('fileEnvio', dteXmlBuf, { filename: 'dte.xml', contentType: 'application/xml' });
+  const path = base64 ? `base64/${ancho}` : `pdf/${ancho}`;
+  const res = await axios.post(`${DTE_BASE}/impresion/${path}`, form, { headers: { ...getHeaders(apiKey), ...form.getHeaders() } });
+  return res.data;
+}
+
+// ──────────────────────────────────────────────
+// COMPRAS — Aceptación o Rechazo de DTE recibido de un proveedor
+// POST https://api.simpleapi.cl/api/v1/compras/aceptacionreclamo
+// Usado cuando CarolinaPOS recibe una factura de proveedor y debe responder al SII
+//
+// Accion:
+//   'ACD' = Aceptación Comercial (acepta la factura)
+//   'RCD' = Rechazo Comercial   (rechaza la factura)
+//   'ERM' = Recibo de Mercaderías/Servicios (confirma recepción física)
+//
+// Respuesta: { codRespuesta (0=OK), descripcion, response (XML raw del SII) }
+// ──────────────────────────────────────────────
+async function aceptarRechazarCompra(apiKey, { rutCertificado, password, rutEmpresa, tipoDte, folio, accion, ambiente }, certBuf) {
+  const json = {
+    Certificado: {
+      Rut:      rutCertificado,
+      Password: password,
+    },
+    Tipo:       tipoDte,
+    Folio:      folio,
+    Accion:     accion,      // 'ACD' | 'RCD' | 'ERM'
+    RutEmpresa: rutEmpresa,
+    Ambiente:   ambiente,
+  };
+
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+
   const res = await axios.post(
-    `${DTE_BASE}/impresion/pdf/${tamano}/v2`,
+    `${DTE_BASE}/compras/aceptacionreclamo`,
     form,
     { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
   );
-  // Respuesta: PDF en base64 — guardar en dte_documents.pdf_base64
+  // { codRespuesta (0=OK), descripcion, fechaRecepcion, detalles, response (XML) }
   return res.data;
 }
 
@@ -595,27 +657,42 @@ function calcularTotalesDesdeNeto(montoNeto) {
 }
 
 module.exports = {
+  // Constantes
   TIPO_DTE,
+  // Utilidades RUT
   validarRUT,
   formatRUT,
+  // Auth interno
   getHeaders,
+  // Contribuyente
   buscarContribuyente,
+  // Suscripción
   consultarSuscripcion,
+  // Folios CAF
   obtenerFolios,
   consultarFoliosDisponibles,
   consultarUsoFolios,
   anularFolios,
+  // Emisión DTE
   emitirBoleta,
   emitirFactura,
   emitirNotaCredito,
+  // Envío SII
   generarSobre,
   enviarSobre,
+  // Consultas estado
   consultarEstadoEnvio,
   consultarEstadoDTE,
+  // Compras (facturas recibidas)
+  aceptarRechazarCompra,
+  // Impresión / PDF
   obtenerTimbre,
-  obtenerPDF,
+  obtenerPDFCarta,
+  obtenerPDFTermico,   // 80mm y 58mm (reemplaza obtenerPDF80mm)
+  // RCV
   getRCVVentas,
   getRCVCompras,
+  // Helpers IVA Chile 19%
   calcularTotalesDesdeTotal,
   calcularTotalesDesdeNeto,
 };
