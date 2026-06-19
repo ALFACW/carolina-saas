@@ -868,6 +868,42 @@ async function enviarBHEMail(apiKey, { rutUsuario, passwordSII, correo, folio, a
   return res.data; // texto plano
 }
 
+// BHE en nombre de terceros — emitir boleta para otro RUT
+// POST servicios.simpleapi.cl/api/bhe/terceros/emitir
+// A diferencia de emitirBHE(), aquí el Emisor.Rut es el trabajador independiente
+// y rutCertificado es el representante autorizado que firma con su PFX
+// Respuesta: { folio, codigoBarras, fechaEmision, pdfBase64 }
+async function emitirBHETerceros(apiKey, { rutCertificado, password = '', retencion = 2, fechaEmision, emisorRut, receptor, detalles }, certBuf) {
+  const json = {
+    RutCertificado: rutCertificado,
+    Password:       password,
+    Retencion:      retencion,
+    FechaEmision:   fechaEmision, // "DD-MM-YYYY"
+    Emisor: { Rut: emisorRut },   // RUT del trabajador independiente (el que EMITE la boleta)
+    Receptor: {
+      Rut:       receptor.rut,
+      Nombre:    receptor.nombre,
+      Direccion: receptor.direccion,
+      Region:    receptor.region,
+      Comuna:    receptor.comuna,
+    },
+    Detalles: detalles.map((d) => ({
+      Nombre: d.nombre,
+      Valor:  d.valor,
+    })),
+  };
+  const form = new FormData();
+  form.append('input', JSON.stringify(json));
+  form.append('files', certBuf, { filename: 'cert.pfx', contentType: 'application/x-pkcs12' });
+  const res = await axios.post(
+    `${FOLIOS_BASE}/bhe/terceros/emitir`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  // { folio, codigoBarras, fechaEmision, pdfBase64 }
+  return res.data;
+}
+
 // Consultar direcciones registradas del emisor BHE
 // GET servicios.simpleapi.cl/api/bhe/direcciones
 // Respuesta: array de strings con las direcciones
@@ -1058,7 +1094,8 @@ module.exports = {
   obtenerPDFCarta,
   obtenerPDFTermico,   // 80mm y 58mm (reemplaza obtenerPDF80mm)
   // BHE — Boleta de Honorarios Electrónica (personas naturales)
-  emitirBHE,
+  emitirBHE,           // emisor = titular del cert
+  emitirBHETerceros,   // emisor = otro RUT; rutCertificado = representante autorizado
   anularBHE,
   enviarBHEMail,
   obtenerDireccionesBHE,
