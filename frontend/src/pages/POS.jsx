@@ -154,8 +154,9 @@ export default function POS() {
   const [vrDesc,           setVrDesc]           = useState('')
   const [vrPrecio,         setVrPrecio]         = useState('')
   const [vrCantidad,       setVrCantidad]       = useState('1')
-  const vrDescRef   = useRef(null)
-  const vrPrecioRef = useRef(null)
+  const vrDescRef    = useRef(null)
+  const vrPrecioRef  = useRef(null)
+  const vrCantidadRef = useRef(null)
   // Chile: tipo de documento
   const esChile = tenant?.country === 'CL'
   const [tipoDte,          setTipoDte]          = useState(39) // 39=boleta, 33=factura
@@ -878,6 +879,7 @@ export default function POS() {
               value={vrDesc}
               onChange={e => setVrDesc(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); vrPrecioRef.current?.focus(); vrPrecioRef.current?.select() } }}
+
               placeholder="Ej: Dulces, Servicio, etc."
               className="w-full h-16 px-4 border border-border rounded-xl text-xl font-semibold focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
             />
@@ -891,7 +893,7 @@ export default function POS() {
               type="number"
               value={vrPrecio}
               onChange={e => setVrPrecio(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); confirmarVentaRapida() } }}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); vrCantidadRef.current?.focus(); vrCantidadRef.current?.select() } }}
               placeholder="0"
               className="w-full h-16 px-4 border border-border rounded-xl text-xl font-semibold text-right focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
             />
@@ -909,10 +911,12 @@ export default function POS() {
                 <Minus size={18} />
               </button>
               <input
+                ref={vrCantidadRef}
                 type="number"
                 min="1"
                 value={vrCantidad}
                 onChange={e => setVrCantidad(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); confirmarVentaRapida() } }}
                 className="flex-1 h-11 border border-border rounded-lg text-xl font-bold text-center focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
               />
               <button
