@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS dte_documents (
   monto_total  INTEGER NOT NULL,
   xml_firmado  TEXT,                      -- XML firmado devuelto por SimpleAPI
   pdf_base64   TEXT,                      -- PDF devuelto por SimpleAPI
-  factura_id   INTEGER REFERENCES facturas(id) ON DELETE SET NULL,  -- link a la venta
+  factura_id   UUID REFERENCES facturas(id) ON DELETE SET NULL,  -- link a la venta
   fecha_emision TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
