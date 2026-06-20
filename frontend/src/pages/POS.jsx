@@ -879,7 +879,7 @@ export default function POS() {
               onChange={e => setVrDesc(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); vrPrecioRef.current?.focus(); vrPrecioRef.current?.select() } }}
               placeholder="Ej: Dulces, Servicio, etc."
-              className="w-full px-4 py-3 border border-border rounded-lg text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+              className="w-full h-16 px-4 border border-border rounded-xl text-xl font-semibold focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
             />
           </div>
 
@@ -893,7 +893,7 @@ export default function POS() {
               onChange={e => setVrPrecio(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); confirmarVentaRapida() } }}
               placeholder="0"
-              className="w-full px-4 py-3 border border-border rounded-lg text-2xl font-bold text-right focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+              className="w-full h-16 px-4 border border-border rounded-xl text-xl font-semibold text-right focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
             />
           </div>
 
