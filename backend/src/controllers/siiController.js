@@ -1,40 +1,26 @@
-// Controller SII Chile — gestión de certificado PFX, CAF, config SimpleAPI
+// Controller SII Chile — SimpleFactura (Bearer token, sin PFX ni CAF por request)
 const { encrypt, decrypt } = require('../lib/crypto');
-const { emitirBoleta, emitirFactura, emitirNotaCredito, generarSobre, enviarSobre } = require('../lib/billing/simpleapi');
+const sf = require('../lib/billing/simplefactura');
 const logger = require('../lib/logger');
 const db = require('../db');
-const xml2js = require('xml2js');
 
 // ── Helpers ────────────────────────────────────────────
 
+function _decryptToken(tenant) {
+  if (!tenant.simplefactura_token_encrypted)
+    throw Object.assign(new Error('Token SimpleFactura no configurado — ve a Configuración SII'), { status: 400 });
+  return decrypt(tenant.simplefactura_token_encrypted);
+}
+
 async function _getTenantSII(tenantId) {
   const { rows } = await db.query(
-    `SELECT id, country, sii_status, cert_pfx_rut,
-            cert_pfx_encrypted, cert_pfx_password_encrypted,
-            simpleapi_key_encrypted,
-            sii_numero_resolucion, sii_fecha_resolucion, sii_unidad,
-            rut_empresa, razon_social, giro, direccion, ciudad
+    `SELECT id, country, nit, nombre, giro, email, direccion, ciudad,
+            simplefactura_token_encrypted, simplefactura_sucursal, simplefactura_ambiente,
+            sii_numero_resolucion, sii_fecha_resolucion, sii_unidad
      FROM tenants WHERE id = $1`,
     [tenantId]
   );
   return rows[0] || null;
-}
-
-// Descifra PFX y retorna Buffer listo para SimpleAPI
-function _decryptPFX(tenant) {
-  if (!tenant.cert_pfx_encrypted) throw Object.assign(new Error('Certificado PFX no configurado'), { status: 400 });
-  const pfxBase64 = decrypt(tenant.cert_pfx_encrypted);
-  return Buffer.from(pfxBase64, 'base64');
-}
-
-function _decryptPassword(tenant) {
-  if (!tenant.cert_pfx_password_encrypted) return '';
-  return decrypt(tenant.cert_pfx_password_encrypted);
-}
-
-function _decryptApiKey(tenant) {
-  if (!tenant.simpleapi_key_encrypted) throw Object.assign(new Error('API Key SimpleAPI no configurada'), { status: 400 });
-  return decrypt(tenant.simpleapi_key_encrypted);
 }
 
 // ── GET /api/sii/config ────────────────────────────────
@@ -44,22 +30,15 @@ async function getConfiguracion(req, res, next) {
     const tenant = await _getTenantSII(req.tenant.id);
     if (!tenant) return res.status(404).json({ error: 'Tenant no encontrado' });
 
-    const { rows: cafRows } = await db.query(
-      `SELECT tipo_dte, folio_desde, folio_hasta, folio_actual, agotado, fecha_autorizacion
-       FROM caf_folios WHERE tenant_id = $1 ORDER BY tipo_dte, folio_desde`,
-      [req.tenant.id]
-    );
-
     res.json({
-      country: tenant.country,
-      sii_status: tenant.sii_status,
-      cert_pfx_rut: tenant.cert_pfx_rut,
-      tiene_certificado: !!tenant.cert_pfx_encrypted,
-      tiene_apikey: !!tenant.simpleapi_key_encrypted,
-      sii_numero_resolucion: tenant.sii_numero_resolucion,
-      sii_fecha_resolucion: tenant.sii_fecha_resolucion,
-      sii_unidad: tenant.sii_unidad,
-      caf_folios: cafRows,
+      country:                  tenant.country,
+      nit:                      tenant.nit,
+      tiene_token:              !!tenant.simplefactura_token_encrypted,
+      simplefactura_sucursal:   tenant.simplefactura_sucursal || 'Casa Matriz',
+      simplefactura_ambiente:   tenant.simplefactura_ambiente ?? 0,
+      sii_numero_resolucion:    tenant.sii_numero_resolucion,
+      sii_fecha_resolucion:     tenant.sii_fecha_resolucion,
+      sii_unidad:               tenant.sii_unidad,
     });
   } catch (err) { next(err); }
 }
@@ -68,20 +47,19 @@ async function getConfiguracion(req, res, next) {
 
 async function updateConfiguracion(req, res, next) {
   try {
-    const { sii_numero_resolucion, sii_fecha_resolucion, sii_unidad, cert_pfx_rut, simpleapi_key } = req.body;
+    const { simplefactura_token, simplefactura_sucursal, simplefactura_ambiente,
+            sii_numero_resolucion, sii_fecha_resolucion, sii_unidad } = req.body;
 
     const updates = [];
-    const values = [];
+    const values  = [];
     let idx = 1;
 
-    if (sii_numero_resolucion !== undefined) { updates.push(`sii_numero_resolucion = $${idx++}`); values.push(sii_numero_resolucion); }
-    if (sii_fecha_resolucion  !== undefined) { updates.push(`sii_fecha_resolucion  = $${idx++}`); values.push(sii_fecha_resolucion); }
-    if (sii_unidad            !== undefined) { updates.push(`sii_unidad            = $${idx++}`); values.push(sii_unidad); }
-    if (cert_pfx_rut          !== undefined) { updates.push(`cert_pfx_rut          = $${idx++}`); values.push(cert_pfx_rut); }
-    if (simpleapi_key) {
-      updates.push(`simpleapi_key_encrypted = $${idx++}`);
-      values.push(encrypt(simpleapi_key));
-    }
+    if (simplefactura_token)    { updates.push(`simplefactura_token_encrypted = $${idx++}`); values.push(encrypt(simplefactura_token)); }
+    if (simplefactura_sucursal) { updates.push(`simplefactura_sucursal = $${idx++}`);        values.push(simplefactura_sucursal); }
+    if (simplefactura_ambiente !== undefined) { updates.push(`simplefactura_ambiente = $${idx++}`); values.push(simplefactura_ambiente); }
+    if (sii_numero_resolucion !== undefined)  { updates.push(`sii_numero_resolucion = $${idx++}`);  values.push(sii_numero_resolucion); }
+    if (sii_fecha_resolucion)  { updates.push(`sii_fecha_resolucion = $${idx++}`);  values.push(sii_fecha_resolucion); }
+    if (sii_unidad)            { updates.push(`sii_unidad = $${idx++}`);            values.push(sii_unidad); }
 
     if (!updates.length) return res.json({ success: true });
 
@@ -92,186 +70,76 @@ async function updateConfiguracion(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// ── POST /api/sii/certificado ──────────────────────────
-// multipart: file=cert.pfx, body.password
-
-async function subirCertificado(req, res, next) {
-  try {
-    if (!req.file) return res.status(400).json({ error: 'No se recibió archivo PFX' });
-
-    const pfxBase64 = req.file.buffer.toString('base64');
-    const password  = req.body.password || '';
-
-    await db.query(
-      `UPDATE tenants SET cert_pfx_encrypted = $1, cert_pfx_password_encrypted = $2 WHERE id = $3`,
-      [encrypt(pfxBase64), encrypt(password), req.tenant.id]
-    );
-
-    logger.info('Certificado PFX actualizado', { tenant_id: req.tenant.id });
-    res.json({ success: true, message: 'Certificado guardado correctamente' });
-  } catch (err) { next(err); }
-}
-
-// ── POST /api/sii/caf ─────────────────────────────────
-// multipart: file=caf.xml
-
-async function subirCAF(req, res, next) {
-  try {
-    if (!req.file) return res.status(400).json({ error: 'No se recibió archivo CAF XML' });
-
-    const cafXml = req.file.buffer.toString('utf-8');
-    const parsed = await xml2js.parseStringPromise(cafXml);
-
-    const da         = parsed.AUTORIZACION.CAF[0].DA[0];
-    const tipoDte    = parseInt(da.TD[0], 10);
-    const folioDesde = parseInt(da.RNG[0].D[0], 10);
-    const folioHasta = parseInt(da.RNG[0].H[0], 10);
-    const fechaAuth  = da.FA[0]; // YYYY-MM-DD
-
-    await db.query(
-      `INSERT INTO caf_folios (tenant_id, tipo_dte, folio_desde, folio_hasta, folio_actual, caf_xml, fecha_autorizacion, agotado)
-       VALUES ($1,$2,$3,$4,$3,$5,$6,false)
-       ON CONFLICT (tenant_id, tipo_dte, folio_desde)
-       DO UPDATE SET caf_xml = $5, agotado = false, folio_actual = $3`,
-      [req.tenant.id, tipoDte, folioDesde, folioHasta, cafXml, fechaAuth]
-    );
-
-    logger.info('CAF subido', { tenant_id: req.tenant.id, tipo_dte: tipoDte, folioDesde, folioHasta });
-    res.json({ success: true, tipo_dte: tipoDte, folio_desde: folioDesde, folio_hasta: folioHasta });
-  } catch (err) {
-    if (err.message?.includes('Cannot read') || err.message?.includes('parseString')) {
-      return res.status(400).json({ error: 'El archivo no es un CAF XML válido' });
-    }
-    next(err);
-  }
-}
-
-// ── GET /api/sii/folios ───────────────────────────────
-
-async function getCAFFolios(req, res, next) {
-  try {
-    const { rows } = await db.query(
-      `SELECT tipo_dte, folio_desde, folio_hasta, folio_actual, agotado, fecha_autorizacion,
-              (folio_hasta - folio_actual + 1) as disponibles
-       FROM caf_folios WHERE tenant_id = $1 ORDER BY tipo_dte, folio_desde`,
-      [req.tenant.id]
-    );
-    res.json(rows);
-  } catch (err) { next(err); }
-}
-
-// ── Función interna: obtener y reservar próximo folio ─
-
-async function _nextFolio(client, tenantId, tipoDte) {
-  // FOR UPDATE garantiza exclusión mutua en concurrencia
-  const { rows } = await client.query(
-    `SELECT id, folio_actual, folio_hasta, caf_xml
-     FROM caf_folios
-     WHERE tenant_id=$1 AND tipo_dte=$2 AND agotado=false
-     ORDER BY folio_actual ASC LIMIT 1 FOR UPDATE`,
-    [tenantId, tipoDte]
-  );
-  if (!rows.length) throw Object.assign(new Error(`Sin folios CAF disponibles para tipo DTE ${tipoDte}`), { status: 400 });
-
-  const caf = rows[0];
-  const folio = caf.folio_actual;
-  const agotado = (folio >= caf.folio_hasta);
-
-  await client.query(
-    `UPDATE caf_folios SET folio_actual = $1, agotado = $2 WHERE id = $3`,
-    [folio + 1, agotado, caf.id]
-  );
-
-  return { folio, cafXml: caf.caf_xml };
-}
-
-// ── Función pública: emitir DTE Chile (llamada desde posController) ──────────
-// Retorna { folio, pdfBase64, xml_firmado, sobre_id }
+// ── Función pública: emitir DTE Chile desde posController ──
+// tipoDte: 39=Boleta, 33=Factura, 52=Guía, 56=Nota débito, 61=Nota crédito
+// receptor (obligatorio para 33, 52, 56, 61): { rut, razonSocial, giro?, direccion?, comuna?, correo? }
+// items: [{ nombre, cantidad, precio (bruto=con IVA), descuento? }]
+// total: monto total con IVA
+// Retorna { folio, fechaEmision }
 
 async function emitirDTEChile(client, tenant, { tipoDte, items, total, receptor, fecha }) {
-  const apiKey  = _decryptApiKey(tenant);
-  const certBuf = _decryptPFX(tenant);
-  const pwd     = _decryptPassword(tenant);
-
-  const { folio, cafXml } = await _nextFolio(client, tenant.id, tipoDte);
-  const cafBuf = Buffer.from(cafXml, 'utf-8');
-
-  // Fecha en formato YYYY-MM-DD
+  const token   = _decryptToken(tenant);
+  const sucursal = tenant.simplefactura_sucursal || 'Casa Matriz';
+  const ambiente = tenant.simplefactura_ambiente ?? 0;
   const fechaStr = fecha || new Date().toISOString().split('T')[0];
 
-  const baseParams = {
-    rutCertificado: tenant.cert_pfx_rut,
-    password: pwd,
-    rutEmisor: tenant.rut_empresa,
-    razonSocial: tenant.razon_social,
-    giro: tenant.giro || 'ACTIVIDAD COMERCIAL',
-    direccion: tenant.direccion || '',
-    comuna: tenant.ciudad || '',
-    folio,
-    fecha: fechaStr,
-    items,
-    totales: {
-      MntNeto: Math.round(total / 1.19),
-      TasaIVA: 19,
-      IVA: Math.round(total - total / 1.19),
-      MntTotal: Math.round(total),
-    },
+  const totales = sf.calcularTotalesDesdeTotal(Math.round(total));
+
+  const emisor = {
+    rutEmisor:   tenant.nit,
+    razonSocial: tenant.nombre,
+    giro:        tenant.giro || 'ACTIVIDAD COMERCIAL',
+    correo:      tenant.email || '',
+    direccion:   tenant.direccion || '',
+    comuna:      tenant.ciudad || '',
   };
 
-  let resultado;
+  let documento;
+
   if (tipoDte === 39) {
-    // Boleta electrónica — sin receptor identificado
-    resultado = await emitirBoleta(apiKey, baseParams, certBuf, cafBuf);
+    // Boleta — precios CON IVA, receptor anónimo
+    documento = sf.buildBoleta({
+      emisor,
+      receptor: receptor || null,
+      items: items.map(i => ({
+        nombre:    i.nombre,
+        cantidad:  i.cantidad,
+        precio:    i.precio,         // precio con IVA
+        descuento: i.descuento || 0,
+        unidad:    i.unidad || 'un',
+      })),
+      totales,
+      fecha: fechaStr,
+    });
   } else if (tipoDte === 33) {
-    // Factura electrónica — con receptor
-    resultado = await emitirFactura(apiKey, {
-      ...baseParams,
-      actividadEconomica: tenant.actividad_economica || 0,
+    // Factura — precios NETOS (sin IVA)
+    if (!receptor?.rut) throw Object.assign(new Error('La factura requiere RUT del receptor'), { status: 400 });
+    documento = sf.buildFactura({
+      emisor,
       receptor,
-    }, certBuf, cafBuf);
+      items: items.map(i => ({
+        nombre:      i.nombre,
+        cantidad:    i.cantidad,
+        precioNeto:  Math.round(i.precio / 1.19),  // convertir a neto
+        descuento:   i.descuento ? Math.round(i.descuento / 1.19) : 0,
+        unidad:      i.unidad || 'un',
+      })),
+      totales,
+      fecha: fechaStr,
+    });
   } else {
-    throw new Error(`Tipo DTE ${tipoDte} no soportado por emitirDTEChile`);
+    throw Object.assign(new Error(`Tipo DTE ${tipoDte} no soportado en esta versión`), { status: 400 });
   }
 
-  // Envío al SII (sobre)
-  const sobre = await generarSobre(apiKey, {
-    rutCertificado: tenant.cert_pfx_rut,
-    password: pwd,
-    rutEmisor: tenant.rut_empresa,
-    ambiente: process.env.SII_AMBIENTE === 'produccion' ? 2 : 1,
-    numeroResolucion: tenant.sii_numero_resolucion || 0,
-    fechaResolucion: tenant.sii_fecha_resolucion?.toISOString?.().split('T')[0] || fechaStr,
-    dtes: [resultado.xml],
-  }, certBuf, cafBuf);
+  const result = await sf.emitirDTE(token, sucursal, documento);
+  // result: { tipoDTE, rutEmisor, rutReceptor, folio, fechaEmision, total }
 
-  let sobreId = null;
-  try {
-    const envio = await enviarSobre(apiKey, {
-      rutCertificado: tenant.cert_pfx_rut,
-      password: pwd,
-      rutEmisor: tenant.rut_empresa,
-      ambiente: process.env.SII_AMBIENTE === 'produccion' ? 2 : 1,
-      tipo: tipoDte === 39 ? 2 : 1, // 2=boleta, 1=factura
-    }, sobre.sobre, certBuf, cafBuf);
-    sobreId = envio.trackId || null;
-  } catch (e) {
-    // El envío puede fallar temporalmente — el DTE igual se guarda
-    logger.warn('Error enviando sobre al SII (DTE se guardará igual)', { error: e.message });
-  }
-
-  return {
-    folio,
-    pdfBase64: resultado.pdf,
-    xml_firmado: resultado.xml,
-    sobre_id: sobreId,
-  };
+  logger.info(`[SII] DTE ${tipoDte} emitido — folio ${result.folio} tenant ${tenant.id}`);
+  return { folio: result.folio, fechaEmision: result.fechaEmision };
 }
 
 module.exports = {
   getConfiguracion,
   updateConfiguracion,
-  subirCertificado,
-  subirCAF,
-  getCAFFolios,
   emitirDTEChile,
 };

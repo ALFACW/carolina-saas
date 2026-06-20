@@ -149,6 +149,12 @@ export default function POS() {
   const [searchDebounced,  setSearchDebounced]  = useState('')
   const [resultIndex,      setResultIndex]      = useState(-1)
   const [showOrderPanel,   setShowOrderPanel]   = useState(false)
+  // Chile: tipo de documento
+  const esChile = tenant?.country === 'CL'
+  const [tipoDte,          setTipoDte]          = useState(39) // 39=boleta, 33=factura
+  const [receptorRut,      setReceptorRut]      = useState('')
+  const [receptorNombre,   setReceptorNombre]   = useState('')
+  const [receptorGiro,     setReceptorGiro]     = useState('')
 
   const searchRef    = useRef(null)
   const debounceRef  = useRef(null)
@@ -392,11 +398,26 @@ export default function POS() {
 
   const handleCobrar = () => {
     setErrorVenta('')
-    ventaMutation.mutate({
+    if (esChile && tipoDte === 33 && !receptorRut.trim()) {
+      setErrorVenta('La factura requiere el RUT del receptor')
+      return
+    }
+    const payload = {
       cliente_id: clienteSeleccionado?.id || undefined,
       items: carrito.map(i => ({ producto_id: i.producto_id, cantidad: i.cantidad, precio_unitario: i.precio_unitario, descuento: i.descuento })),
       metodo_pago: metodoPago,
-    })
+    }
+    if (esChile) {
+      payload.tipo_dte = tipoDte
+      if (tipoDte === 33) {
+        payload.receptor = {
+          rut:        receptorRut.trim(),
+          razonSocial: receptorNombre.trim() || receptorRut.trim(),
+          giro:        receptorGiro.trim() || '',
+        }
+      }
+    }
+    ventaMutation.mutate(payload)
   }
 
   // ─── RENDER ────────────────────────────────────────────────────────────────
@@ -807,6 +828,54 @@ export default function POS() {
               <p className="text-xs text-ink-2 mt-1">{clienteSeleccionado.nombre}</p>
             )}
           </div>
+
+          {/* Selector tipo documento — solo tenants Chile */}
+          {esChile && (
+            <div className="space-y-3">
+              <div className="flex rounded-lg border border-border overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setTipoDte(39)}
+                  className={`flex-1 py-2 text-sm font-medium transition-colors ${tipoDte === 39 ? 'bg-accent text-white' : 'text-ink-2 hover:bg-surface-soft'}`}
+                >
+                  Boleta
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTipoDte(33)}
+                  className={`flex-1 py-2 text-sm font-medium transition-colors ${tipoDte === 33 ? 'bg-accent text-white' : 'text-ink-2 hover:bg-surface-soft'}`}
+                >
+                  Factura
+                </button>
+              </div>
+
+              {tipoDte === 33 && (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={receptorRut}
+                    onChange={e => setReceptorRut(e.target.value)}
+                    placeholder="RUT receptor (ej: 12345678-9)"
+                    className="input-base w-full"
+                  />
+                  <input
+                    type="text"
+                    value={receptorNombre}
+                    onChange={e => setReceptorNombre(e.target.value)}
+                    placeholder="Razón social"
+                    className="input-base w-full"
+                  />
+                  <input
+                    type="text"
+                    value={receptorGiro}
+                    onChange={e => setReceptorGiro(e.target.value)}
+                    placeholder="Giro (opcional)"
+                    className="input-base w-full"
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           <MetodoPago />
 

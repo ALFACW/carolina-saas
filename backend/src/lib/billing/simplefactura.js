@@ -279,6 +279,145 @@ function buildNotaCredDebito({ tipoDte, emisor, receptor, items, totales, fecha,
 }
 
 // ──────────────────────────────────────────────────────────
+// ACEPTAR / RECHAZAR DTE RECIBIDO (acuse de recibo)
+// POST /acknowledgmentReceipt
+// respuesta: 3=Aceptado, 4=Aceptado con reparos, 5=Rechazado
+// tipoRechazo (solo si respuesta=5): 1=Contenido, 3=Falta parcial mercadería, 4=Falta total
+// ──────────────────────────────────────────────────────────
+async function acuseRecibo(token, { rutEmisor, rutContribuyente, nombreSucursal, folio, codigoTipoDte, ambiente = 1, respuesta, tipoRechazo = null, comentario = '' }) {
+  const body = {
+    credenciales: { rutEmisor, rutContribuyente, nombreSucursal },
+    dteReferenciadoExterno: { folio, codigoTipoDte, ambiente },
+    respuesta,
+    comentario,
+  };
+  if (tipoRechazo !== null) body.tipoRechazo = tipoRechazo;
+
+  const res = await axios.post(`${BASE}/acknowledgmentReceipt`, body, { headers: headers(token) });
+  return res.data; // { status, message, data: true, errors }
+}
+
+// ──────────────────────────────────────────────────────────
+// LISTADO DTEs RECIBIDOS de proveedores
+// POST /documentsReceived  (método GET en docs, body JSON)
+// rutContribuyente null → todos los proveedores
+// folio null + codigoTipoDte null → todos los DTE del período
+// cedida: true|false|null → filtrar por cesión
+// Respuesta: [{ ambiente, codigoSii, tipoDte, estado, fechaEmision, folio,
+//               razonSocialProveedor, rutProveedor, neto, iva, total,
+//               detalles[], referencias[], cedida, nula, tieneNc }]
+// ──────────────────────────────────────────────────────────
+async function listarDTEsRecibidos(token, { rutEmisor, nombreSucursal = 'Casa Matriz', rutContribuyente = null, folio = null, codigoTipoDte = null, desde, hasta, ambiente = 1, cedida = null }) {
+  const body = {
+    credenciales: { rutEmisor, nombreSucursal },
+    ambiente,
+    folio,
+    codigoTipoDte,
+    desde,
+    hasta,
+  };
+  if (rutContribuyente) body.credenciales.rutContribuyente = rutContribuyente;
+  if (cedida !== null)  body.cedida = cedida;
+
+  const res = await axios.post(`${BASE}/documentsReceived`, body, { headers: headers(token) });
+  return res.data?.data || []; // array de DTEs recibidos
+}
+
+// ──────────────────────────────────────────────────────────
+// FOLIOS — Consultar folios disponibles en el portal SimpleFactura
+// POST /folios/consultar
+// codigoTipoDte null → todos los tipos
+// Respuesta: [{ codigoSii, tipoDte, desde, hasta, foliosDisponibles, fechaVencimiento, ambiente }]
+// ──────────────────────────────────────────────────────────
+async function consultarFolios(token, { rutEmisor, nombreSucursal = 'Casa Matriz', codigoTipoDte = null, ambiente = 1 }) {
+  const res = await axios.post(
+    `${BASE}/folios/consultar`,
+    { credenciales: { rutEmisor, nombreSucursal }, codigoTipoDte, ambiente },
+    { headers: headers(token) }
+  );
+  return res.data?.data || [];
+}
+
+// Folios sin uso (no emitidos aún)
+// POST /folios/consultar/sin-uso
+// Respuesta: [{ desde, hasta, cantidad, sucursal }]
+async function consultarFoliosSinUso(token, { rutEmpresa, tipoDTE = null, ambiente = 1 }) {
+  const res = await axios.post(
+    `${BASE}/folios/consultar/sin-uso`,
+    { rutEmpresa, tipoDTE, ambiente },
+    { headers: headers(token) }
+  );
+  return res.data?.data || [];
+}
+
+// ──────────────────────────────────────────────────────────
+// CESIONES — Factura cedida a factoring
+// ──────────────────────────────────────────────────────────
+
+// Listado de cesiones emitidas
+// GET /cessions/Issued (usa body JSON pese al método GET)
+async function listarCesiones(token, { rutEmisor, nombreSucursal = 'Casa Matriz', desde, hasta, ambiente = 1 }) {
+  const res = await axios.get(
+    `${BASE}/cessions/Issued`,
+    { data: { credenciales: { rutEmisor, nombreSucursal }, desde, hasta, ambiente }, headers: headers(token) }
+  );
+  return res.data?.data || [];
+}
+
+// Cesionarios (factoring) asociados al emisor
+// POST /cessions/cesionarios
+async function obtenerCesionarios(token, { rutEmisor, nombreSucursal = 'Casa Matriz', rutCesionario = null, incluirInactivos = false }) {
+  const body = { credenciales: { rutEmisor, nombreSucursal }, incluirInactivos };
+  if (rutCesionario) body.RutCesionario = rutCesionario;
+  const res = await axios.post(`${BASE}/cessions/cesionarios`, body, { headers: headers(token) });
+  return res.data?.data || [];
+}
+
+// ──────────────────────────────────────────────────────────
+// PAYKU — Link de pago integrado (requiere Payku configurado en SimpleFactura)
+// ──────────────────────────────────────────────────────────
+
+// Generar URL de pago para un DTE
+// POST /payku/generar-url → data: "https://app.payku.cl/pago/..."
+async function obtenerUrlPago(token, { rutEmisor, folio, codigoTipoDte, ambiente = 1 }) {
+  const res = await axios.post(
+    `${BASE}/payku/generar-url`,
+    { credenciales: { rutEmisor }, dte: { folio, codigoTipoDte, ambiente } },
+    { headers: headers(token) }
+  );
+  return res.data?.data; // URL string
+}
+
+// Reenviar link y QR de pago por correo
+// POST /payku/reenviar-link-Qr
+async function reenviarLinkPago(token, { rutEmisor, folio, codigoTipoDte, ambiente = 1 }) {
+  const res = await axios.post(
+    `${BASE}/payku/reenviar-link-Qr`,
+    { credenciales: { rutEmisor }, dte: { folio, codigoTipoDte, ambiente } },
+    { headers: headers(token) }
+  );
+  return res.data;
+}
+
+// ──────────────────────────────────────────────────────────
+// ESTADO DE PAGO — Marcar DTE recibido como pagado o pendiente
+// POST /dte/marcar-pagado-pendiente
+// pagado: true=pagado, false=pendiente
+// ──────────────────────────────────────────────────────────
+async function marcarPagado(token, { rutEmisor, folio, codigoTipoDte, ambiente = 1, pagado }) {
+  const res = await axios.post(
+    `${BASE}/dte/marcar-pagado-pendiente`,
+    {
+      credenciales: { rutEmisor },
+      dteReferenciadoExterno: { folio, codigoTipoDte, ambiente },
+      pagado,
+    },
+    { headers: headers(token) }
+  );
+  return res.data;
+}
+
+// ──────────────────────────────────────────────────────────
 // IVA helpers
 // ──────────────────────────────────────────────────────────
 function calcularTotalesDesdeTotal(montoConIVA) {
@@ -308,6 +447,20 @@ module.exports = {
   buildFactura,
   buildGuiaDespacho,
   buildNotaCredDebito,
+  // DTEs recibidos (compras desde proveedores)
+  acuseRecibo,
+  listarDTEsRecibidos,
+  // Folios
+  consultarFolios,
+  consultarFoliosSinUso,
+  // Cesiones / factoring
+  listarCesiones,
+  obtenerCesionarios,
+  // Payku — pagos integrados
+  obtenerUrlPago,
+  reenviarLinkPago,
+  // Estado de pago
+  marcarPagado,
   // IVA helpers
   calcularTotalesDesdeTotal,
   calcularTotalesDesdeNeto,
