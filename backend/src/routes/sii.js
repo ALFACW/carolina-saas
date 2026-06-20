@@ -2,7 +2,7 @@ const express = require('express');
 const multer  = require('multer');
 const auth    = require('../middleware/auth');
 const tenant  = require('../middleware/tenant');
-const requireRole = require('../middleware/roleGuard');
+const { requireRole } = require('../middleware/roleGuard');
 const ctrl = require('../controllers/siiController');
 
 const router = express.Router();
