@@ -353,6 +353,170 @@ async function emitirNotaCredito(apiKey, { rutCertificado, password = '', rutEmi
   return res.data;
 }
 
+// Guía de despacho (52) — traslado de bienes (con o sin venta)
+// Campos obligatorios extra: TipoDespacho + IndTraslado
+//
+// TipoDespacho:
+//   1 = Despacho por cuenta del receptor del documento
+//   2 = Despacho por cuenta del emisor a instalaciones del cliente
+//   3 = Despacho por cuenta del emisor a otras instalaciones
+//
+// IndTraslado:
+//   1 = Operación constituye venta     4 = Entrega gratuita
+//   2 = Ventas por efectuar            5 = Traslados internos
+//   3 = Consignaciones                 6 = Otros traslados no venta
+//
+// transporte (opcional): { patente, rutTransportista, fechaSalida, horaSalida }
+async function emitirGuiaDespacho(apiKey, {
+  rutCertificado, password = '',
+  rutEmisor, razonSocial, giro, actividadEconomica,
+  direccion, comuna,
+  folio, fecha,
+  tipoDespacho = 2, indTraslado = 1,
+  receptor, items, totales,
+  transporte = null,
+  referencias = [],
+}, certBuf, cafBuf) {
+  const identificacion = {
+    TipoDTE:       TIPO_DTE.GUIA_DESPACHO,
+    Folio:         folio,
+    FechaEmision:  fecha,
+    TipoDespacho:  tipoDespacho,
+    IndicadorTraslado: indTraslado,
+    FormaPago:     1,
+  };
+
+  const doc = {
+    Documento: {
+      Encabezado: {
+        IdentificacionDTE: identificacion,
+        Emisor: {
+          Rut:                rutEmisor,
+          RazonSocial:        razonSocial,
+          Giro:               giro,
+          ActividadEconomica: Array.isArray(actividadEconomica) ? actividadEconomica : [actividadEconomica],
+          DireccionOrigen:    direccion,
+          ComunaOrigen:       comuna,
+          Telefono:           [],
+        },
+        Receptor: {
+          Rut:         receptor.rut,
+          RazonSocial: receptor.razonSocial,
+          Giro:        receptor.giro      || '',
+          Direccion:   receptor.direccion || '',
+          Comuna:      receptor.comuna    || '',
+        },
+        Transporte: transporte ? {
+          Patente:         transporte.patente         || '',
+          RutTransportista: transporte.rutTransportista || '',
+          FechaSalida:     transporte.fechaSalida      || fecha,
+          HoraSalida:      transporte.horaSalida       || '00:00',
+        } : null,
+        Totales: {
+          MontoNeto:  totales.neto,
+          TasaIVA:    19,
+          IVA:        totales.iva,
+          MontoTotal: totales.total,
+        },
+      },
+      Detalles: items.map((item) => ({
+        IndicadorExento: 0,
+        Nombre:          item.nombre,
+        Descripcion:     item.descripcion || '',
+        Cantidad:        item.cantidad,
+        UnidadMedida:    item.unidad || 'un',
+        Precio:          item.precioNeto,
+        Descuento:       item.descuento || 0,
+        Recargo:         0,
+        MontoItem:       Math.round(item.cantidad * item.precioNeto - (item.descuento || 0)),
+      })),
+      Referencias: referencias,
+    },
+    Certificado: {
+      Rut:      rutCertificado,
+      Password: password,
+    },
+  };
+
+  const form = buildForm(doc, certBuf, cafBuf);
+  const res = await axios.post(
+    `${DTE_BASE}/dte/generar`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  logger.info(`[SimpleAPI] Guía de Despacho 52 emitida — folio ${folio} RUT emisor ${rutEmisor}`);
+  return res.data;
+}
+
+// Nota de débito (56) — incrementa el monto de un DTE anterior (inversa a nota de crédito)
+// Casos de uso: cobrar intereses de mora, corrección de precio menor al real, recargo omitido
+// Siempre debe referenciar el DTE original
+async function emitirNotaDebito(apiKey, {
+  rutCertificado, password = '',
+  rutEmisor, razonSocial, giro,
+  folio, fecha,
+  receptor, dteReferencia, motivo,
+  items, totales,
+}, certBuf, cafBuf) {
+  const doc = {
+    Documento: {
+      Encabezado: {
+        IdentificacionDTE: {
+          TipoDTE:      TIPO_DTE.NOTA_DEBITO,
+          Folio:        folio,
+          FechaEmision: fecha,
+        },
+        Emisor: {
+          Rut:         rutEmisor,
+          RazonSocial: razonSocial,
+          Giro:        giro,
+        },
+        Receptor: {
+          Rut:         receptor.rut,
+          RazonSocial: receptor.razonSocial,
+          Direccion:   receptor.direccion || '',
+          Comuna:      receptor.comuna    || '',
+          Giro:        receptor.giro      || '',
+        },
+        Totales: {
+          MontoNeto:  totales.neto,
+          TasaIVA:    19,
+          IVA:        totales.iva,
+          MontoTotal: totales.total,
+        },
+      },
+      Detalles: items.map((item) => ({
+        IndicadorExento: 0,
+        Nombre:          item.nombre,
+        Cantidad:        item.cantidad,
+        Precio:          item.precioNeto,
+        Descuento:       0,
+        Recargo:         0,
+        MontoItem:       Math.round(item.cantidad * item.precioNeto),
+      })),
+      Referencias: [{
+        TipoDocumento:   String(dteReferencia.tipoDte),
+        Folio:           dteReferencia.folio,
+        FechaDocumento:  dteReferencia.fecha,
+        RazonReferencia: motivo,
+      }],
+    },
+    Certificado: {
+      Rut:      rutCertificado,
+      Password: password,
+    },
+  };
+
+  const form = buildForm(doc, certBuf, cafBuf);
+  const res = await axios.post(
+    `${DTE_BASE}/dte/generar`,
+    form,
+    { headers: { ...getHeaders(apiKey), ...form.getHeaders() } }
+  );
+  logger.info(`[SimpleAPI] Nota de Débito 56 emitida — folio ${folio} RUT emisor ${rutEmisor}`);
+  return res.data;
+}
+
 // ──────────────────────────────────────────────
 // SOBRE DE ENVÍO — Empaqueta el DTE para envío al SII
 // POST https://api.simpleapi.cl/api/v1/envio/generar
@@ -1324,6 +1488,8 @@ module.exports = {
   // rutCertificado = RUT del dueño del PFX (persona), puede diferir del RUT empresa (emisor)
   emitirBoleta,
   emitirFactura,
+  emitirGuiaDespacho,  // tipo 52 — TipoDespacho + IndTraslado obligatorios
+  emitirNotaDebito,    // tipo 56 — inversa de nota de crédito, debe referenciar DTE original
   emitirNotaCredito,
   emitirLiquidacion,  // tipo 43 — endpoint /dte/liquidacion/generar
   firmarDTEXml,       // firma un DTE XML ya construido — /dte/generar/xml
