@@ -879,7 +879,7 @@ export default function POS() {
               onChange={e => setVrDesc(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); vrPrecioRef.current?.focus(); vrPrecioRef.current?.select() } }}
               placeholder="Ej: Dulces, Servicio, etc."
-              className="w-full px-4 py-3 border border-border rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+              className="w-full px-4 py-3 border border-border rounded-lg text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
             />
           </div>
 
