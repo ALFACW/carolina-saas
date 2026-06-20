@@ -1,16 +1,18 @@
 const express = require('express');
 const multer  = require('multer');
-const { authenticate, requireRole } = require('../middleware/auth');
+const auth    = require('../middleware/auth');
+const tenant  = require('../middleware/tenant');
+const requireRole = require('../middleware/roleGuard');
 const ctrl = require('../controllers/siiController');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
-router.use(authenticate);
+router.use(auth, tenant);
 
-router.get('/config',      ctrl.getConfiguracion);
-router.put('/config',      requireRole('admin'), ctrl.updateConfiguracion);
-router.get('/folios',      ctrl.getCAFFolios);
+router.get('/config',  ctrl.getConfiguracion);
+router.get('/folios',  ctrl.getCAFFolios);
+router.put('/config',  requireRole('admin'), ctrl.updateConfiguracion);
 
 router.post('/certificado',
   requireRole('admin'),
