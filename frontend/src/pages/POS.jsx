@@ -154,6 +154,8 @@ export default function POS() {
   const [vrDesc,           setVrDesc]           = useState('')
   const [vrPrecio,         setVrPrecio]         = useState('')
   const [vrCantidad,       setVrCantidad]       = useState('1')
+  const vrDescRef   = useRef(null)
+  const vrPrecioRef = useRef(null)
   // Chile: tipo de documento
   const esChile = tenant?.country === 'CL'
   const [tipoDte,          setTipoDte]          = useState(39) // 39=boleta, 33=factura
@@ -865,50 +867,72 @@ export default function POS() {
 
       {/* ── Modal: venta rápida (ítem libre) ── */}
       <Modal isOpen={showVentaRapida} onClose={() => setShowVentaRapida(false)} title="Venta rápida" size="sm">
-        <div
-          className="space-y-4"
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); confirmarVentaRapida() } }}
-        >
-          <p className="text-xs text-ink-2">Agrega un ítem sin producto registrado. No descuenta inventario.</p>
+        <div className="space-y-5">
+          {/* Descripción */}
           <div>
             <label className="label-base">Descripción</label>
             <input
+              ref={vrDescRef}
               autoFocus
               type="text"
               value={vrDesc}
               onChange={e => setVrDesc(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); vrPrecioRef.current?.focus(); vrPrecioRef.current?.select() } }}
               placeholder="Ej: Dulces, Servicio, etc."
-              className="input-base w-full"
+              className="input-base w-full text-base"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="label-base">Precio</label>
-              <input
-                type="number"
-                value={vrPrecio}
-                onChange={e => setVrPrecio(e.target.value)}
-                placeholder="0"
-                className="input-base w-full text-right font-bold text-lg"
-              />
-            </div>
-            <div>
-              <label className="label-base">Cantidad</label>
+
+          {/* Precio */}
+          <div>
+            <label className="label-base">Precio</label>
+            <input
+              ref={vrPrecioRef}
+              type="number"
+              value={vrPrecio}
+              onChange={e => setVrPrecio(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); confirmarVentaRapida() } }}
+              placeholder="0"
+              className="w-full px-4 py-3 border border-border rounded-lg text-2xl font-bold text-right focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+            />
+          </div>
+
+          {/* Cantidad con +/- */}
+          <div>
+            <label className="label-base">Cantidad</label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setVrCantidad(c => String(Math.max(1, (parseInt(c) || 1) - 1)))}
+                className="w-11 h-11 rounded-lg border border-border flex items-center justify-center text-xl font-bold text-ink hover:bg-surface-soft active:bg-border transition-colors"
+              >
+                <Minus size={18} />
+              </button>
               <input
                 type="number"
                 min="1"
                 value={vrCantidad}
                 onChange={e => setVrCantidad(e.target.value)}
-                className="input-base w-full text-center font-bold text-lg"
+                className="flex-1 h-11 border border-border rounded-lg text-xl font-bold text-center focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
               />
+              <button
+                type="button"
+                onClick={() => setVrCantidad(c => String((parseInt(c) || 1) + 1))}
+                className="w-11 h-11 rounded-lg border border-border flex items-center justify-center text-xl font-bold text-ink hover:bg-surface-soft active:bg-border transition-colors"
+              >
+                <Plus size={18} />
+              </button>
             </div>
           </div>
-          {vrPrecio && vrCantidad && (
-            <div className="flex justify-between items-center bg-surface-soft rounded-lg px-4 py-2.5">
-              <span className="text-sm text-ink-2">Total</span>
-              <span className="text-lg font-bold text-ink">{COP(parseFloat(vrPrecio || 0) * (parseInt(vrCantidad) || 1))}</span>
-            </div>
-          )}
+
+          {/* Total */}
+          <div className="flex justify-between items-center bg-accent/5 border border-accent/20 rounded-xl px-5 py-4">
+            <span className="text-sm font-medium text-ink-2">Total</span>
+            <span className="text-3xl font-bold text-ink tracking-tight">
+              {COP(parseFloat(vrPrecio || 0) * (parseInt(vrCantidad) || 1))}
+            </span>
+          </div>
+
           <div className="flex gap-2 pt-1">
             <button
               onClick={() => setShowVentaRapida(false)}
