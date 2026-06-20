@@ -273,7 +273,7 @@ export default function POS() {
 
   useEffect(() => {
     const onKey = async (e) => {
-      if (showCobroModal || showClienteModal || showTicketModal || modalCaja) return
+      if (showCobroModal || showClienteModal || showTicketModal || modalCaja || showVentaRapida) return
 
       const enInput    = (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'textarea')
       const enBuscador = e.target === searchRef.current
@@ -389,7 +389,7 @@ export default function POS() {
 
     window.addEventListener('keydown', onKey, true)
     return () => { window.removeEventListener('keydown', onKey, true); clearTimeout(scanTimer.current) }
-  }, [showCobroModal, showClienteModal, showTicketModal, modalCaja, searchResults, procesarEscaneo, agregarDesdeResultado, actualizarCantidad, scan])
+  }, [showCobroModal, showClienteModal, showTicketModal, modalCaja, showVentaRapida, searchResults, procesarEscaneo, agregarDesdeResultado, actualizarCantidad, scan])
 
   const { data: clientesData } = useQuery({
     queryKey: ['clientes-pos', clienteSearch],
