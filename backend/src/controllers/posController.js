@@ -7,13 +7,16 @@ const logger = require('../lib/logger');
 const ventaSchema = z.object({
   cliente_id: z.string().uuid().optional(),
   items: z.array(z.object({
-    producto_id: z.string().uuid(),
-    cantidad: z.coerce.number().int().positive(),
-    precio_unitario: z.coerce.number().positive().optional(),
-    descuento: z.coerce.number().min(0).default(0),
+    producto_id:     z.string().uuid().optional().nullable(), // null = ítem libre (venta rápida)
+    nombre_libre:    z.string().optional(),                   // descripción si es ítem libre
+    cantidad:        z.coerce.number().int().positive(),
+    precio_unitario: z.coerce.number().positive(),
+    descuento:       z.coerce.number().min(0).default(0),
   })).min(1),
   metodo_pago: z.enum(['efectivo', 'tarjeta_credito', 'tarjeta_debito', 'transferencia', 'credito']),
-  notas: z.string().optional(),
+  tipo_dte:    z.number().optional(),
+  receptor:    z.any().optional(),
+  notas:       z.string().optional(),
 });
 
 async function getDashboard(req, res, next) {
@@ -53,24 +56,27 @@ async function procesarVenta(req, res, next) {
 
     await client.query('BEGIN');
 
-    // Validar stock
-    const productosIds = data.items.map(i => i.producto_id);
-    const { rows: productos } = await client.query(
-      `SELECT * FROM productos WHERE id = ANY($1::uuid[]) AND tenant_id = $2 AND activo = true`,
-      [productosIds, req.tenant.id]
-    );
-
+    // Validar stock solo para ítems con producto_id
+    const itemsConProducto = data.items.filter(i => i.producto_id);
+    const productosIds = itemsConProducto.map(i => i.producto_id);
     const productoMap = {};
-    for (const p of productos) productoMap[p.id] = p;
 
-    for (const item of data.items) {
-      const prod = productoMap[item.producto_id];
-      if (!prod) throw Object.assign(new Error(`Producto no encontrado: ${item.producto_id}`), { status: 400 });
-      if (prod.stock_actual < item.cantidad) {
-        throw Object.assign(
-          new Error(`Stock insuficiente para "${prod.nombre}": disponible ${prod.stock_actual}, solicitado ${item.cantidad}`),
-          { status: 400 }
-        );
+    if (productosIds.length) {
+      const { rows: productos } = await client.query(
+        `SELECT * FROM productos WHERE id = ANY($1::uuid[]) AND tenant_id = $2 AND activo = true`,
+        [productosIds, req.tenant.id]
+      );
+      for (const p of productos) productoMap[p.id] = p;
+
+      for (const item of itemsConProducto) {
+        const prod = productoMap[item.producto_id];
+        if (!prod) throw Object.assign(new Error(`Producto no encontrado: ${item.producto_id}`), { status: 400 });
+        if (prod.stock_actual < item.cantidad) {
+          throw Object.assign(
+            new Error(`Stock insuficiente para "${prod.nombre}": disponible ${prod.stock_actual}, solicitado ${item.cantidad}`),
+            { status: 400 }
+          );
+        }
       }
     }
 
@@ -81,39 +87,42 @@ async function procesarVenta(req, res, next) {
     const itemsFactus  = [];
 
     for (const item of data.items) {
-      const prod = productoMap[item.producto_id];
-      const precioUnit = item.precio_unitario || parseFloat(prod.precio_venta);
+      const prod       = item.producto_id ? productoMap[item.producto_id] : null;
+      const precioUnit = parseFloat(item.precio_unitario);
       const descuento  = item.descuento || 0;
-      const iva        = parseFloat(prod.impuesto_iva) || 0;
+      const iva        = prod ? parseFloat(prod.impuesto_iva) || 0 : 19; // ítem libre: IVA 19% por defecto
 
       // En Colombia el precio_venta YA INCLUYE IVA
-      const precioFinal   = precioUnit * (1 - descuento / 100); // precio con IVA por unidad
-      const totalItem     = precioFinal * item.cantidad;         // total que paga el cliente
-      const baseItem      = totalItem / (1 + iva / 100);         // base gravable (sin IVA)
-      const impItem       = totalItem - baseItem;                 // IVA del item
-      const precioBase    = baseItem / item.cantidad;             // precio base por unidad (para Factus)
+      const precioFinal = precioUnit * (1 - descuento / 100);
+      const totalItem   = precioFinal * item.cantidad;
+      const baseItem    = totalItem / (1 + iva / 100);
+      const impItem     = totalItem - baseItem;
+      const precioBase  = baseItem / item.cantidad;
 
       subtotal      += baseItem;
       impuestoTotal += impItem;
 
+      const descripcion = prod ? prod.nombre : (item.nombre_libre || 'Ítem libre');
+      const codigo      = prod ? (prod.codigo || '') : '';
+
       itemsFactura.push({
-        producto_id:    prod.id,
-        descripcion:    prod.nombre,
-        codigo:         prod.codigo || '',
-        cantidad:       item.cantidad,
-        precio_unitario:precioFinal,  // precio con IVA (lo que el cliente ve)
-        precio_base:    precioBase,   // precio sin IVA (para reportes)
+        producto_id:     prod?.id || null,
+        descripcion,
+        codigo,
+        cantidad:        item.cantidad,
+        precio_unitario: precioFinal,
+        precio_base:     precioBase,
         descuento,
-        impuesto:       impItem,
-        subtotal:       baseItem,
-        iva_rate:       iva,
+        impuesto:        impItem,
+        subtotal:        baseItem,
+        iva_rate:        iva,
       });
 
       itemsFactus.push({
-        codigo:          prod.codigo || prod.id.substring(0, 10),
-        descripcion:     prod.nombre,
+        codigo:          prod ? (prod.codigo || prod.id.substring(0, 10)) : 'LIBRE',
+        descripcion,
         cantidad:        item.cantidad,
-        precio_unitario: precioBase,  // Factus recibe precio SIN IVA
+        precio_unitario: precioBase,
         descuento,
         iva_rate:        iva,
         impuesto:        impItem,
@@ -272,8 +281,9 @@ async function procesarVenta(req, res, next) {
       );
     }
 
-    // Descontar stock
+    // Descontar stock — solo ítems con producto_id
     for (const item of data.items) {
+      if (!item.producto_id) continue; // ítems libres no tienen stock
       const prod = productoMap[item.producto_id];
       const stockNuevo = prod.stock_actual - item.cantidad;
       await client.query('UPDATE productos SET stock_actual = $1 WHERE id = $2', [stockNuevo, prod.id]);
@@ -310,14 +320,25 @@ async function getProductosRapido(req, res, next) {
     const { search = '' } = req.query;
 
     if (search.trim()) {
-      // Búsqueda por nombre o código — solo los campos que necesita el POS
+      const s = search.trim();
+      // Coincidencia exacta por codigo_interno (atajo rápido)
+      const { rows: exactos } = await db.query(
+        `SELECT id, nombre, codigo, codigo_interno, precio_venta, stock_actual, impuesto_iva
+         FROM productos
+         WHERE tenant_id = $1 AND activo = true AND codigo_interno = $2
+         LIMIT 1`,
+        [req.tenant.id, s]
+      );
+      if (exactos.length) return res.json(exactos);
+
+      // Búsqueda general por nombre, código SKU o código interno
       const { rows } = await db.query(
-        `SELECT id, nombre, codigo, precio_venta, stock_actual, impuesto_iva
+        `SELECT id, nombre, codigo, codigo_interno, precio_venta, stock_actual, impuesto_iva
          FROM productos
          WHERE tenant_id = $1 AND activo = true
-           AND (nombre ILIKE $2 OR codigo ILIKE $2)
+           AND (nombre ILIKE $2 OR codigo ILIKE $2 OR codigo_interno ILIKE $2)
          ORDER BY nombre LIMIT 10`,
-        [req.tenant.id, `%${search.trim()}%`]
+        [req.tenant.id, `%${s}%`]
       );
       return res.json(rows);
     }

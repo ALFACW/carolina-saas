@@ -3,8 +3,14 @@ const db = require('../db');
 const logger = require('../lib/logger');
 const { enviarAlertaStock } = require('../lib/email');
 
+const CODIGOS_RESERVADOS = ['1', '2', '3'];
+
 const productoSchema = z.object({
   codigo: z.string().optional().nullable(),
+  codigo_interno: z.string().optional().nullable().refine(
+    v => !v || !CODIGOS_RESERVADOS.includes(v.trim()),
+    { message: 'Los códigos 1, 2 y 3 están reservados por el sistema' }
+  ),
   nombre: z.string().min(1),
   descripcion: z.string().optional().nullable(),
   categoria: z.string().optional().nullable(),
@@ -62,11 +68,12 @@ async function create(req, res, next) {
   try {
     const data = productoSchema.parse(req.body);
     const { rows } = await db.query(
-      `INSERT INTO productos (tenant_id, codigo, nombre, descripcion, categoria, precio_venta, precio_costo, stock_actual, stock_minimo, bodega, impuesto_iva)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      `INSERT INTO productos (tenant_id, codigo, codigo_interno, nombre, descripcion, categoria, precio_venta, precio_costo, stock_actual, stock_minimo, bodega, impuesto_iva)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
       [
         req.tenant.id,
         data.codigo || null,
+        data.codigo_interno?.trim() || null,
         data.nombre,
         data.descripcion || null,
         data.categoria || null,

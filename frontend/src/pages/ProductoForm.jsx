@@ -186,6 +186,20 @@ export default function ProductoForm() {
                 </div>
               </div>
 
+              <div>
+                <Input
+                  label="Código interno (atajo POS)"
+                  placeholder="Ej: 10, 345 (no usar 1, 2, 3)"
+                  {...register('codigo_interno', {
+                    validate: v => !v || !['1','2','3'].includes(v.trim()) || 'Los códigos 1, 2 y 3 están reservados'
+                  })}
+                />
+                {errors.codigo_interno && (
+                  <p className="text-xs text-danger mt-1">{errors.codigo_interno.message}</p>
+                )}
+                <p className="text-xs text-ink-2 mt-1">Opcional. Escribe este código en el POS para agregar el producto directo.</p>
+              </div>
+
               <Input label="Categoría" placeholder="Ropa, Alimentos..." {...register('categoria')} />
 
               <div>

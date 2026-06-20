@@ -149,6 +149,11 @@ export default function POS() {
   const [searchDebounced,  setSearchDebounced]  = useState('')
   const [resultIndex,      setResultIndex]      = useState(-1)
   const [showOrderPanel,   setShowOrderPanel]   = useState(false)
+  // Venta rápida (ítem libre sin stock)
+  const [showVentaRapida,  setShowVentaRapida]  = useState(false)
+  const [vrDesc,           setVrDesc]           = useState('')
+  const [vrPrecio,         setVrPrecio]         = useState('')
+  const [vrCantidad,       setVrCantidad]       = useState('1')
   // Chile: tipo de documento
   const esChile = tenant?.country === 'CL'
   const [tipoDte,          setTipoDte]          = useState(39) // 39=boleta, 33=factura
@@ -163,9 +168,38 @@ export default function POS() {
   const scanTimer    = useRef(null)
   const lastAdded    = useRef(null)
 
+  const abrirVentaRapida = (precioInicial = '') => {
+    setVrDesc('')
+    setVrPrecio(precioInicial)
+    setVrCantidad('1')
+    setSearchText('')
+    setSearchDebounced('')
+    setShowVentaRapida(true)
+  }
+
+  const confirmarVentaRapida = () => {
+    const precio = parseFloat(vrPrecio)
+    const cantidad = parseInt(vrCantidad) || 1
+    if (!vrDesc.trim() || !precio || precio <= 0) return
+    agregarItem({
+      id:             `libre-${Date.now()}`,
+      producto_id:    null,
+      nombre:         vrDesc.trim(),
+      precio_venta:   precio,
+      stock_actual:   999,
+      iva:            19,
+    }, cantidad)
+    setShowVentaRapida(false)
+    setTimeout(() => searchRef.current?.focus(), 100)
+  }
+
+  const CODIGOS_RESERVADOS = ['1', '2', '3']
+
   useEffect(() => {
     clearTimeout(debounceRef.current)
     if (searchText.length === 0) { setSearchDebounced(''); setResultIndex(-1); return }
+    // Códigos reservados del sistema — no buscar, esperar Enter
+    if (CODIGOS_RESERVADOS.includes(searchText.trim())) { setSearchDebounced(''); setResultIndex(-1); return }
     debounceRef.current = setTimeout(() => {
       setSearchDebounced(searchText)
       setResultIndex(-1)
@@ -292,21 +326,34 @@ export default function POS() {
           return
         }
 
+        // Códigos reservados del sistema
+        if (enBuscador && searchText.trim() === '1') {
+          e.preventDefault()
+          abrirVentaRapida()
+          return
+        }
+        // 2 y 3 reservados para futuro — limpiar sin hacer nada
+        if (enBuscador && (searchText.trim() === '2' || searchText.trim() === '3')) {
+          e.preventDefault()
+          setSearchText('')
+          return
+        }
+
         if (enBuscador && resultIndex >= 0 && searchResults?.[resultIndex]) {
           e.preventDefault()
-          agregarDesdeResultado(searchResults.productos[resultIndex])
+          agregarDesdeResultado(searchResults[resultIndex])
           return
         }
 
         if (enBuscador && searchResults?.length === 1) {
           e.preventDefault()
-          agregarDesdeResultado(searchResults.productos[0])
+          agregarDesdeResultado(searchResults[0])
           return
         }
 
         if (enBuscador && searchResults?.length > 1 && resultIndex === -1) {
           e.preventDefault()
-          agregarDesdeResultado(searchResults.productos[0])
+          agregarDesdeResultado(searchResults[0])
           return
         }
 
@@ -404,7 +451,12 @@ export default function POS() {
     }
     const payload = {
       cliente_id: clienteSeleccionado?.id || undefined,
-      items: carrito.map(i => ({ producto_id: i.producto_id, cantidad: i.cantidad, precio_unitario: i.precio_unitario, descuento: i.descuento })),
+      items: carrito.map(i => {
+        const esLibre = !i.producto_id || String(i.producto_id).startsWith('libre-')
+        return esLibre
+          ? { nombre_libre: i.nombre, cantidad: i.cantidad, precio_unitario: i.precio_unitario, descuento: i.descuento }
+          : { producto_id: i.producto_id, cantidad: i.cantidad, precio_unitario: i.precio_unitario, descuento: i.descuento }
+      }),
       metodo_pago: metodoPago,
     }
     if (esChile) {
@@ -807,6 +859,70 @@ export default function POS() {
                 <p className="text-xs text-ink-2">{c.tipo_documento}: {c.numero_documento}</p>
               </button>
             ))}
+          </div>
+        </div>
+      </Modal>
+
+      {/* ── Modal: venta rápida (ítem libre) ── */}
+      <Modal isOpen={showVentaRapida} onClose={() => setShowVentaRapida(false)} title="Venta rápida" size="sm">
+        <div
+          className="space-y-4"
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); confirmarVentaRapida() } }}
+        >
+          <p className="text-xs text-ink-2">Agrega un ítem sin producto registrado. No descuenta inventario.</p>
+          <div>
+            <label className="label-base">Descripción</label>
+            <input
+              autoFocus
+              type="text"
+              value={vrDesc}
+              onChange={e => setVrDesc(e.target.value)}
+              placeholder="Ej: Dulces, Servicio, etc."
+              className="input-base w-full"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label-base">Precio</label>
+              <input
+                type="number"
+                value={vrPrecio}
+                onChange={e => setVrPrecio(e.target.value)}
+                placeholder="0"
+                className="input-base w-full text-right font-bold text-lg"
+              />
+            </div>
+            <div>
+              <label className="label-base">Cantidad</label>
+              <input
+                type="number"
+                min="1"
+                value={vrCantidad}
+                onChange={e => setVrCantidad(e.target.value)}
+                className="input-base w-full text-center font-bold text-lg"
+              />
+            </div>
+          </div>
+          {vrPrecio && vrCantidad && (
+            <div className="flex justify-between items-center bg-surface-soft rounded-lg px-4 py-2.5">
+              <span className="text-sm text-ink-2">Total</span>
+              <span className="text-lg font-bold text-ink">{COP(parseFloat(vrPrecio || 0) * (parseInt(vrCantidad) || 1))}</span>
+            </div>
+          )}
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={() => setShowVentaRapida(false)}
+              className="flex-1 py-2.5 border border-border rounded-lg text-sm font-medium text-ink hover:bg-surface-soft transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmarVentaRapida}
+              disabled={!vrDesc.trim() || !vrPrecio || parseFloat(vrPrecio) <= 0}
+              className="flex-1 py-2.5 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent-dark transition-colors disabled:opacity-40"
+            >
+              Agregar al carrito
+            </button>
           </div>
         </div>
       </Modal>
